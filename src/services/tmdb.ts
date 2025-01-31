@@ -34,6 +34,13 @@ export const getTVDetails = async (id: string) => {
   return response.data;
 };
 
+export const getTVSeasonDetails = async (id: string, seasonNumber: number) => {
+  const response = await axios.get(
+    `${BASE_URL}/tv/${id}/season/${seasonNumber}?api_key=${API_KEY}`
+  );
+  return response.data;
+};
+
 export const searchContent = async (query: string) => {
   const response = await axios.get(
     `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`

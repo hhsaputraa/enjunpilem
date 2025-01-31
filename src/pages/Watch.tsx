@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { 
   getMovieDetails, 
   getTVDetails, 
@@ -7,20 +8,30 @@ import {
   getTVRecommendations,
   getMovieCredits,
   getTVCredits,
+  getTVSeasonDetails,
   getImageUrl 
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Calendar, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Star, Calendar, Clock, Users, TrendingUp } from 'lucide-react';
 
 const Watch = () => {
   const { type, id } = useParams();
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [selectedEpisode, setSelectedEpisode] = useState(1);
   
   const { data: details, isLoading: detailsLoading } = useQuery({
     queryKey: ['details', type, id],
     queryFn: () => type === 'movie' ? getMovieDetails(id!) : getTVDetails(id!),
+  });
+
+  const { data: seasonDetails, isLoading: seasonLoading } = useQuery({
+    queryKey: ['season', id, selectedSeason],
+    queryFn: () => getTVSeasonDetails(id!, selectedSeason),
+    enabled: type === 'tv',
   });
 
   const { data: recommendations, isLoading: recommendationsLoading } = useQuery({
@@ -66,12 +77,57 @@ const Watch = () => {
                 {details.runtime} min
               </Badge>
             )}
+            {details?.number_of_seasons && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" />
+                {details.number_of_seasons} Season{details.number_of_seasons > 1 ? 's' : ''}
+              </Badge>
+            )}
           </div>
+
+          {type === 'tv' && (
+            <div className="flex gap-4 mb-4">
+              <Select
+                value={selectedSeason.toString()}
+                onValueChange={(value) => setSelectedSeason(parseInt(value))}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select season" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
+                    <SelectItem key={i + 1} value={(i + 1).toString()}>
+                      Season {i + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedEpisode.toString()}
+                onValueChange={(value) => setSelectedEpisode(parseInt(value))}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select episode" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
+                    <SelectItem key={i + 1} value={(i + 1).toString()}>
+                      Episode {i + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
-        <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden">
+        <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
           <iframe
-            src={`https://player.embed-api.stream/?id=${id}&type=${type}`}
+            src={type === 'movie' 
+              ? `https://player.embed-api.stream/?id=${id}&type=movie`
+              : `https://player.embed-api.stream/?id=${id}&s=${selectedSeason}&e=${selectedEpisode}`
+            }
             className="w-full h-full"
             allowFullScreen
           />
@@ -79,6 +135,14 @@ const Watch = () => {
 
         <div className="prose prose-invert max-w-none mb-8">
           <p className="text-lg">{details?.overview}</p>
+          {type === 'tv' && seasonDetails?.episodes?.[selectedEpisode - 1] && (
+            <div className="mt-4">
+              <h3 className="text-xl font-semibold mb-2">
+                Episode {selectedEpisode}: {seasonDetails.episodes[selectedEpisode - 1].name}
+              </h3>
+              <p>{seasonDetails.episodes[selectedEpisode - 1].overview}</p>
+            </div>
+          )}
         </div>
 
         {!creditsLoading && credits?.cast && (
