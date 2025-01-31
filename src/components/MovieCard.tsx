@@ -47,7 +47,7 @@ export const MovieCard = ({
                   {new Date(releaseDate).getFullYear()}
                 </Badge>
               )}
-              <Badge variant="primary">
+              <Badge variant="default">
                 {mediaType === 'movie' ? 'Movie' : 'TV Show'}
               </Badge>
             </div>
