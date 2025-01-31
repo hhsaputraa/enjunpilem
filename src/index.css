@@ -33,11 +33,11 @@
 }
 
 .movie-card {
-  @apply relative overflow-hidden rounded-lg transition-transform duration-300 hover:scale-105;
+  @apply relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-105 hover:z-10;
 }
 
 .movie-card-overlay {
-  @apply absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300;
+  @apply absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-0 transition-opacity duration-300;
 }
 
 .movie-card:hover .movie-card-overlay {
@@ -50,4 +50,21 @@
 
 .movie-card:hover .movie-card-content {
   @apply translate-y-0;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted/80;
 }

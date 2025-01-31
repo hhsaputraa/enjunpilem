@@ -9,6 +9,21 @@ export const getTrending = async () => {
   return response.data.results;
 };
 
+export const getPopularMovies = async () => {
+  const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
+export const getPopularTVShows = async () => {
+  const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
+export const getTopRatedMovies = async () => {
+  const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
 export const getMovieDetails = async (id: string) => {
   const response = await axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`);
   return response.data;
@@ -27,5 +42,26 @@ export const searchContent = async (query: string) => {
 };
 
 export const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') => {
+  if (!path) return '/placeholder.svg';
   return `${IMAGE_BASE_URL}/${size}${path}`;
+};
+
+export const getMovieRecommendations = async (id: string) => {
+  const response = await axios.get(`${BASE_URL}/movie/${id}/recommendations?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
+export const getTVRecommendations = async (id: string) => {
+  const response = await axios.get(`${BASE_URL}/tv/${id}/recommendations?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
+export const getMovieCredits = async (id: string) => {
+  const response = await axios.get(`${BASE_URL}/movie/${id}/credits?api_key=${API_KEY}`);
+  return response.data;
+};
+
+export const getTVCredits = async (id: string) => {
+  const response = await axios.get(`${BASE_URL}/tv/${id}/credits?api_key=${API_KEY}`);
+  return response.data;
 };
