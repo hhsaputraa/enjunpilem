@@ -66,7 +66,7 @@ const Index = () => {
       <div className="max-w-[1400px] mx-auto">
         <div className="flex flex-col items-center mb-12">
           <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 text-transparent bg-clip-text">
-            StreamFlix
+            EnjunPilem
           </h1>
           <SearchBar />
         </div>
