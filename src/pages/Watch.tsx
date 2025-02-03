@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { 
   getMovieDetails, 
   getTVDetails, 
@@ -16,17 +16,12 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { Star, Calendar, Clock, TrendingUp, Upload } from 'lucide-react';
+import { Star, Calendar, Clock, Users, TrendingUp } from 'lucide-react';
 
 const Watch = () => {
   const { type, id } = useParams();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [subtitleUrl, setSubtitleUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   
   const { data: details, isLoading: detailsLoading } = useQuery({
     queryKey: ['details', type, id],
@@ -48,30 +43,6 @@ const Watch = () => {
     queryKey: ['credits', type, id],
     queryFn: () => type === 'movie' ? getMovieCredits(id!) : getTVCredits(id!),
   });
-
-  const handleSubtitleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.name.endsWith('.srt')) {
-        const url = URL.createObjectURL(file);
-        setSubtitleUrl(url);
-        toast({
-          title: "Subtitle loaded",
-          description: `Successfully loaded subtitles from ${file.name}`,
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Invalid file format",
-          description: "Please upload an .srt subtitle file",
-        });
-      }
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
 
   if (detailsLoading) {
     return (
@@ -149,37 +120,14 @@ const Watch = () => {
               </Select>
             </div>
           )}
-
-          <div className="flex items-center gap-2 mb-4">
-            <Button 
-              variant="outline" 
-              onClick={triggerFileInput}
-              className="flex items-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Upload Subtitles
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".srt"
-              onChange={handleSubtitleUpload}
-              className="hidden"
-            />
-            {subtitleUrl && (
-              <Badge variant="secondary">
-                Subtitles loaded
-              </Badge>
-            )}
-          </div>
         </div>
 
         <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
           <iframe
-            src={`${type === 'movie' 
+            src={type === 'movie' 
               ? `https://player.embed-api.stream/?id=${id}&type=movie`
               : `https://player.embed-api.stream/?id=${id}&s=${selectedSeason}&e=${selectedEpisode}`
-            }${subtitleUrl ? `&subtitle=${encodeURIComponent(subtitleUrl)}` : ''}`}
+            }
             className="w-full h-full"
             allowFullScreen
           />
