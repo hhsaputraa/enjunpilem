@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Watch from "./pages/Watch";
 import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -16,13 +17,14 @@ const App = () => (
     <BrowserRouter>
       <TooltipProvider>
         <Navbar />
-        <main className="pt-16"> {/* Add padding to account for fixed navbar */}
+        <main className="pt-16">
           <Toaster />
           <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/:type/:id" element={<Watch />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

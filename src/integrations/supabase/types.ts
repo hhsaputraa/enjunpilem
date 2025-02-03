@@ -9,7 +9,126 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          added_at: string
+          id: string
+          media_id: number
+          media_type: string
+          user_id: string | null
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          media_id: number
+          media_type: string
+          user_id?: string | null
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      watch_history: {
+        Row: {
+          id: string
+          last_watched_at: string
+          media_id: number
+          media_type: string
+          progress: number | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          last_watched_at?: string
+          media_id: number
+          media_type: string
+          progress?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          last_watched_at?: string
+          media_id?: number
+          media_type?: string
+          progress?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watchlist: {
+        Row: {
+          added_at: string
+          id: string
+          media_id: number
+          media_type: string
+          user_id: string | null
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          media_id: number
+          media_type: string
+          user_id?: string | null
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

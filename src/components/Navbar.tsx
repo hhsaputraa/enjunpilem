@@ -1,8 +1,52 @@
 import { Link } from "react-router-dom";
-import { Search, Film, Tv } from "lucide-react";
+import { Search, Film, Tv, Heart, Clock, List, LogOut, LogIn } from "lucide-react";
 import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+      toast({
+        title: "Logged out successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error logging out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-effect">
       <div className="max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between">
@@ -43,6 +87,46 @@ const Navbar = () => {
               <span className="sr-only">Search</span>
             </Button>
           </Link>
+
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary">My Profile</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Lists</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/favorites" className="flex items-center cursor-pointer">
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Favorites</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/watchlist" className="flex items-center cursor-pointer">
+                    <List className="mr-2 h-4 w-4" />
+                    <span>Watch Later</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/history" className="flex items-center cursor-pointer">
+                    <Clock className="mr-2 h-4 w-4" />
+                    <span>Watch History</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="secondary" onClick={() => navigate('/auth')} className="flex items-center gap-2">
+              <LogIn className="h-4 w-4" />
+              Sign In
+            </Button>
+          )}
         </div>
       </div>
     </nav>
