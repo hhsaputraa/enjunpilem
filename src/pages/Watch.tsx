@@ -145,7 +145,7 @@ const Watch = () => {
           )}
         </div>
 
-        {!creditsLoading && credits?.cast && (
+        {/* {!creditsLoading && credits?.cast && (
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Cast</h2>
             <ScrollArea className="w-full whitespace-nowrap">
@@ -167,7 +167,7 @@ const Watch = () => {
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </section>
-        )}
+        )} */}
 
         {!recommendationsLoading && recommendations?.length > 0 && (
           <section>
