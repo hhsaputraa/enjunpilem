@@ -10,6 +10,24 @@ interface CollectionDetailsProps {
   onBack: () => void;
 }
 
+interface TMDBData {
+  title?: string;
+  name?: string;
+  poster_path: string;
+  overview: string;
+  vote_average: number;
+  release_date?: string;
+  first_air_date?: string;
+}
+
+interface CollectionItem {
+  id: string;
+  media_id: number;
+  media_type: 'movie' | 'tv';
+  collection_id: string;
+  tmdb_data: TMDBData;
+}
+
 export const CollectionDetails = ({ collectionId, collectionName, onBack }: CollectionDetailsProps) => {
   const { data: items, isLoading } = useQuery({
     queryKey: ['collection-items', collectionId],
@@ -26,7 +44,7 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
         .eq('collection_id', collectionId);
 
       if (error) throw error;
-      return data;
+      return data as CollectionItem[];
     },
   });
 
@@ -53,7 +71,7 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
             <MovieCard
               key={`${item.media_type}-${item.media_id}`}
               id={item.media_id}
-              title={item.tmdb_data.title || item.tmdb_data.name}
+              title={item.tmdb_data.title || item.tmdb_data.name || ''}
               posterPath={item.tmdb_data.poster_path}
               overview={item.tmdb_data.overview}
               mediaType={item.media_type}
