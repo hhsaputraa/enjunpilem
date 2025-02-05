@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -18,10 +18,26 @@ const Collections = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [user, setUser] = useState<any>(null);
+
+  // Get and maintain user session
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('collections')
         .select(`
@@ -33,18 +49,25 @@ const Collections = () => {
             media_type
           )
         `)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   const createCollection = useMutation({
     mutationFn: async (name: string) => {
+      if (!user) throw new Error('You must be logged in to create a collection');
+      
       const { data, error } = await supabase
         .from('collections')
-        .insert({ name })
+        .insert({ 
+          name,
+          user_id: user.id 
+        })
         .select()
         .single();
 
@@ -67,10 +90,13 @@ const Collections = () => {
 
   const deleteCollection = useMutation({
     mutationFn: async (collectionId: string) => {
+      if (!user) throw new Error('You must be logged in to delete a collection');
+      
       const { error } = await supabase
         .from('collections')
         .delete()
-        .eq('id', collectionId);
+        .eq('id', collectionId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
     },
@@ -93,6 +119,17 @@ const Collections = () => {
       createCollection.mutate(newCollectionName.trim());
     }
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen p-6 bg-background">
+        <div className="max-w-7xl mx-auto text-center py-12">
+          <h1 className="text-3xl font-bold mb-4">Collections</h1>
+          <p className="text-lg text-muted-foreground">Please sign in to view and manage your collections.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6 bg-background">
