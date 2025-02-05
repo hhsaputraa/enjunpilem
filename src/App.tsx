@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
 import Watchlist from "./pages/Watchlist";
+import Collections from "./pages/Collections";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/collections" element={<Collections />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

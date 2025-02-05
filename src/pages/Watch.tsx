@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Star, Calendar, Clock, Heart, List, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -201,6 +202,7 @@ const Watch = () => {
                   >
                     <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
                   </Button>
+                  <AddToCollectionDialog mediaId={parseInt(id!)} mediaType={type as 'movie' | 'tv'} />
                 </>
               ) : (
                 <Button variant="outline" onClick={() => navigate('/auth')} className="flex items-center gap-2">
