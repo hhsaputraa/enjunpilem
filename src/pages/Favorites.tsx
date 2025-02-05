@@ -4,6 +4,7 @@ import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
+import { useState, useEffect } from 'react';
 
 const Favorites = () => {
   const navigate = useNavigate();

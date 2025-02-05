@@ -64,9 +64,9 @@ const Watch = () => {
       const { data } = await supabase
         .from('watch_history')
         .select('*')
-        .eq('media_id', id)
+        .eq('media_id', parseInt(id!))
         .eq('media_type', type)
-        .single();
+        .maybeSingle();
       return data;
     },
     enabled: !!user,
@@ -79,9 +79,9 @@ const Watch = () => {
       const { data } = await supabase
         .from('favorites')
         .select('*')
-        .eq('media_id', id)
+        .eq('media_id', parseInt(id!))
         .eq('media_type', type)
-        .single();
+        .maybeSingle();
       return !!data;
     },
     enabled: !!user,
@@ -94,9 +94,9 @@ const Watch = () => {
       const { data } = await supabase
         .from('watchlist')
         .select('*')
-        .eq('media_id', id)
+        .eq('media_id', parseInt(id!))
         .eq('media_type', type)
-        .single();
+        .maybeSingle();
       return !!data;
     },
     enabled: !!user,
@@ -135,7 +135,7 @@ const Watch = () => {
         const { error } = await supabase
           .from('favorites')
           .delete()
-          .eq('media_id', id)
+          .eq('media_id', parseInt(id!))
           .eq('media_type', type);
         if (error) throw error;
       } else {
@@ -171,7 +171,7 @@ const Watch = () => {
         const { error } = await supabase
           .from('watchlist')
           .delete()
-          .eq('media_id', id)
+          .eq('media_id', parseInt(id!))
           .eq('media_type', type);
         if (error) throw error;
       } else {
