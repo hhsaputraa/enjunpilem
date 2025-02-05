@@ -34,17 +34,26 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
     queryFn: async () => {
       const { data, error } = await supabase
         .from('collection_items')
-        .select(`
-          id,
-          media_id,
-          media_type,
-          collection_id,
-          tmdb_data:media_id(*)
-        `)
+        .select('*')
         .eq('collection_id', collectionId);
 
       if (error) throw error;
-      return data as CollectionItem[];
+
+      // Since we don't have a direct relationship with TMDB data in our database,
+      // we'll need to fetch it from the TMDB API or use the data that was stored
+      // when the item was added to the collection
+      return (data || []).map(item => ({
+        ...item,
+        tmdb_data: {
+          title: item.title || '',
+          name: item.name || '',
+          poster_path: item.poster_path || '',
+          overview: item.overview || '',
+          vote_average: item.vote_average || 0,
+          release_date: item.release_date,
+          first_air_date: item.first_air_date
+        }
+      })) as CollectionItem[];
     },
   });
 
@@ -74,7 +83,7 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
               title={item.tmdb_data.title || item.tmdb_data.name || ''}
               posterPath={item.tmdb_data.poster_path}
               overview={item.tmdb_data.overview}
-              mediaType={item.media_type}
+              mediaType={item.media_type as 'movie' | 'tv'}
               voteAverage={item.tmdb_data.vote_average}
               releaseDate={item.tmdb_data.release_date || item.tmdb_data.first_air_date}
             />
