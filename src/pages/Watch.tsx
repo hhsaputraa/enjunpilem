@@ -7,7 +7,6 @@ import {
   getMovieRecommendations,
   getTVRecommendations,
   getTVSeasonDetails,
-  getImageUrl 
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +14,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Star, Calendar, Clock, Heart, List, Play, LogIn } from 'lucide-react';
+import { Star, Calendar, Clock, Heart, List, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,7 +25,6 @@ const Watch = () => {
   const queryClient = useQueryClient();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [progress, setProgress] = useState(0);
   const [user, setUser] = useState<any>(null);
   
   useEffect(() => {
@@ -55,21 +53,6 @@ const Watch = () => {
   const { data: recommendations, isLoading: recommendationsLoading } = useQuery({
     queryKey: ['recommendations', type, id],
     queryFn: () => type === 'movie' ? getMovieRecommendations(id!) : getTVRecommendations(id!),
-  });
-
-  const { data: watchHistory } = useQuery({
-    queryKey: ['watchHistory', type, id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await supabase
-        .from('watch_history')
-        .select('*')
-        .eq('media_id', parseInt(id!))
-        .eq('media_type', type)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
   });
 
   const { data: isFavorite } = useQuery({
@@ -102,32 +85,6 @@ const Watch = () => {
     enabled: !!user,
   });
 
-  const updateWatchHistory = useMutation({
-    mutationFn: async (progress: number) => {
-      if (!user) return; // Skip if user is not logged in
-      const { error } = await supabase
-        .from('watch_history')
-        .upsert({
-          user_id: user.id,
-          media_id: Number(id),
-          media_type: type,
-          progress,
-          last_watched_at: new Date().toISOString(),
-        });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchHistory', type, id] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error updating watch history",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const toggleFavorite = useMutation({
     mutationFn: async () => {
       if (!user) {
@@ -146,7 +103,7 @@ const Watch = () => {
           .from('favorites')
           .insert({
             user_id: user.id,
-            media_id: Number(id),
+            media_id: parseInt(id!),
             media_type: type,
           });
         if (error) throw error;
@@ -185,7 +142,7 @@ const Watch = () => {
           .from('watchlist')
           .insert({
             user_id: user.id,
-            media_id: Number(id),
+            media_id: parseInt(id!),
             media_type: type,
           });
         if (error) throw error;
@@ -205,17 +162,6 @@ const Watch = () => {
       });
     },
   });
-
-  useEffect(() => {
-    if (watchHistory?.progress) {
-      setProgress(watchHistory.progress);
-    }
-  }, [watchHistory]);
-
-  const handleProgressUpdate = (newProgress: number) => {
-    setProgress(newProgress);
-    updateWatchHistory.mutate(newProgress);
-  };
 
   if (detailsLoading) {
     return (
@@ -280,12 +226,6 @@ const Watch = () => {
                 {details.runtime} min
               </Badge>
             )}
-            {watchHistory && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Play className="w-4 h-4" />
-                {progress}% watched
-              </Badge>
-            )}
           </div>
 
           {type === 'tv' && (
@@ -332,51 +272,44 @@ const Watch = () => {
               }
               className="w-full h-full"
               allowFullScreen
-              onTimeUpdate={(e: any) => {
-                const video = e.target;
-                const progress = Math.round((video.currentTime / video.duration) * 100);
-                if (progress !== watchHistory?.progress) {
-                  handleProgressUpdate(progress);
-                }
-              }}
             />
           </div>
 
-        <div className="prose prose-invert max-w-none mb-8">
-          <p className="text-lg">{details?.overview}</p>
-          {type === 'tv' && seasonDetails?.episodes?.[selectedEpisode - 1] && (
-            <div className="mt-4">
-              <h3 className="text-xl font-semibold mb-2">
-                Episode {selectedEpisode}: {seasonDetails.episodes[selectedEpisode - 1].name}
-              </h3>
-              <p>{seasonDetails.episodes[selectedEpisode - 1].overview}</p>
-            </div>
-          )}
-        </div>
-
-        {!recommendationsLoading && recommendations?.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">More Like This</h2>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex space-x-4">
-                {recommendations.map((item: any) => (
-                  <div key={item.id} className="w-[200px] flex-shrink-0">
-                    <MovieCard
-                      id={item.id}
-                      title={item.title || item.name}
-                      posterPath={item.poster_path}
-                      overview={item.overview}
-                      mediaType={type as 'movie' | 'tv'}
-                      voteAverage={item.vote_average}
-                      releaseDate={item.release_date || item.first_air_date}
-                    />
-                  </div>
-                ))}
+          <div className="prose prose-invert max-w-none mb-8">
+            <p className="text-lg">{details?.overview}</p>
+            {type === 'tv' && seasonDetails?.episodes?.[selectedEpisode - 1] && (
+              <div className="mt-4">
+                <h3 className="text-xl font-semibold mb-2">
+                  Episode {selectedEpisode}: {seasonDetails.episodes[selectedEpisode - 1].name}
+                </h3>
+                <p>{seasonDetails.episodes[selectedEpisode - 1].overview}</p>
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </section>
-        )}
+            )}
+          </div>
+
+          {!recommendationsLoading && recommendations?.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">More Like This</h2>
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex space-x-4">
+                  {recommendations.map((item: any) => (
+                    <div key={item.id} className="w-[200px] flex-shrink-0">
+                      <MovieCard
+                        id={item.id}
+                        title={item.title || item.name}
+                        posterPath={item.poster_path}
+                        overview={item.overview}
+                        mediaType={type as 'movie' | 'tv'}
+                        voteAverage={item.vote_average}
+                        releaseDate={item.release_date || item.first_air_date}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </section>
+          )}
         </div>
       </div>
     </div>
