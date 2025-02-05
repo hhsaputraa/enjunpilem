@@ -62,41 +62,6 @@ export type Database = {
         }
         Relationships: []
       }
-      watch_history: {
-        Row: {
-          id: string
-          last_watched_at: string
-          media_id: number
-          media_type: string
-          progress: number | null
-          user_id: string | null
-        }
-        Insert: {
-          id?: string
-          last_watched_at?: string
-          media_id: number
-          media_type: string
-          progress?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          id?: string
-          last_watched_at?: string
-          media_id?: number
-          media_type?: string
-          progress?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "watch_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       watchlist: {
         Row: {
           added_at: string

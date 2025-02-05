@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Watchlist = () => {
   const navigate = useNavigate();
@@ -61,10 +62,14 @@ const Watchlist = () => {
     );
   }
 
+  const movies = watchlist?.filter(item => item.media_type === 'movie') || [];
+  const tvShows = watchlist?.filter(item => item.media_type === 'tv') || [];
+
   return (
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">My Watchlist</h1>
+        
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {[...Array(10)].map((_, i) => (
@@ -76,20 +81,64 @@ const Watchlist = () => {
             <p className="text-lg text-gray-400">No items in watchlist yet</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {watchlist?.map((item: any) => (
-              <MovieCard
-                key={`${item.media_type}-${item.id}`}
-                id={item.id}
-                title={item.title || item.name}
-                posterPath={item.poster_path}
-                overview={item.overview}
-                mediaType={item.media_type}
-                voteAverage={item.vote_average}
-                releaseDate={item.release_date || item.first_air_date}
-              />
-            ))}
-          </div>
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">All ({watchlist?.length || 0})</TabsTrigger>
+              <TabsTrigger value="movies">Movies ({movies.length})</TabsTrigger>
+              <TabsTrigger value="tv">TV Shows ({tvShows.length})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {watchlist?.map((item: any) => (
+                  <MovieCard
+                    key={`${item.media_type}-${item.id}`}
+                    id={item.id}
+                    title={item.title || item.name}
+                    posterPath={item.poster_path}
+                    overview={item.overview}
+                    mediaType={item.media_type}
+                    voteAverage={item.vote_average}
+                    releaseDate={item.release_date || item.first_air_date}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="movies">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {movies.map((item: any) => (
+                  <MovieCard
+                    key={`${item.media_type}-${item.id}`}
+                    id={item.id}
+                    title={item.title}
+                    posterPath={item.poster_path}
+                    overview={item.overview}
+                    mediaType={item.media_type}
+                    voteAverage={item.vote_average}
+                    releaseDate={item.release_date}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="tv">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {tvShows.map((item: any) => (
+                  <MovieCard
+                    key={`${item.media_type}-${item.id}`}
+                    id={item.id}
+                    title={item.name}
+                    posterPath={item.poster_path}
+                    overview={item.overview}
+                    mediaType={item.media_type}
+                    voteAverage={item.vote_average}
+                    releaseDate={item.first_air_date}
+                  />
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>
