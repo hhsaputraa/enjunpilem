@@ -1,13 +1,11 @@
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { 
   getMovieDetails, 
   getTVDetails, 
   getMovieRecommendations,
   getTVRecommendations,
-  getMovieCredits,
-  getTVCredits,
   getTVSeasonDetails,
   getImageUrl 
 } from '@/services/tmdb';
@@ -16,13 +14,33 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, Calendar, Clock, Users, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Star, Calendar, Clock, Heart, List, Play } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Watch = () => {
   const { type, id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
+  const [progress, setProgress] = useState(0);
+  const [user, setUser] = useState<any>(null);
   
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const { data: details, isLoading: detailsLoading } = useQuery({
     queryKey: ['details', type, id],
     queryFn: () => type === 'movie' ? getMovieDetails(id!) : getTVDetails(id!),
@@ -39,10 +57,172 @@ const Watch = () => {
     queryFn: () => type === 'movie' ? getMovieRecommendations(id!) : getTVRecommendations(id!),
   });
 
-  const { data: credits, isLoading: creditsLoading } = useQuery({
-    queryKey: ['credits', type, id],
-    queryFn: () => type === 'movie' ? getMovieCredits(id!) : getTVCredits(id!),
+  const { data: watchHistory } = useQuery({
+    queryKey: ['watchHistory', type, id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('watch_history')
+        .select('*')
+        .eq('media_id', id)
+        .eq('media_type', type)
+        .single();
+      return data;
+    },
+    enabled: !!user,
   });
+
+  const { data: isFavorite } = useQuery({
+    queryKey: ['favorite', type, id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('favorites')
+        .select('*')
+        .eq('media_id', id)
+        .eq('media_type', type)
+        .single();
+      return !!data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: isInWatchlist } = useQuery({
+    queryKey: ['watchlist', type, id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('watchlist')
+        .select('*')
+        .eq('media_id', id)
+        .eq('media_type', type)
+        .single();
+      return !!data;
+    },
+    enabled: !!user,
+  });
+
+  const updateWatchHistory = useMutation({
+    mutationFn: async (progress: number) => {
+      if (!user) throw new Error('User not authenticated');
+      const { error } = await supabase
+        .from('watch_history')
+        .upsert({
+          user_id: user.id,
+          media_id: Number(id),
+          media_type: type,
+          progress,
+          last_watched_at: new Date().toISOString(),
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchHistory', type, id] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating watch history",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('User not authenticated');
+      if (isFavorite) {
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('media_id', id)
+          .eq('media_type', type);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('favorites')
+          .insert({
+            user_id: user.id,
+            media_id: Number(id),
+            media_type: type,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorite', type, id] });
+      toast({
+        title: isFavorite ? "Removed from favorites" : "Added to favorites",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating favorites",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleWatchlist = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('User not authenticated');
+      if (isInWatchlist) {
+        const { error } = await supabase
+          .from('watchlist')
+          .delete()
+          .eq('media_id', id)
+          .eq('media_type', type);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('watchlist')
+          .insert({
+            user_id: user.id,
+            media_id: Number(id),
+            media_type: type,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlist', type, id] });
+      toast({
+        title: isInWatchlist ? "Removed from watchlist" : "Added to watchlist",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating watchlist",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (watchHistory?.progress) {
+      setProgress(watchHistory.progress);
+    }
+  }, [watchHistory]);
+
+  const handleProgressUpdate = (newProgress: number) => {
+    setProgress(newProgress);
+    updateWatchHistory.mutate(newProgress);
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Please log in to watch</h2>
+          <Button onClick={() => navigate('/auth')}>
+            Log In
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (detailsLoading) {
     return (
@@ -61,7 +241,27 @@ const Watch = () => {
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-4">{details?.title || details?.name}</h1>
+          <div className="flex justify-between items-start mb-4">
+            <h1 className="text-3xl font-bold">{details?.title || details?.name}</h1>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => toggleFavorite.mutate()}
+                className={isFavorite ? "bg-pink-500/20" : ""}
+              >
+                <Heart className={`h-4 w-4 ${isFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => toggleWatchlist.mutate()}
+                className={isInWatchlist ? "bg-purple-500/20" : ""}
+              >
+                <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
+              </Button>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2 mb-4">
             <Badge variant="secondary" className="flex items-center gap-1">
               <Star className="w-4 h-4" />
@@ -77,10 +277,10 @@ const Watch = () => {
                 {details.runtime} min
               </Badge>
             )}
-            {details?.number_of_seasons && (
+            {watchHistory && (
               <Badge variant="outline" className="flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" />
-                {details.number_of_seasons} Season{details.number_of_seasons > 1 ? 's' : ''}
+                <Play className="w-4 h-4" />
+                {progress}% watched
               </Badge>
             )}
           </div>
@@ -130,6 +330,13 @@ const Watch = () => {
             }
             className="w-full h-full"
             allowFullScreen
+            onTimeUpdate={(e: any) => {
+              const video = e.target;
+              const progress = Math.round((video.currentTime / video.duration) * 100);
+              if (progress !== watchHistory?.progress) {
+                handleProgressUpdate(progress);
+              }
+            }}
           />
         </div>
 
@@ -144,30 +351,6 @@ const Watch = () => {
             </div>
           )}
         </div>
-
-        {/* {!creditsLoading && credits?.cast && (
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Cast</h2>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex space-x-4">
-                {credits.cast.slice(0, 10).map((actor: any) => (
-                  <div key={actor.id} className="flex-shrink-0 w-[150px]">
-                    <div className="rounded-lg overflow-hidden mb-2">
-                      <img
-                        src={getImageUrl(actor.profile_path)}
-                        alt={actor.name}
-                        className="w-full h-[225px] object-cover"
-                      />
-                    </div>
-                    <p className="font-semibold truncate">{actor.name}</p>
-                    <p className="text-sm text-gray-400 truncate">{actor.character}</p>
-                  </div>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </section>
-        )} */}
 
         {!recommendationsLoading && recommendations?.length > 0 && (
           <section>

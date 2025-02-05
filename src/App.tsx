@@ -9,6 +9,9 @@ import Watch from "./pages/Watch";
 import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Favorites from "./pages/Favorites";
+import History from "./pages/History";
+import Watchlist from "./pages/Watchlist";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +28,9 @@ const App = () => (
             <Route path="/:type/:id" element={<Watch />} />
             <Route path="/search" element={<Search />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/watchlist" element={<Watchlist />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
