@@ -15,7 +15,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Star, Calendar, Clock, Heart, List, Play } from 'lucide-react';
+import { Star, Calendar, Clock, Heart, List, Play, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -104,7 +104,7 @@ const Watch = () => {
 
   const updateWatchHistory = useMutation({
     mutationFn: async (progress: number) => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user) return; // Skip if user is not logged in
       const { error } = await supabase
         .from('watch_history')
         .upsert({
@@ -130,7 +130,10 @@ const Watch = () => {
 
   const toggleFavorite = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
       if (isFavorite) {
         const { error } = await supabase
           .from('favorites')
@@ -166,7 +169,10 @@ const Watch = () => {
 
   const toggleWatchlist = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
       if (isInWatchlist) {
         const { error } = await supabase
           .from('watchlist')
@@ -211,19 +217,6 @@ const Watch = () => {
     updateWatchHistory.mutate(newProgress);
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Please log in to watch</h2>
-          <Button onClick={() => navigate('/auth')}>
-            Log In
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   if (detailsLoading) {
     return (
       <div className="p-6">
@@ -244,24 +237,34 @@ const Watch = () => {
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-3xl font-bold">{details?.title || details?.name}</h1>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => toggleFavorite.mutate()}
-                className={isFavorite ? "bg-pink-500/20" : ""}
-              >
-                <Heart className={`h-4 w-4 ${isFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => toggleWatchlist.mutate()}
-                className={isInWatchlist ? "bg-purple-500/20" : ""}
-              >
-                <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
-              </Button>
+              {user ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toggleFavorite.mutate()}
+                    className={isFavorite ? "bg-pink-500/20" : ""}
+                  >
+                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toggleWatchlist.mutate()}
+                    className={isInWatchlist ? "bg-purple-500/20" : ""}
+                  >
+                    <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => navigate('/auth')} className="flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign in to save
+                </Button>
+              )}
             </div>
           </div>
+          
           <div className="flex flex-wrap gap-2 mb-4">
             <Badge variant="secondary" className="flex items-center gap-1">
               <Star className="w-4 h-4" />
@@ -320,25 +323,24 @@ const Watch = () => {
               </Select>
             </div>
           )}
-        </div>
 
-        <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
-          <iframe
-            src={type === 'movie' 
-              ? `https://player.embed-api.stream/?id=${id}&type=movie`
-              : `https://player.embed-api.stream/?id=${id}&s=${selectedSeason}&e=${selectedEpisode}`
-            }
-            className="w-full h-full"
-            allowFullScreen
-            onTimeUpdate={(e: any) => {
-              const video = e.target;
-              const progress = Math.round((video.currentTime / video.duration) * 100);
-              if (progress !== watchHistory?.progress) {
-                handleProgressUpdate(progress);
+          <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
+            <iframe
+              src={type === 'movie' 
+                ? `https://player.embed-api.stream/?id=${id}&type=movie`
+                : `https://player.embed-api.stream/?id=${id}&s=${selectedSeason}&e=${selectedEpisode}`
               }
-            }}
-          />
-        </div>
+              className="w-full h-full"
+              allowFullScreen
+              onTimeUpdate={(e: any) => {
+                const video = e.target;
+                const progress = Math.round((video.currentTime / video.duration) * 100);
+                if (progress !== watchHistory?.progress) {
+                  handleProgressUpdate(progress);
+                }
+              }}
+            />
+          </div>
 
         <div className="prose prose-invert max-w-none mb-8">
           <p className="text-lg">{details?.overview}</p>
@@ -375,6 +377,7 @@ const Watch = () => {
             </ScrollArea>
           </section>
         )}
+        </div>
       </div>
     </div>
   );
