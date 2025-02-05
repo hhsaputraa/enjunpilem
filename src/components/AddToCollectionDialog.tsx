@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,7 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
 
-  // Get the current user session
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
@@ -36,7 +35,7 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
     });
 
     return () => subscription.unsubscribe();
-  });
+  }, []);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],
@@ -44,7 +43,7 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
       if (!user) return [];
       const { data, error } = await supabase
         .from('collections')
-        .select('*')
+        .select('*, collection_items!collection_items_collection_id_fkey(*)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -62,7 +61,7 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
         .from('collections')
         .insert({ 
           name,
-          user_id: user.id // Add the user_id here
+          user_id: user.id
         })
         .select()
         .single();
@@ -96,6 +95,18 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
 
   const addToCollection = useMutation({
     mutationFn: async (collectionId: string) => {
+      // Check if the media item already exists in the collection
+      const { data: existingItems } = await supabase
+        .from('collection_items')
+        .select('*')
+        .eq('collection_id', collectionId)
+        .eq('media_id', mediaId)
+        .eq('media_type', mediaType);
+
+      if (existingItems && existingItems.length > 0) {
+        throw new Error('This item is already in the collection');
+      }
+
       const { error } = await supabase
         .from('collection_items')
         .insert({
@@ -142,16 +153,24 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
         
         <div className="space-y-4">
           <div className="space-y-4">
-            {collections?.map((collection) => (
-              <Button
-                key={collection.id}
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => addToCollection.mutate(collection.id)}
-              >
-                {collection.name}
-              </Button>
-            ))}
+            {collections?.map((collection) => {
+              const hasItem = collection.collection_items?.some(
+                item => item.media_id === mediaId && item.media_type === mediaType
+              );
+              
+              return (
+                <Button
+                  key={collection.id}
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => addToCollection.mutate(collection.id)}
+                  disabled={hasItem}
+                >
+                  {collection.name}
+                  {hasItem && <span className="ml-2 text-sm text-muted-foreground">(Already added)</span>}
+                </Button>
+              );
+            })}
           </div>
 
           <div className="relative">

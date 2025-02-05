@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MovieCard } from '@/components/MovieCard';
 import { useToast } from '@/hooks/use-toast';
+import { CollectionDetails } from '@/components/CollectionDetails';
 import {
   Dialog,
   DialogContent,
@@ -16,11 +16,11 @@ import { Plus, Trash2 } from 'lucide-react';
 
 const Collections = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
+  const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
 
-  // Get and maintain user session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -131,6 +131,20 @@ const Collections = () => {
     );
   }
 
+  if (selectedCollection) {
+    return (
+      <div className="min-h-screen p-6 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <CollectionDetails
+            collectionId={selectedCollection.id}
+            collectionName={selectedCollection.name}
+            onBack={() => setSelectedCollection(null)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-7xl mx-auto">
@@ -169,7 +183,7 @@ const Collections = () => {
           </div>
         ) : collections?.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-lg text-gray-400">No collections yet</p>
+            <p className="text-lg text-muted-foreground">No collections yet</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -191,6 +205,13 @@ const Collections = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   {collection.collection_items?.length || 0} items
                 </p>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                >
+                  View Collection
+                </Button>
               </div>
             ))}
           </div>
