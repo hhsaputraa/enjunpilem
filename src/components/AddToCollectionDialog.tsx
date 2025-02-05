@@ -23,25 +23,47 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
   const [newCollectionName, setNewCollectionName] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [user, setUser] = useState<any>(null);
+
+  // Get the current user session
+  useState(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  });
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],
     queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from('collections')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   const createCollection = useMutation({
     mutationFn: async (name: string) => {
+      if (!user) throw new Error('User must be logged in');
+      
       const { data: collection, error: collectionError } = await supabase
         .from('collections')
-        .insert({ name })
+        .insert({ 
+          name,
+          user_id: user.id // Add the user_id here
+        })
         .select()
         .single();
 
