@@ -48,9 +48,13 @@ const Collections = () => {
             id,
             media_id,
             media_type,
-            poster_path,
             title,
-            name
+            name,
+            poster_path,
+            overview,
+            vote_average,
+            release_date,
+            first_air_date
           )
         `)
         .eq('user_id', user.id)
@@ -216,7 +220,7 @@ const Collections = () => {
                 {collection.collection_items && collection.collection_items.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-4 h-32">
                     {collection.collection_items.slice(0, 3).map((item) => {
-                      console.log('Poster path:', item.poster_path); // Debug log
+                      console.log('Collection item:', item); // Debug log
                       return (
                         <div key={item.id} className="relative rounded-md overflow-hidden bg-gray-900">
                           {item.poster_path ? (
