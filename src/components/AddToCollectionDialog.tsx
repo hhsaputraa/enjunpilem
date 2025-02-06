@@ -36,6 +36,9 @@ export const AddToCollectionDialog = ({
   releaseDate,
   firstAirDate
 }: AddToCollectionDialogProps) => {
+  console.log("AddToCollectionDialog Props:", { 
+    mediaId, mediaType, posterPath, title, name, overview, voteAverage, releaseDate, firstAirDate 
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const { toast } = useToast();
