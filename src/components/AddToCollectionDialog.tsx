@@ -16,9 +16,26 @@ import { Input } from '@/components/ui/input';
 interface AddToCollectionDialogProps {
   mediaId: number;
   mediaType: 'movie' | 'tv';
+  posterPath?: string;
+  title?: string;
+  name?: string;
+  overview?: string;
+  voteAverage?: number;
+  releaseDate?: string;
+  firstAirDate?: string;
 }
 
-export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDialogProps) => {
+export const AddToCollectionDialog = ({ 
+  mediaId, 
+  mediaType,
+  posterPath,
+  title,
+  name,
+  overview,
+  voteAverage,
+  releaseDate,
+  firstAirDate
+}: AddToCollectionDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const { toast } = useToast();
@@ -74,6 +91,13 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
           collection_id: collection.id,
           media_id: mediaId,
           media_type: mediaType,
+          poster_path: posterPath,
+          title,
+          name,
+          overview,
+          vote_average: voteAverage,
+          release_date: releaseDate,
+          first_air_date: firstAirDate
         });
 
       if (itemError) throw itemError;
@@ -113,6 +137,13 @@ export const AddToCollectionDialog = ({ mediaId, mediaType }: AddToCollectionDia
           collection_id: collectionId,
           media_id: mediaId,
           media_type: mediaType,
+          poster_path: posterPath,
+          title,
+          name,
+          overview,
+          vote_average: voteAverage,
+          release_date: releaseDate,
+          first_air_date: firstAirDate
         });
 
       if (error) throw error;
