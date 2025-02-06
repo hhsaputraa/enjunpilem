@@ -48,13 +48,20 @@ const Collections = () => {
             id,
             media_id,
             media_type,
-            poster_path
+            poster_path,
+            title,
+            name
           )
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching collections:', error);
+        throw error;
+      }
+      
+      console.log('Fetched collections:', data); // Debug log
       return data;
     },
     enabled: !!user,
@@ -208,16 +215,25 @@ const Collections = () => {
                 {/* Thumbnails Grid */}
                 {collection.collection_items && collection.collection_items.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-4 h-32">
-                    {collection.collection_items.slice(0, 3).map((item) => (
-                      <div key={item.id} className="relative rounded-md overflow-hidden">
-                        <img
-                          src={getImageUrl(item.poster_path)}
-                          alt=""
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))}
+                    {collection.collection_items.slice(0, 3).map((item) => {
+                      console.log('Poster path:', item.poster_path); // Debug log
+                      return (
+                        <div key={item.id} className="relative rounded-md overflow-hidden bg-gray-900">
+                          {item.poster_path ? (
+                            <img
+                              src={getImageUrl(item.poster_path)}
+                              alt={item.title || item.name || ''}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-500">
+                              No Image
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
