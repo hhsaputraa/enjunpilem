@@ -226,8 +226,16 @@ const Watch = () => {
                   >
                     <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
                   </Button>
-                  <AddToCollectionDialog mediaId={parseInt(id!)} mediaType={type as 'movie' | 'tv'} />
-                </>
+                  <AddToCollectionDialog
+    mediaId={mediaId!}
+    mediaType={validType as 'movie' | 'tv'}
+    posterPath={details.poster_path}
+    title={details.title || details.name}
+    overview={details.overview}
+    voteAverage={details.vote_average}
+    releaseDate={details.release_date}
+    firstAirDate={details.first_air_date}
+  />                </>
               ) : (
                 <Button variant="outline" onClick={() => navigate('/auth')} className="flex items-center gap-2">
                   <LogIn className="h-4 w-4" />
