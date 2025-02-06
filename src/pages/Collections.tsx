@@ -21,6 +21,7 @@ const Collections = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,6 +92,7 @@ const Collections = () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       toast({ title: "Collection created successfully" });
       setNewCollectionName('');
+      setIsDialogOpen(false);
     },
     onError: (error: any) => {
       toast({
@@ -163,29 +165,29 @@ const Collections = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Collections</h1>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                New Collection
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Collection</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateCollection} className="space-y-4">
-                <Input
-                  placeholder="Collection name"
-                  value={newCollectionName}
-                  onChange={(e) => setNewCollectionName(e.target.value)}
-                />
-                <Button type="submit" disabled={!newCollectionName.trim()}>
-                  Create Collection
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+  <DialogTrigger asChild>
+    <Button className="flex items-center gap-2" onClick={() => setIsDialogOpen(true)}>
+      <Plus className="w-4 h-4" />
+      New Collection
+    </Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Create New Collection</DialogTitle>
+    </DialogHeader>
+    <form onSubmit={handleCreateCollection} className="space-y-4">
+      <Input
+        placeholder="Collection name"
+        value={newCollectionName}
+        onChange={(e) => setNewCollectionName(e.target.value)}
+      />
+      <Button type="submit" disabled={!newCollectionName.trim()}>
+        Create Collection
+      </Button>
+    </form>
+  </DialogContent>
+</Dialog>
         </div>
 
         {isLoading ? (
