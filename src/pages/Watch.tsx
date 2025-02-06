@@ -28,6 +28,13 @@ const Watch = () => {
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [user, setUser] = useState<any>(null);
   
+  // Validate media type and ID
+  const validType = type === 'movie' || type === 'tv' ? type : null;
+  const mediaId = id ? parseInt(id) : null;
+  
+  console.log('Media type:', validType);
+  console.log('Media ID:', mediaId);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -41,49 +48,53 @@ const Watch = () => {
   }, []);
 
   const { data: details, isLoading: detailsLoading } = useQuery({
-    queryKey: ['details', type, id],
-    queryFn: () => type === 'movie' ? getMovieDetails(id!) : getTVDetails(id!),
+    queryKey: ['details', validType, mediaId],
+    queryFn: () => validType === 'movie' ? getMovieDetails(id!) : getTVDetails(id!),
+    enabled: !!validType && !!mediaId,
   });
 
   const { data: seasonDetails, isLoading: seasonLoading } = useQuery({
-    queryKey: ['season', id, selectedSeason],
+    queryKey: ['season', mediaId, selectedSeason],
     queryFn: () => getTVSeasonDetails(id!, selectedSeason),
-    enabled: type === 'tv',
+    enabled: validType === 'tv' && !!mediaId,
   });
 
   const { data: recommendations, isLoading: recommendationsLoading } = useQuery({
-    queryKey: ['recommendations', type, id],
-    queryFn: () => type === 'movie' ? getMovieRecommendations(id!) : getTVRecommendations(id!),
+    queryKey: ['recommendations', validType, mediaId],
+    queryFn: () => validType === 'movie' ? getMovieRecommendations(id!) : getTVRecommendations(id!),
+    enabled: !!validType && !!mediaId,
   });
 
   const { data: isFavorite } = useQuery({
-    queryKey: ['favorite', type, id],
+    queryKey: ['favorite', validType, mediaId],
     queryFn: async () => {
-      if (!user) return false;
+      if (!user || !validType || !mediaId) return false;
+      console.log('Checking favorites for:', { mediaId, type: validType });
       const { data } = await supabase
         .from('favorites')
         .select('*')
-        .eq('media_id', parseInt(id!))
-        .eq('media_type', type)
+        .eq('media_id', mediaId)
+        .eq('media_type', validType)
         .maybeSingle();
       return !!data;
     },
-    enabled: !!user,
+    enabled: !!user && !!validType && !!mediaId,
   });
 
   const { data: isInWatchlist } = useQuery({
-    queryKey: ['watchlist', type, id],
+    queryKey: ['watchlist', validType, mediaId],
     queryFn: async () => {
-      if (!user) return false;
+      if (!user || !validType || !mediaId) return false;
+      console.log('Checking watchlist for:', { mediaId, type: validType });
       const { data } = await supabase
         .from('watchlist')
         .select('*')
-        .eq('media_id', parseInt(id!))
-        .eq('media_type', type)
+        .eq('media_id', mediaId)
+        .eq('media_type', validType)
         .maybeSingle();
       return !!data;
     },
-    enabled: !!user,
+    enabled: !!user && !!validType && !!mediaId,
   });
 
   const toggleFavorite = useMutation({
@@ -163,6 +174,19 @@ const Watch = () => {
       });
     },
   });
+
+  if (!validType || !mediaId) {
+    return (
+      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Invalid media type or ID</h2>
+          <Button onClick={() => navigate('/')}>
+            Go Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (detailsLoading) {
     return (
