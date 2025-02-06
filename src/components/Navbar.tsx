@@ -109,9 +109,9 @@ const Navbar = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/history" className="flex items-center cursor-pointer">
+                  <Link to="/collections" className="flex items-center cursor-pointer">
                     <Clock className="mr-2 h-4 w-4" />
-                    <span>Watch History</span>
+                    <span>My Collection</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
