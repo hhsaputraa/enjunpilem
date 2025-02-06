@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { CollectionDetails } from '@/components/CollectionDetails';
+import { getImageUrl } from '@/services/tmdb';
 import {
   Dialog,
   DialogContent,
@@ -46,7 +47,8 @@ const Collections = () => {
           collection_items (
             id,
             media_id,
-            media_type
+            media_type,
+            poster_path
           )
         `)
         .eq('user_id', user.id)
@@ -202,6 +204,23 @@ const Collections = () => {
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+                
+                {/* Thumbnails Grid */}
+                {collection.collection_items && collection.collection_items.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-4 h-32">
+                    {collection.collection_items.slice(0, 3).map((item) => (
+                      <div key={item.id} className="relative rounded-md overflow-hidden">
+                        <img
+                          src={getImageUrl(item.poster_path)}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <p className="text-sm text-muted-foreground mb-4">
                   {collection.collection_items?.length || 0} items
                 </p>
