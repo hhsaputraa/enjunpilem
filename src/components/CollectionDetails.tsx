@@ -83,7 +83,7 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
               title={item.tmdb_data.title || item.tmdb_data.name || ''}
               posterPath={item.tmdb_data.poster_path}
               overview={item.tmdb_data.overview}
-              mediaType={item.media_type as 'movie' | 'tv'}
+              mediaType={item.media_type}
               voteAverage={item.tmdb_data.vote_average}
               releaseDate={item.tmdb_data.release_date || item.tmdb_data.first_air_date}
             />

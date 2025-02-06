@@ -13,23 +13,44 @@ export type Database = {
         Row: {
           added_at: string
           collection_id: string | null
+          first_air_date: string | null
           id: string
           media_id: number
           media_type: string
+          name: string | null
+          overview: string | null
+          poster_path: string | null
+          release_date: string | null
+          title: string | null
+          vote_average: number | null
         }
         Insert: {
           added_at?: string
           collection_id?: string | null
+          first_air_date?: string | null
           id?: string
           media_id: number
           media_type: string
+          name?: string | null
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          title?: string | null
+          vote_average?: number | null
         }
         Update: {
           added_at?: string
           collection_id?: string | null
+          first_air_date?: string | null
           id?: string
           media_id?: number
           media_type?: string
+          name?: string | null
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          title?: string | null
+          vote_average?: number | null
         }
         Relationships: [
           {
