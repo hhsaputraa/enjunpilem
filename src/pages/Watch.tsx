@@ -27,6 +27,8 @@ const Watch = () => {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [user, setUser] = useState<any>(null);
+  const [localFavorite, setLocalFavorite] = useState(false);
+const [localWatchlist, setLocalWatchlist] = useState(false);
   
   // Validate media type and ID
   const validType = type === 'movie' || type === 'tv' ? type : null;
@@ -79,6 +81,7 @@ const Watch = () => {
       return !!data;
     },
     enabled: !!user && !!validType && !!mediaId,
+    onSuccess: (data) => setLocalFavorite(data),
   });
 
   const { data: isInWatchlist } = useQuery({
@@ -95,6 +98,7 @@ const Watch = () => {
       return !!data;
     },
     enabled: !!user && !!validType && !!mediaId,
+    onSuccess: (data) => setLocalWatchlist(data),
   });
 
   const toggleFavorite = useMutation({
@@ -103,7 +107,10 @@ const Watch = () => {
         navigate('/auth');
         return;
       }
-      if (isFavorite) {
+  
+      setLocalFavorite(!localFavorite); // Ubah state lokal langsung
+  
+      if (localFavorite) {
         const { error } = await supabase
           .from('favorites')
           .delete()
@@ -121,25 +128,11 @@ const Watch = () => {
         if (error) throw error;
       }
     },
-    onMutate: async () => {
-      // Optimistic update: ubah state sebelum request selesai
-      await queryClient.cancelQueries({ queryKey: ['favorite', type, id] });
-      const previousState = queryClient.getQueryData(['favorite', type, id]);
-      queryClient.setQueryData(['favorite', type, id], !isFavorite);
-      return { previousState };
-    },
-    onError: (err, _, context) => {
-      queryClient.setQueryData(['favorite', type, id], context?.previousState);
-      toast({
-        title: "Error updating favorites",
-        description: err.message,
-        variant: "destructive",
-      });
-    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['favorite', type, id] });
     },
   });
+  
   
 
   const toggleWatchlist = useMutation({
@@ -148,7 +141,10 @@ const Watch = () => {
         navigate('/auth');
         return;
       }
-      if (isInWatchlist) {
+  
+      setLocalWatchlist(!localWatchlist); // Ubah state lokal langsung
+  
+      if (localWatchlist) {
         const { error } = await supabase
           .from('watchlist')
           .delete()
@@ -166,24 +162,11 @@ const Watch = () => {
         if (error) throw error;
       }
     },
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['watchlist', type, id] });
-      const previousState = queryClient.getQueryData(['watchlist', type, id]);
-      queryClient.setQueryData(['watchlist', type, id], !isInWatchlist);
-      return { previousState };
-    },
-    onError: (err, _, context) => {
-      queryClient.setQueryData(['watchlist', type, id], context?.previousState);
-      toast({
-        title: "Error updating watchlist",
-        description: err.message,
-        variant: "destructive",
-      });
-    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['watchlist', type, id] });
     },
   });
+  
   
 
   if (!validType || !mediaId) {
@@ -222,21 +205,23 @@ const Watch = () => {
               {user ? (
                 <>
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => toggleFavorite.mutate()}
-                    className={isFavorite ? "bg-pink-500/20" : ""}
-                  >
-                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => toggleWatchlist.mutate()}
-                    className={isInWatchlist ? "bg-purple-500/20" : ""}
-                  >
-                    <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
-                  </Button>
+  variant="outline"
+  size="icon"
+  onClick={() => toggleFavorite.mutate()}
+  className={localFavorite ? "bg-pink-500/20" : ""}
+>
+  <Heart className={`h-4 w-4 ${localFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
+</Button>
+
+<Button
+  variant="outline"
+  size="icon"
+  onClick={() => toggleWatchlist.mutate()}
+  className={localWatchlist ? "bg-purple-500/20" : ""}
+>
+  <List className={`h-4 w-4 ${localWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
+</Button>
+
                   <AddToCollectionDialog
     mediaId={mediaId!}
     mediaType={validType as 'movie' | 'tv'}
