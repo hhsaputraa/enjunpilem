@@ -121,20 +121,26 @@ const Watch = () => {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorite', type, id] });
-      toast({
-        title: isFavorite ? "Removed from favorites" : "Added to favorites",
-      });
+    onMutate: async () => {
+      // Optimistic update: ubah state sebelum request selesai
+      await queryClient.cancelQueries({ queryKey: ['favorite', type, id] });
+      const previousState = queryClient.getQueryData(['favorite', type, id]);
+      queryClient.setQueryData(['favorite', type, id], !isFavorite);
+      return { previousState };
     },
-    onError: (error: any) => {
+    onError: (err, _, context) => {
+      queryClient.setQueryData(['favorite', type, id], context?.previousState);
       toast({
         title: "Error updating favorites",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorite', type, id] });
+    },
   });
+  
 
   const toggleWatchlist = useMutation({
     mutationFn: async () => {
@@ -160,20 +166,25 @@ const Watch = () => {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchlist', type, id] });
-      toast({
-        title: isInWatchlist ? "Removed from watchlist" : "Added to watchlist",
-      });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['watchlist', type, id] });
+      const previousState = queryClient.getQueryData(['watchlist', type, id]);
+      queryClient.setQueryData(['watchlist', type, id], !isInWatchlist);
+      return { previousState };
     },
-    onError: (error: any) => {
+    onError: (err, _, context) => {
+      queryClient.setQueryData(['watchlist', type, id], context?.previousState);
       toast({
         title: "Error updating watchlist",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlist', type, id] });
+    },
   });
+  
 
   if (!validType || !mediaId) {
     return (
