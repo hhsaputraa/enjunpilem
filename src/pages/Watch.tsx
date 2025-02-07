@@ -28,12 +28,8 @@ const Watch = () => {
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [user, setUser] = useState<any>(null);
   
-  // Validate media type and ID
   const validType = type === 'movie' || type === 'tv' ? type : null;
   const mediaId = id ? parseInt(id) : null;
-  
-  console.log('Media type:', validType);
-  console.log('Media ID:', mediaId);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -107,22 +103,22 @@ const Watch = () => {
         const { error } = await supabase
           .from('favorites')
           .delete()
-          .eq('media_id', parseInt(id!))
-          .eq('media_type', type);
+          .eq('media_id', mediaId)
+          .eq('media_type', validType);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('favorites')
           .insert({
             user_id: user.id,
-            media_id: parseInt(id!),
-            media_type: type,
+            media_id: mediaId,
+            media_type: validType,
           });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorite', type, id] });
+      queryClient.invalidateQueries({ queryKey: ['favorite', validType, mediaId] });
       toast({
         title: isFavorite ? "Removed from favorites" : "Added to favorites",
       });
@@ -146,22 +142,22 @@ const Watch = () => {
         const { error } = await supabase
           .from('watchlist')
           .delete()
-          .eq('media_id', parseInt(id!))
-          .eq('media_type', type);
+          .eq('media_id', mediaId)
+          .eq('media_type', validType);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('watchlist')
           .insert({
             user_id: user.id,
-            media_id: parseInt(id!),
-            media_type: type,
+            media_id: mediaId,
+            media_type: validType,
           });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchlist', type, id] });
+      queryClient.invalidateQueries({ queryKey: ['watchlist', validType, mediaId] });
       toast({
         title: isInWatchlist ? "Removed from watchlist" : "Added to watchlist",
       });
@@ -227,15 +223,16 @@ const Watch = () => {
                     <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
                   </Button>
                   <AddToCollectionDialog
-    mediaId={mediaId!}
-    mediaType={validType as 'movie' | 'tv'}
-    posterPath={details.poster_path}
-    title={details.title || details.name}
-    overview={details.overview}
-    voteAverage={details.vote_average}
-    releaseDate={details.release_date}
-    firstAirDate={details.first_air_date}
-  />                </>
+                    mediaId={mediaId!}
+                    mediaType={validType as 'movie' | 'tv'}
+                    posterPath={details?.poster_path}
+                    title={validType === 'movie' ? details?.title : details?.name}
+                    overview={details?.overview}
+                    voteAverage={details?.vote_average}
+                    releaseDate={validType === 'movie' ? details?.release_date : undefined}
+                    firstAirDate={validType === 'tv' ? details?.first_air_date : undefined}
+                  />
+                </>
               ) : (
                 <Button variant="outline" onClick={() => navigate('/auth')} className="flex items-center gap-2">
                   <LogIn className="h-4 w-4" />
