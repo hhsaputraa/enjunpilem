@@ -29,12 +29,10 @@ const Auth = () => {
       if (existingUser) {
         throw new Error('Username already taken');
       }
-      
-      // Generate a temporary email using the username
-      const tempEmail = `${username}@temporary.com`;
-      
-      const { error } = await supabase.auth.signUp({
-        email: tempEmail,
+
+      // Sign up the user with username as the unique identifier
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: username,
         password,
         options: {
           data: {
@@ -43,7 +41,7 @@ const Auth = () => {
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
       
       toast({
         title: "Success!",
@@ -66,31 +64,13 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // First, check if the username exists and get the associated email
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username)
-        .maybeSingle();
-
-      if (!userProfile) {
-        throw new Error('Username not found');
-      }
-
-      // Use the temporary email format for login
-      const tempEmail = `${username}@temporary.com`;
-      
-      console.log('Attempting login with:', { tempEmail, password });
-      
+      // Sign in with username as the identifier
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: tempEmail,
+        email: username,
         password,
       });
 
-      if (error) {
-        console.error('Login error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data.user) {
         navigate('/');
@@ -100,7 +80,7 @@ const Auth = () => {
         });
       }
     } catch (error: any) {
-      console.error('Login process error:', error);
+      console.error('Login error:', error);
       toast({
         title: "Error",
         description: error.message,
