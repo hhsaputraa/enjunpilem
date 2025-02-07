@@ -19,20 +19,11 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Check if username already exists
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', username)
-        .maybeSingle();
-
-      if (existingUser) {
-        throw new Error('Username already taken');
-      }
-
-      // Sign up the user with username as the unique identifier
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: username,
+      // Generate a temporary email using the username
+      const tempEmail = `${username}@temporary.com`;
+      
+      const { error } = await supabase.auth.signUp({
+        email: tempEmail,
         password,
         options: {
           data: {
@@ -41,7 +32,7 @@ const Auth = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (error) throw error;
       
       toast({
         title: "Success!",
@@ -64,23 +55,33 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Sign in with username as the identifier
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
+      // Query the profiles table to get the email associated with the username
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+      if (profileError || !profiles) {
+        throw new Error('Username not found');
+      }
+
+      // Use the temporary email format for login
+      const tempEmail = `${username}@temporary.com`;
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email: tempEmail,
         password,
       });
 
       if (error) throw error;
-
-      if (data.user) {
-        navigate('/');
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully logged in.",
-        });
-      }
+      
+      navigate('/');
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully logged in.",
+      });
     } catch (error: any) {
-      console.error('Login error:', error);
       toast({
         title: "Error",
         description: error.message,
