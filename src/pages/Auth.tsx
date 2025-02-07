@@ -19,6 +19,17 @@ const Auth = () => {
     try {
       setLoading(true);
       
+      // Check if username already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error('Username already taken');
+      }
+      
       // Generate a temporary email using the username
       const tempEmail = `${username}@temporary.com`;
       
@@ -56,13 +67,17 @@ const Auth = () => {
       setLoading(true);
       
       // Query the profiles table to get the email associated with the username
-      const { data: profiles, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('username', username)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profiles) {
+      if (profileError) {
+        throw new Error('Error finding user');
+      }
+
+      if (!profile) {
         throw new Error('Username not found');
       }
 
