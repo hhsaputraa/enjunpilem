@@ -60,20 +60,27 @@ const Auth = () => {
       
       // Determine if input is email or username
       const isEmail = emailOrUsername.includes('@');
-      let signinEmail = emailOrUsername;
+      const { data: profile, error: profileError } = await supabase
+  .from('profiles')
+  .select('id') // Ambil id dari tabel profiles
+  .eq('username', emailOrUsername)
+  .maybeSingle();
 
-if (!isEmail) {
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('email') // Ambil email berdasarkan username
-    .eq('username', emailOrUsername)
-    .maybeSingle();
+if (profileError) throw profileError;
+if (!profile) throw new Error('Username not found');
 
-  if (profileError) throw profileError;
-  if (!profile || !profile.email) throw new Error('Username not found');
+// Gunakan id dari profiles untuk mendapatkan email dari auth.users
+const { data: user, error: userError } = await supabase
+  .from('auth.users')
+  .select('email')
+  .eq('id', profile.id)
+  .maybeSingle();
 
-  signinEmail = profile.email; // Gunakan email yang ditemukan untuk login
-}
+if (userError) throw userError;
+if (!user || !user.email) throw new Error('Email not found for this username');
+
+signinEmail = user.email; // Gunakan email untuk login
+
 
 
       const { error } = await supabase.auth.signInWithPassword({
