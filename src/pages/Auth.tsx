@@ -4,14 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -19,6 +20,12 @@ const Auth = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      
+      // Check if email is valid
+      if (!email.includes('@')) {
+        throw new Error('Please enter a valid email address');
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -33,7 +40,7 @@ const Auth = () => {
       
       toast({
         title: "Success!",
-        description: "Please check your email to verify your account.",
+        description: "Account created successfully. Please check your email to verify your account.",
       });
     } catch (error: any) {
       toast({
@@ -50,8 +57,25 @@ const Auth = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      
+      // Determine if input is email or username
+      const isEmail = emailOrUsername.includes('@');
+      let signinEmail = emailOrUsername;
+
+      // If username is provided, get the corresponding email from profiles
+      if (!isEmail) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', emailOrUsername)
+          .maybeSingle();
+
+        if (profileError) throw profileError;
+        if (!profile) throw new Error('Username not found');
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: signinEmail,
         password,
       });
 
@@ -87,10 +111,10 @@ const Auth = () => {
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="Email or Username"
+                    value={emailOrUsername}
+                    onChange={(e) => setEmailOrUsername(e.target.value)}
                     required
                   />
                   <Input
