@@ -69,6 +69,8 @@ const Auth = () => {
           .select('id')
           .eq('username', emailOrUsername)
           .maybeSingle();
+
+          console.log("Profile result:", profile, profileError);
   
         if (profileError) throw profileError;
         if (!profile) throw new Error('Username not found');
