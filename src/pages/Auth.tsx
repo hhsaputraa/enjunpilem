@@ -66,37 +66,41 @@ const Auth = () => {
     try {
       setLoading(true);
       
-      // Query the profiles table to get the email associated with the username
-      const { data: profile, error: profileError } = await supabase
+      // First, check if the username exists and get the associated email
+      const { data: userProfile } = await supabase
         .from('profiles')
         .select('id')
         .eq('username', username)
         .maybeSingle();
 
-      if (profileError) {
-        throw new Error('Error finding user');
-      }
-
-      if (!profile) {
+      if (!userProfile) {
         throw new Error('Username not found');
       }
 
       // Use the temporary email format for login
       const tempEmail = `${username}@temporary.com`;
       
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting login with:', { tempEmail, password });
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: tempEmail,
         password,
       });
 
-      if (error) throw error;
-      
-      navigate('/');
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in.",
-      });
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
+
+      if (data.user) {
+        navigate('/');
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully logged in.",
+        });
+      }
     } catch (error: any) {
+      console.error('Login process error:', error);
       toast({
         title: "Error",
         description: error.message,
