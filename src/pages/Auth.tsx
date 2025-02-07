@@ -57,50 +57,46 @@ const Auth = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      
-      // Determine if input is email or username
+  
+      // Cek apakah input berupa email atau username
       const isEmail = emailOrUsername.includes('@');
-      const { data: profile, error: profileError } = await supabase
-  .from('profiles')
-  .select('id') // Ambil id dari tabel profiles
-  .eq('username', emailOrUsername)
-  .maybeSingle();
-
-if (profileError) throw profileError;
-if (!profile) throw new Error('Username not found');
-
-// Gunakan id dari profiles untuk mendapatkan email dari auth.users
-const { data: user, error: userError } = await supabase
-  .from('auth.users')
-  .select('email')
-  .eq('id', profile.id)
-  .maybeSingle();
-
-if (userError) throw userError;
-if (!user || !user.email) throw new Error('Email not found for this username');
-
-signinEmail = user.email; // Gunakan email untuk login
-
-
-
+      let signinIdentifier = emailOrUsername;
+  
+      if (!isEmail) {
+        // Jika input adalah username, cari id user dari tabel profiles
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id') // Ambil hanya id
+          .eq('username', emailOrUsername)
+          .maybeSingle();
+  
+        if (profileError) throw profileError;
+        if (!profile) throw new Error('Username not found');
+  
+        // Gunakan id dari profile untuk login
+        signinIdentifier = profile.id;
+      }
+  
+      // Lakukan proses login menggunakan email atau user id
       const { error } = await supabase.auth.signInWithPassword({
-        email: signinEmail,
+        email: isEmail ? signinIdentifier : undefined,
         password,
       });
-
+  
       if (error) throw error;
-      
+  
       navigate('/');
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
