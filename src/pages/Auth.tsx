@@ -63,23 +63,32 @@ const Auth = () => {
       let signinIdentifier = emailOrUsername;
   
       if (!isEmail) {
-        // Jika input adalah username, cari id user dari tabel profiles
+        // Cari id dari username di tabel profiles
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id') // Ambil hanya id
+          .select('id')
           .eq('username', emailOrUsername)
           .maybeSingle();
   
         if (profileError) throw profileError;
         if (!profile) throw new Error('Username not found');
   
-        // Gunakan id dari profile untuk login
-        signinIdentifier = profile.id;
+        // Cari email berdasarkan id dari auth.users
+        const { data: user, error: userError } = await supabase
+          .from('auth.users')
+          .select('email')
+          .eq('id', profile.id)
+          .maybeSingle();
+  
+        if (userError) throw userError;
+        if (!user || !user.email) throw new Error('Email not found for this username');
+  
+        signinIdentifier = user.email; // Gunakan email untuk login
       }
   
-      // Lakukan proses login menggunakan email atau user id
+      // Lakukan proses login menggunakan email
       const { error } = await supabase.auth.signInWithPassword({
-        email: isEmail ? signinIdentifier : undefined,
+        email: signinIdentifier,
         password,
       });
   
@@ -96,6 +105,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+  
   
 
   return (
