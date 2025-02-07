@@ -76,17 +76,22 @@ const Auth = () => {
         if (!profile) throw new Error('Username not found');
   
         // Cari email berdasarkan id dari auth.users
-        const { data: user, error: userError } = await supabase
-          .from('auth.users')
-          .select('email')
-          .eq('id', profile.id)
-          .maybeSingle();
-  
-        if (userError) throw userError;
-        if (!user || !user.email) throw new Error('Email not found for this username');
-  
-        signinIdentifier = user.email; // Gunakan email untuk login
-      }
+        const { data: profile, error: profileError } = await supabase
+  .from('user_profiles')  // Gunakan VIEW baru
+  .select('email')
+  .eq('username', emailOrUsername)
+  .maybeSingle();
+
+console.log("Profile result:", profile, profileError);
+
+if (profileError) throw profileError;
+if (!profile || !profile.email) throw new Error('Username not found');
+
+const { error } = await supabase.auth.signInWithPassword({
+  email: profile.email,  // Gunakan email dari VIEW
+  password,
+});
+
   
       // Lakukan proses login menggunakan email
       const { error } = await supabase.auth.signInWithPassword({
