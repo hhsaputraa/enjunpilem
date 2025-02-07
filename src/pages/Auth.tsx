@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -18,12 +19,8 @@ const Auth = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      
-      // Generate a temporary email using the username
-      const tempEmail = `${username}@temporary.com`;
-      
       const { error } = await supabase.auth.signUp({
-        email: tempEmail,
+        email,
         password,
         options: {
           data: {
@@ -36,9 +33,8 @@ const Auth = () => {
       
       toast({
         title: "Success!",
-        description: "Account created successfully. You can now log in.",
+        description: "Please check your email to verify your account.",
       });
-      
     } catch (error: any) {
       toast({
         title: "Error",
@@ -54,33 +50,14 @@ const Auth = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      
-      // Query the profiles table to get the email associated with the username
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username)
-        .single();
-
-      if (profileError || !profiles) {
-        throw new Error('Username not found');
-      }
-
-      // Use the temporary email format for login
-      const tempEmail = `${username}@temporary.com`;
-      
       const { error } = await supabase.auth.signInWithPassword({
-        email: tempEmail,
+        email,
         password,
       });
 
       if (error) throw error;
       
       navigate('/');
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in.",
-      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -110,10 +87,10 @@ const Auth = () => {
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                   <Input
@@ -138,6 +115,13 @@ const Auth = () => {
                     placeholder="Username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                   <Input
