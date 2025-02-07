@@ -60,42 +60,27 @@ const Auth = () => {
   
       // Cek apakah input berupa email atau username
       const isEmail = emailOrUsername.includes('@');
-      let signinIdentifier = emailOrUsername;
+      let signinEmail = emailOrUsername;
   
       if (!isEmail) {
-        // Cari id dari username di tabel profiles
+        // Cari email berdasarkan username dari VIEW 'user_profiles'
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
+          .from('user_profiles')  // Gunakan VIEW yang sudah dibuat
+          .select('email')
           .eq('username', emailOrUsername)
           .maybeSingle();
-
-          console.log("Profile result:", profile, profileError);
+  
+        console.log("Profile result:", profile, profileError); // Debugging
   
         if (profileError) throw profileError;
-        if (!profile) throw new Error('Username not found');
+        if (!profile || !profile.email) throw new Error('Username not found');
   
-        // Cari email berdasarkan id dari auth.users
-        const { data: profile, error: profileError } = await supabase
-  .from('user_profiles')  // Gunakan VIEW baru
-  .select('email')
-  .eq('username', emailOrUsername)
-  .maybeSingle();
-
-console.log("Profile result:", profile, profileError);
-
-if (profileError) throw profileError;
-if (!profile || !profile.email) throw new Error('Username not found');
-
-const { error } = await supabase.auth.signInWithPassword({
-  email: profile.email,  // Gunakan email dari VIEW
-  password,
-});
-
+        signinEmail = profile.email; // Gunakan email yang ditemukan
+      }
   
-      // Lakukan proses login menggunakan email
+      // Lakukan proses login menggunakan email yang sudah didapatkan
       const { error } = await supabase.auth.signInWithPassword({
-        email: signinIdentifier,
+        email: signinEmail,
         password,
       });
   
@@ -103,6 +88,7 @@ const { error } = await supabase.auth.signInWithPassword({
   
       navigate('/');
     } catch (error: any) {
+      console.error("Login error:", error); // Debugging error di console
       toast({
         title: 'Error',
         description: error.message,
