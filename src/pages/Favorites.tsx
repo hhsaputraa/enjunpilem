@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Favorites = () => {
@@ -100,23 +100,28 @@ const Favorites = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {favorites?.map((item: any) => (
               <div key={`${item.media_type}-${item.id}`} className="relative group">
-                <MovieCard
-                  id={item.id}
-                  title={item.title || item.name}
-                  posterPath={item.poster_path}
-                  overview={item.overview}
-                  mediaType={item.media_type}
-                  voteAverage={item.vote_average}
-                  releaseDate={item.release_date || item.first_air_date}
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => deleteMutation.mutate(item.favorite_id)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="relative">
+                  <MovieCard
+                    id={item.id}
+                    title={item.title || item.name}
+                    posterPath={item.poster_path}
+                    overview={item.overview}
+                    mediaType={item.media_type}
+                    voteAverage={item.vote_average}
+                    releaseDate={item.release_date || item.first_air_date}
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out z-10 hover:bg-destructive/90"
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevent navigation
+                      deleteMutation.mutate(item.favorite_id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface CollectionDetailsProps {
   collectionId: string;
@@ -29,6 +31,9 @@ interface CollectionItem {
 }
 
 export const CollectionDetails = ({ collectionId, collectionName, onBack }: CollectionDetailsProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: items, isLoading } = useQuery({
     queryKey: ['collection-items', collectionId],
     queryFn: async () => {
@@ -39,9 +44,6 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
 
       if (error) throw error;
 
-      // Since we don't have a direct relationship with TMDB data in our database,
-      // we'll need to fetch it from the TMDB API or use the data that was stored
-      // when the item was added to the collection
       return (data || []).map(item => ({
         ...item,
         tmdb_data: {
@@ -54,6 +56,22 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
           first_air_date: item.first_air_date
         }
       })) as CollectionItem[];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase
+        .from('collection_items')
+        .delete()
+        .eq('id', itemId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collection-items', collectionId] });
+      toast({
+        title: "Removed from collection",
+      });
     },
   });
 
@@ -77,16 +95,30 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items?.map((item) => (
-            <MovieCard
-              key={`${item.media_type}-${item.media_id}`}
-              id={item.media_id}
-              title={item.tmdb_data.title || item.tmdb_data.name || ''}
-              posterPath={item.tmdb_data.poster_path}
-              overview={item.tmdb_data.overview}
-              mediaType={item.media_type}
-              voteAverage={item.tmdb_data.vote_average}
-              releaseDate={item.tmdb_data.release_date || item.tmdb_data.first_air_date}
-            />
+            <div key={`${item.media_type}-${item.media_id}`} className="relative group">
+              <div className="relative">
+                <MovieCard
+                  id={item.media_id}
+                  title={item.tmdb_data.title || item.tmdb_data.name || ''}
+                  posterPath={item.tmdb_data.poster_path}
+                  overview={item.tmdb_data.overview}
+                  mediaType={item.media_type}
+                  voteAverage={item.tmdb_data.vote_average}
+                  releaseDate={item.tmdb_data.release_date || item.tmdb_data.first_air_date}
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out z-10 hover:bg-destructive/90"
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent navigation
+                    deleteMutation.mutate(item.id);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       )}
