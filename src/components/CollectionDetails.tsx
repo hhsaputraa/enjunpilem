@@ -68,7 +68,9 @@ export const CollectionDetails = ({ collectionId, collectionName, onBack }: Coll
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate both the collection items and collections queries
       queryClient.invalidateQueries({ queryKey: ['collection-items', collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
       toast({
         title: "Removed from collection",
       });
