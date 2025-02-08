@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
@@ -6,10 +7,14 @@ import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Watchlist = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -40,13 +45,29 @@ const Watchlist = () => {
             ? getMovieDetails(item.media_id.toString())
             : getTVDetails(item.media_id.toString())
           );
-          return { ...details, media_type: item.media_type };
+          return { ...details, media_type: item.media_type, watchlist_id: item.id };
         })
       );
 
       return mediaDetails;
     },
     enabled: !!user,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (watchlistId: string) => {
+      const { error } = await supabase
+        .from('watchlist')
+        .delete()
+        .eq('id', watchlistId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] });
+      toast({
+        title: "Removed from watchlist",
+      });
+    },
   });
 
   if (!user) {
@@ -64,6 +85,32 @@ const Watchlist = () => {
 
   const movies = watchlist?.filter(item => item.media_type === 'movie') || [];
   const tvShows = watchlist?.filter(item => item.media_type === 'tv') || [];
+
+  const MovieList = ({ items }: { items: any[] }) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      {items.map((item: any) => (
+        <div key={`${item.media_type}-${item.id}`} className="relative group">
+          <MovieCard
+            id={item.id}
+            title={item.title || item.name}
+            posterPath={item.poster_path}
+            overview={item.overview}
+            mediaType={item.media_type}
+            voteAverage={item.vote_average}
+            releaseDate={item.release_date || item.first_air_date}
+          />
+          <Button
+            variant="destructive"
+            size="icon"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={() => deleteMutation.mutate(item.watchlist_id)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen p-6 bg-background">
@@ -89,54 +136,15 @@ const Watchlist = () => {
             </TabsList>
             
             <TabsContent value="all">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {watchlist?.map((item: any) => (
-                  <MovieCard
-                    key={`${item.media_type}-${item.id}`}
-                    id={item.id}
-                    title={item.title || item.name}
-                    posterPath={item.poster_path}
-                    overview={item.overview}
-                    mediaType={item.media_type}
-                    voteAverage={item.vote_average}
-                    releaseDate={item.release_date || item.first_air_date}
-                  />
-                ))}
-              </div>
+              <MovieList items={watchlist || []} />
             </TabsContent>
             
             <TabsContent value="movies">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {movies.map((item: any) => (
-                  <MovieCard
-                    key={`${item.media_type}-${item.id}`}
-                    id={item.id}
-                    title={item.title}
-                    posterPath={item.poster_path}
-                    overview={item.overview}
-                    mediaType={item.media_type}
-                    voteAverage={item.vote_average}
-                    releaseDate={item.release_date}
-                  />
-                ))}
-              </div>
+              <MovieList items={movies} />
             </TabsContent>
             
             <TabsContent value="tv">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {tvShows.map((item: any) => (
-                  <MovieCard
-                    key={`${item.media_type}-${item.id}`}
-                    id={item.id}
-                    title={item.name}
-                    posterPath={item.poster_path}
-                    overview={item.overview}
-                    mediaType={item.media_type}
-                    voteAverage={item.vote_average}
-                    releaseDate={item.first_air_date}
-                  />
-                ))}
-              </div>
+              <MovieList items={tvShows} />
             </TabsContent>
           </Tabs>
         )}

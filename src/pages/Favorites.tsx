@@ -1,14 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Favorites = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -39,13 +44,29 @@ const Favorites = () => {
             ? getMovieDetails(item.media_id.toString())
             : getTVDetails(item.media_id.toString())
           );
-          return { ...details, media_type: item.media_type };
+          return { ...details, media_type: item.media_type, favorite_id: item.id };
         })
       );
 
       return mediaDetails;
     },
     enabled: !!user,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (favoriteId: string) => {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('id', favoriteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      toast({
+        title: "Removed from favorites",
+      });
+    },
   });
 
   if (!user) {
@@ -78,16 +99,25 @@ const Favorites = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {favorites?.map((item: any) => (
-              <MovieCard
-                key={`${item.media_type}-${item.id}`}
-                id={item.id}
-                title={item.title || item.name}
-                posterPath={item.poster_path}
-                overview={item.overview}
-                mediaType={item.media_type}
-                voteAverage={item.vote_average}
-                releaseDate={item.release_date || item.first_air_date}
-              />
+              <div key={`${item.media_type}-${item.id}`} className="relative group">
+                <MovieCard
+                  id={item.id}
+                  title={item.title || item.name}
+                  posterPath={item.poster_path}
+                  overview={item.overview}
+                  mediaType={item.media_type}
+                  voteAverage={item.vote_average}
+                  releaseDate={item.release_date || item.first_air_date}
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => deleteMutation.mutate(item.favorite_id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             ))}
           </div>
         )}
