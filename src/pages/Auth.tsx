@@ -8,36 +8,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const COOLDOWN_PERIOD = 300000; // 5 minutes in milliseconds
-
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [lastAttempt, setLastAttempt] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check if we're still in cooldown period
-    const now = Date.now();
-    if (now - lastAttempt < COOLDOWN_PERIOD) {
-      const remainingMinutes = Math.ceil((COOLDOWN_PERIOD - (now - lastAttempt)) / 60000);
-      toast({
-        title: "Rate Limit",
-        description: `Too many attempts. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before trying again.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setLoading(true);
-      setLastAttempt(now);
       
       // Check if email is valid
       if (!email.includes('@')) {
@@ -54,37 +37,13 @@ const Auth = () => {
         },
       });
 
-      // Handle specific Supabase error cases
-      if (error) {
-        // Parse the error message if it's a JSON string
-        let errorMessage = error.message;
-        try {
-          const errorBody = JSON.parse(error.message);
-          if (errorBody.message) {
-            errorMessage = errorBody.message;
-          }
-        } catch {
-          // If parsing fails, use the original error message
-        }
-
-        // Handle rate limit errors specifically
-        if (
-          error.message.includes('rate limit') || 
-          error.message.includes('over_email_send_rate_limit') ||
-          error.status === 429
-        ) {
-          throw new Error('Email rate limit exceeded. Please wait 5 minutes before trying again.');
-        }
-        
-        throw new Error(errorMessage);
-      }
+      if (error) throw error;
       
       toast({
         title: "Success!",
         description: "Account created successfully. Please check your email to verify your account.",
       });
     } catch (error: any) {
-      console.error('Signup error:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -100,14 +59,14 @@ const Auth = () => {
     try {
       setLoading(true);
   
-      // Check if input is email or username
+      // Cek apakah input berupa email atau username
       const isEmail = emailOrUsername.includes('@');
       let signinEmail = emailOrUsername;
   
       if (!isEmail) {
-        // Find email based on username from user_profiles view
+        // Cari email berdasarkan username dari VIEW 'user_profiles'
         const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
+          .from('user_profiles')  // Gunakan VIEW yang sudah dibuat
           .select('email')
           .eq('username', emailOrUsername)
           .maybeSingle();
@@ -117,9 +76,10 @@ const Auth = () => {
         if (profileError) throw profileError;
         if (!profile || !profile.email) throw new Error('Username not found');
   
-        signinEmail = profile.email;
+        signinEmail = profile.email; // Gunakan email yang ditemukan
       }
   
+      // Lakukan proses login menggunakan email yang sudah didapatkan
       const { error } = await supabase.auth.signInWithPassword({
         email: signinEmail,
         password,
@@ -129,7 +89,7 @@ const Auth = () => {
   
       navigate('/');
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Login error:", error); // Debugging error di console
       toast({
         title: 'Error',
         description: error.message,
@@ -139,6 +99,8 @@ const Auth = () => {
       setLoading(false);
     }
   };
+  
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
