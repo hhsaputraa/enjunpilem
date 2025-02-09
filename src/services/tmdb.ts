@@ -72,3 +72,18 @@ export const getTVCredits = async (id: string) => {
   const response = await axios.get(`${BASE_URL}/tv/${id}/credits?api_key=${API_KEY}`);
   return response.data;
 };
+
+export const getNowPlayingMovies = async () => {
+  const response = await axios.get(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
+export const getTopRatedTVShows = async () => {
+  const response = await axios.get(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}`);
+  return response.data.results;
+};
+
+export const getAiringTodayTVShows = async () => {
+  const response = await axios.get(`${BASE_URL}/tv/airing_today?api_key=${API_KEY}`);
+  return response.data.results;
+};

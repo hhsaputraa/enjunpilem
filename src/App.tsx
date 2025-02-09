@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,6 +13,8 @@ import Auth from "./pages/Auth";
 import Favorites from "./pages/Favorites";
 import Watchlist from "./pages/Watchlist";
 import Collections from "./pages/Collections";
+import NavMovies from "./pages/NavMovies";
+import NavTVShows from "./pages/NavTVShows";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,8 @@ const App = () => (
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/watchlist" element={<Watchlist />} />
             <Route path="/collections" element={<Collections />} />
+            <Route path="/navmovies" element={<NavMovies />} />
+            <Route path="/navtvshows" element={<NavTVShows />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

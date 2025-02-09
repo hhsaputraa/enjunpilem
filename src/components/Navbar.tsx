@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Search, Film, Tv, Heart, Clock, List, LogOut, LogIn } from "lucide-react";
 import { Button } from "./ui/button";
@@ -60,14 +61,14 @@ const Navbar = () => {
           
           <div className="hidden md:flex items-center space-x-6">
             <Link 
-              to="/" 
+              to="/navmovies" 
               className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-2 group"
             >
               <Film className="w-4 h-4 group-hover:rotate-12 transition-transform" />
               Movies
             </Link>
             <Link 
-              to="/search" 
+              to="/navtvshows" 
               className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-2 group"
             >
               <Tv className="w-4 h-4 group-hover:rotate-12 transition-transform" />
