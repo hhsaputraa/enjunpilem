@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const COOLDOWN_PERIOD = 60000; // 1 minute in milliseconds
+const COOLDOWN_PERIOD = 300000; // 5 minutes in milliseconds
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -26,10 +26,10 @@ const Auth = () => {
     // Check if we're still in cooldown period
     const now = Date.now();
     if (now - lastAttempt < COOLDOWN_PERIOD) {
-      const remainingSeconds = Math.ceil((COOLDOWN_PERIOD - (now - lastAttempt)) / 1000);
+      const remainingMinutes = Math.ceil((COOLDOWN_PERIOD - (now - lastAttempt)) / 60000);
       toast({
-        title: "Please wait",
-        description: `Please wait ${remainingSeconds} seconds before trying again.`,
+        title: "Rate Limit",
+        description: `Too many attempts. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before trying again.`,
         variant: "destructive",
       });
       return;
@@ -54,11 +54,29 @@ const Auth = () => {
         },
       });
 
+      // Handle specific Supabase error cases
       if (error) {
-        if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
-          throw new Error('Too many signup attempts. Please try again in a minute.');
+        // Parse the error message if it's a JSON string
+        let errorMessage = error.message;
+        try {
+          const errorBody = JSON.parse(error.message);
+          if (errorBody.message) {
+            errorMessage = errorBody.message;
+          }
+        } catch {
+          // If parsing fails, use the original error message
         }
-        throw error;
+
+        // Handle rate limit errors specifically
+        if (
+          error.message.includes('rate limit') || 
+          error.message.includes('over_email_send_rate_limit') ||
+          error.status === 429
+        ) {
+          throw new Error('Email rate limit exceeded. Please wait 5 minutes before trying again.');
+        }
+        
+        throw new Error(errorMessage);
       }
       
       toast({
@@ -66,7 +84,7 @@ const Auth = () => {
         description: "Account created successfully. Please check your email to verify your account.",
       });
     } catch (error: any) {
-      console.error('Signup error:', error); // Log error for debugging
+      console.error('Signup error:', error);
       toast({
         title: "Error",
         description: error.message,
