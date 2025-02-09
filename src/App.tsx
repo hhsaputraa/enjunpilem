@@ -15,6 +15,7 @@ import Watchlist from "./pages/Watchlist";
 import Collections from "./pages/Collections";
 import NavMovies from "./pages/NavMovies";
 import NavTVShows from "./pages/NavTVShows";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/collections" element={<Collections />} />
             <Route path="/navmovies" element={<NavMovies />} />
             <Route path="/navtvshows" element={<NavTVShows />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

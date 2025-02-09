@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Search, Film, Tv, Heart, Clock, List, LogOut, LogIn } from "lucide-react";
+import { Search, Film, Tv, Heart, Clock, List, LogOut, LogIn, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,9 +92,18 @@ const Navbar = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary">My Profile</Button>
+                <Button variant="secondary" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  My Profile
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>View Profile</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuLabel>My Lists</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
