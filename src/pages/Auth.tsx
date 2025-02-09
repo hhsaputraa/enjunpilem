@@ -8,19 +8,36 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+const COOLDOWN_PERIOD = 60000; // 1 minute in milliseconds
+
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [lastAttempt, setLastAttempt] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if we're still in cooldown period
+    const now = Date.now();
+    if (now - lastAttempt < COOLDOWN_PERIOD) {
+      const remainingSeconds = Math.ceil((COOLDOWN_PERIOD - (now - lastAttempt)) / 1000);
+      toast({
+        title: "Please wait",
+        description: `Please wait ${remainingSeconds} seconds before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
+      setLastAttempt(now);
       
       // Check if email is valid
       if (!email.includes('@')) {
@@ -37,13 +54,19 @@ const Auth = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
+          throw new Error('Too many signup attempts. Please try again in a minute.');
+        }
+        throw error;
+      }
       
       toast({
         title: "Success!",
         description: "Account created successfully. Please check your email to verify your account.",
       });
     } catch (error: any) {
+      console.error('Signup error:', error); // Log error for debugging
       toast({
         title: "Error",
         description: error.message,
@@ -59,14 +82,14 @@ const Auth = () => {
     try {
       setLoading(true);
   
-      // Cek apakah input berupa email atau username
+      // Check if input is email or username
       const isEmail = emailOrUsername.includes('@');
       let signinEmail = emailOrUsername;
   
       if (!isEmail) {
-        // Cari email berdasarkan username dari VIEW 'user_profiles'
+        // Find email based on username from user_profiles view
         const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')  // Gunakan VIEW yang sudah dibuat
+          .from('user_profiles')
           .select('email')
           .eq('username', emailOrUsername)
           .maybeSingle();
@@ -76,10 +99,9 @@ const Auth = () => {
         if (profileError) throw profileError;
         if (!profile || !profile.email) throw new Error('Username not found');
   
-        signinEmail = profile.email; // Gunakan email yang ditemukan
+        signinEmail = profile.email;
       }
   
-      // Lakukan proses login menggunakan email yang sudah didapatkan
       const { error } = await supabase.auth.signInWithPassword({
         email: signinEmail,
         password,
@@ -89,7 +111,7 @@ const Auth = () => {
   
       navigate('/');
     } catch (error: any) {
-      console.error("Login error:", error); // Debugging error di console
+      console.error("Login error:", error);
       toast({
         title: 'Error',
         description: error.message,
@@ -99,8 +121,6 @@ const Auth = () => {
       setLoading(false);
     }
   };
-  
-  
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
