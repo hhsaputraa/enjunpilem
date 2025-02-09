@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 
 const Collections = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
@@ -22,6 +23,8 @@ const Collections = () => {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -66,7 +69,6 @@ const Collections = () => {
         throw error;
       }
       
-      console.log('Fetched collections:', data);
       return data;
     },
     enabled: !!user,
@@ -97,6 +99,33 @@ const Collections = () => {
     onError: (error: any) => {
       toast({
         title: "Error creating collection",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCollection = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      if (!user) throw new Error('You must be logged in to update a collection');
+      
+      const { error } = await supabase
+        .from('collections')
+        .update({ name })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      toast({ title: "Collection updated successfully" });
+      setIsEditDialogOpen(false);
+      setEditingCollection(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating collection",
         description: error.message,
         variant: "destructive",
       });
@@ -135,6 +164,16 @@ const Collections = () => {
     }
   };
 
+  const handleUpdateCollection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingCollection && editingCollection.name.trim()) {
+      updateCollection.mutate({
+        id: editingCollection.id,
+        name: editingCollection.name.trim()
+      });
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen p-6 bg-background">
@@ -166,29 +205,48 @@ const Collections = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Collections</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-  <DialogTrigger asChild>
-    <Button className="flex items-center gap-2" onClick={() => setIsDialogOpen(true)}>
-      <Plus className="w-4 h-4" />
-      New Collection
-    </Button>
-  </DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Create New Collection</DialogTitle>
-    </DialogHeader>
-    <form onSubmit={handleCreateCollection} className="space-y-4">
-      <Input
-        placeholder="Collection name"
-        value={newCollectionName}
-        onChange={(e) => setNewCollectionName(e.target.value)}
-      />
-      <Button type="submit" disabled={!newCollectionName.trim()}>
-        Create Collection
-      </Button>
-    </form>
-  </DialogContent>
-</Dialog>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                New Collection
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Collection</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateCollection} className="space-y-4">
+                <Input
+                  placeholder="Collection name"
+                  value={newCollectionName}
+                  onChange={(e) => setNewCollectionName(e.target.value)}
+                />
+                <Button type="submit" disabled={!newCollectionName.trim()}>
+                  Create Collection
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
+
+        {/* Edit Collection Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Collection</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateCollection} className="space-y-4">
+              <Input
+                placeholder="Collection name"
+                value={editingCollection?.name || ''}
+                onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
+              />
+              <Button type="submit" disabled={!editingCollection?.name.trim()}>
+                Update Collection
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -209,13 +267,25 @@ const Collections = () => {
               >
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-semibold">{collection.name}</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteCollection.mutate(collection.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setEditingCollection({ id: collection.id, name: collection.name });
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteCollection.mutate(collection.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
                 
                 {collection.collection_items && collection.collection_items.length > 0 && (
