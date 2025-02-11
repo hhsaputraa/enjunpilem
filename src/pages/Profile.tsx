@@ -167,7 +167,7 @@ const Profile = () => {
               )}
             </div>
 
-            <div className="pt-6 border-t">
+            {/* <div className="pt-6 border-t">
               <h2 className="text-xl font-semibold mb-4">Statistics</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-lg bg-card border">
@@ -183,7 +183,7 @@ const Profile = () => {
                   <p className="text-2xl font-bold">{profile?.collections_count || 0}</p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
