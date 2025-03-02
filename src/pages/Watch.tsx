@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { 
@@ -22,6 +22,7 @@ import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 const Watch = () => {
   const { type, id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -42,6 +43,16 @@ const Watch = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleAuthRedirect = () => {
+    navigate('/auth', { 
+      state: { 
+        redirectTo: location.pathname,
+        mediaType: validType,
+        mediaId: mediaId 
+      } 
+    });
+  };
 
   const { data: details, isLoading: detailsLoading } = useQuery({
     queryKey: ['details', validType, mediaId],
@@ -96,7 +107,7 @@ const Watch = () => {
   const toggleFavorite = useMutation({
     mutationFn: async () => {
       if (!user) {
-        navigate('/auth');
+        handleAuthRedirect();
         return;
       }
       if (isFavorite) {
@@ -135,7 +146,7 @@ const Watch = () => {
   const toggleWatchlist = useMutation({
     mutationFn: async () => {
       if (!user) {
-        navigate('/auth');
+        handleAuthRedirect();
         return;
       }
       if (isInWatchlist) {
@@ -234,7 +245,7 @@ const Watch = () => {
                   />
                 </>
               ) : (
-                <Button variant="outline" onClick={() => navigate('/auth')} className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleAuthRedirect} className="flex items-center gap-2">
                   <LogIn className="h-4 w-4" />
                   Sign in to save
                 </Button>

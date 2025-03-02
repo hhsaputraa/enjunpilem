@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,23 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  // Get redirect info from location state
+  const redirectTo = location.state?.redirectTo || '/';
+  
+  // Effect to check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate(redirectTo);
+      }
+    };
+    
+    checkSession();
+  }, [navigate, redirectTo]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,27 +75,27 @@ const Auth = () => {
     try {
       setLoading(true);
   
-      // Cek apakah input berupa email atau username
+      // Check if input is email or username
       const isEmail = emailOrUsername.includes('@');
       let signinEmail = emailOrUsername;
   
       if (!isEmail) {
-        // Cari email berdasarkan username dari VIEW 'user_profiles'
+        // Find email based on username from user_profiles view
         const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')  // Gunakan VIEW yang sudah dibuat
+          .from('user_profiles')
           .select('email')
           .eq('username', emailOrUsername)
           .maybeSingle();
   
-        console.log("Profile result:", profile, profileError); // Debugging
+        console.log("Profile result:", profile, profileError);
   
         if (profileError) throw profileError;
         if (!profile || !profile.email) throw new Error('Username not found');
   
-        signinEmail = profile.email; // Gunakan email yang ditemukan
+        signinEmail = profile.email;
       }
   
-      // Lakukan proses login menggunakan email yang sudah didapatkan
+      // Login using the email
       const { error } = await supabase.auth.signInWithPassword({
         email: signinEmail,
         password,
@@ -87,9 +103,11 @@ const Auth = () => {
   
       if (error) throw error;
   
-      navigate('/');
+      // Redirect to the page they were trying to access
+      navigate(redirectTo);
+      
     } catch (error: any) {
-      console.error("Login error:", error); // Debugging error di console
+      console.error("Login error:", error);
       toast({
         title: 'Error',
         description: error.message,
@@ -100,14 +118,17 @@ const Auth = () => {
     }
   };
   
-  
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Welcome to EnjunPilem</CardTitle>
-          <CardDescription>Sign in to track your movies and shows</CardDescription>
+          <CardDescription>
+            {location.state?.mediaType ? 
+              `Sign in to continue watching your ${location.state.mediaType === 'movie' ? 'movie' : 'TV show'}` : 
+              'Sign in to track your movies and shows'
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
