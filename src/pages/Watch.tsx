@@ -298,11 +298,12 @@ const Watch = () => {
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
             <iframe
               src={type === 'movie' 
-                ? `https://player.embed-api.stream/?id=${id}&type=movie`
-                : `https://player.embed-api.stream/?id=${id}&s=${selectedSeason}&e=${selectedEpisode}`
+                ? `https://vidbinge.dev/embed/movie/${id}`
+                : `https://vidbinge.dev/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`
               }
               className="w-full h-full"
               allowFullScreen
+              scrolling="no"
             />
           </div>
 
