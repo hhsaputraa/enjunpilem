@@ -3,7 +3,7 @@ import {
   getTrending, 
   getPopularMovies, 
   getPopularTVShows,
-  getTopRatedMovies 
+  getTopRatedMovies,getEnjunChoice,getEnjunTop ,getIndiaAca
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { SearchBar } from '@/components/SearchBar';
@@ -61,6 +61,19 @@ const Index = () => {
     queryFn: getTopRatedMovies,
   });
 
+  const { data: enjunChoice, isLoading: enjunLoading } = useQuery({
+    queryKey: ['enjunChoice'],
+    queryFn: getEnjunChoice,
+  });
+  const { data: enjunTop, isLoading: enjunTopLoading } = useQuery({
+    queryKey: ['enjunTop'],
+    queryFn: getEnjunTop,
+  });
+  const { data: indiaAca, isLoading: indiaAcaLoading } = useQuery({
+    queryKey: ['indiaAca'],
+    queryFn: getIndiaAca,
+  });
+
   return (
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-[1400px] mx-auto">
@@ -73,8 +86,11 @@ const Index = () => {
         
         <ContentRow title="Trending Now" items={trending || []} isLoading={trendingLoading} />
         <ContentRow title="Popular Movies" items={popularMovies || []} isLoading={moviesLoading} />
-        <ContentRow title="Popular TV Shows" items={popularTV || []} isLoading={tvLoading} />
+        <ContentRow title="Top 4 Enjun" items={enjunTop || []} isLoading={enjunTopLoading} />
+        <ContentRow title="Top Choice by Enjun" items={enjunChoice || []} isLoading={enjunLoading} />
+        <ContentRow title="India ACA - ACA nehi nehi" items={indiaAca || []} isLoading={indiaAcaLoading} />
         <ContentRow title="Top Rated Movies" items={topRatedMovies || []} isLoading={topRatedLoading} />
+
       </div>
     </div>
   );
