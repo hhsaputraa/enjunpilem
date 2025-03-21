@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { 
   getTrending, 
@@ -10,7 +9,6 @@ import { MovieCard } from '@/components/MovieCard';
 import { SearchBar } from '@/components/SearchBar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { SharedCollections } from '@/components/SharedCollections';
 
 const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; isLoading: boolean }) => (
   <section className="mt-8">
@@ -77,9 +75,6 @@ const Index = () => {
         <ContentRow title="Popular Movies" items={popularMovies || []} isLoading={moviesLoading} />
         <ContentRow title="Popular TV Shows" items={popularTV || []} isLoading={tvLoading} />
         <ContentRow title="Top Rated Movies" items={topRatedMovies || []} isLoading={topRatedLoading} />
-        
-        {/* Add Shared Collections below Top Rated Movies */}
-        <SharedCollections />
       </div>
     </div>
   );
