@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +12,6 @@ const SharedCollection = () => {
   const navigate = useNavigate();
   const [collectionName, setCollectionName] = useState('');
   const [username, setUsername] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['shared-collection-items', id],
@@ -41,7 +40,6 @@ const SharedCollection = () => {
       
       setCollectionName(collection.name);
       setUsername(collection.profiles?.username || 'Unknown');
-      setUserId(collection.user_id);
 
       // Get collection items
       const { data, error } = await supabase

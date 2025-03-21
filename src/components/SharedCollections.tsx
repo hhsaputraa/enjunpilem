@@ -29,7 +29,7 @@ export const SharedCollections = () => {
   const { data: sharedCollections, isLoading } = useQuery({
     queryKey: ['shared-collections'],
     queryFn: async () => {
-      // Get shared collections
+      // Get shared collections without requiring authentication
       const { data: collections, error } = await supabase
         .from('collections')
         .select(`
