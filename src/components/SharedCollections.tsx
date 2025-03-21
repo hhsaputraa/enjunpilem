@@ -26,40 +26,47 @@ interface SharedCollectionType {
 export const SharedCollections = () => {
   const navigate = useNavigate();
   
-  const { data: sharedCollections, isLoading } = useQuery({
+  const { data: sharedCollections, isLoading, error } = useQuery({
     queryKey: ['shared-collections'],
     queryFn: async () => {
       // Get shared collections without requiring authentication
-      const { data: collections, error } = await supabase
-        .from('collections')
-        .select(`
-          id,
-          name,
-          user_id,
-          profiles!collections_user_id_fkey (username),
-          collection_items (
+      try {
+        const { data: collections, error } = await supabase
+          .from('collections')
+          .select(`
             id,
-            media_id,
-            media_type,
-            poster_path,
-            title,
-            name
-          )
-        `)
-        .eq('is_shared', true)
-        .order('created_at', { ascending: false });
+            name,
+            user_id,
+            profiles!collections_user_id_fkey (username),
+            collection_items (
+              id,
+              media_id,
+              media_type,
+              poster_path,
+              title,
+              name
+            )
+          `)
+          .eq('is_shared', true)
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Format the data for easier consumption
-      return collections.map(collection => ({
-        id: collection.id,
-        name: collection.name,
-        user_id: collection.user_id,
-        username: collection.profiles?.username || 'Unknown',
-        items: collection.collection_items || []
-      })) as SharedCollectionType[];
+        if (error) throw error;
+        
+        // Format the data for easier consumption
+        return collections.map(collection => ({
+          id: collection.id,
+          name: collection.name,
+          user_id: collection.user_id,
+          username: collection.profiles?.username || 'Unknown',
+          items: collection.collection_items || []
+        })) as SharedCollectionType[];
+      } catch (error) {
+        console.error('Error fetching shared collections:', error);
+        return [];
+      }
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
   });
 
   const handleCollectionClick = (collectionId: string) => {
@@ -75,6 +82,10 @@ export const SharedCollections = () => {
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    console.error('Error displaying shared collections:', error);
   }
 
   if (!sharedCollections || sharedCollections.length === 0) {

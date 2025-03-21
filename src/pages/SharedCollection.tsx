@@ -13,57 +13,79 @@ const SharedCollection = () => {
   const [collectionName, setCollectionName] = useState('');
   const [username, setUsername] = useState('');
 
-  const { data: items, isLoading } = useQuery({
+  const { data: items, isLoading, error } = useQuery({
     queryKey: ['shared-collection-items', id],
     queryFn: async () => {
       if (!id) throw new Error('No collection ID provided');
       
-      // First get the collection details to ensure it's shared
-      const { data: collection, error: collectionError } = await supabase
-        .from('collections')
-        .select(`
-          id,
-          name,
-          user_id,
-          is_shared,
-          profiles!collections_user_id_fkey (username)
-        `)
-        .eq('id', id)
-        .eq('is_shared', true)
-        .single();
+      try {
+        // First get the collection details to ensure it's shared
+        const { data: collection, error: collectionError } = await supabase
+          .from('collections')
+          .select(`
+            id,
+            name,
+            user_id,
+            is_shared,
+            profiles!collections_user_id_fkey (username)
+          `)
+          .eq('id', id)
+          .eq('is_shared', true)
+          .single();
 
-      if (collectionError) throw collectionError;
-      
-      if (!collection.is_shared) {
-        throw new Error('This collection is not shared');
-      }
-      
-      setCollectionName(collection.name);
-      setUsername(collection.profiles?.username || 'Unknown');
-
-      // Get collection items
-      const { data, error } = await supabase
-        .from('collection_items')
-        .select('*')
-        .eq('collection_id', id);
-
-      if (error) throw error;
-
-      return data.map(item => ({
-        ...item,
-        tmdb_data: {
-          title: item.title || '',
-          name: item.name || '',
-          poster_path: item.poster_path || '',
-          overview: item.overview || '',
-          vote_average: item.vote_average || 0,
-          release_date: item.release_date,
-          first_air_date: item.first_air_date
+        if (collectionError) throw collectionError;
+        
+        if (!collection || !collection.is_shared) {
+          throw new Error('This collection is not shared or does not exist');
         }
-      }));
+        
+        setCollectionName(collection.name);
+        setUsername(collection.profiles?.username || 'Unknown');
+
+        // Get collection items
+        const { data, error } = await supabase
+          .from('collection_items')
+          .select('*')
+          .eq('collection_id', id);
+
+        if (error) throw error;
+
+        return data.map(item => ({
+          ...item,
+          tmdb_data: {
+            title: item.title || '',
+            name: item.name || '',
+            poster_path: item.poster_path || '',
+            overview: item.overview || '',
+            vote_average: item.vote_average || 0,
+            release_date: item.release_date,
+            first_air_date: item.first_air_date
+          }
+        }));
+      } catch (error) {
+        console.error('Error fetching collection:', error);
+        throw error;
+      }
     },
     enabled: !!id,
+    retry: 1,
   });
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-6 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="p-2">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-2xl font-bold">Collection not found</h1>
+          </div>
+          <p className="text-center text-muted-foreground">This collection is not shared or does not exist.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
