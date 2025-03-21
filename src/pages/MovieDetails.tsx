@@ -10,7 +10,7 @@ const MovieDetails = () => {
   
   const { data: movie, isLoading } = useQuery({
     queryKey: ['movie', id],
-    queryFn: () => getMovieDetails(Number(id)),
+    queryFn: () => getMovieDetails(id as string),
     enabled: !!id,
   });
 

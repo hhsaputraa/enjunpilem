@@ -1,7 +1,7 @@
 
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getTVShowDetails } from '@/services/tmdb';
+import { getTVDetails } from '@/services/tmdb';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 
@@ -10,7 +10,7 @@ const TVShowDetails = () => {
   
   const { data: tvShow, isLoading } = useQuery({
     queryKey: ['tv', id],
-    queryFn: () => getTVShowDetails(Number(id)),
+    queryFn: () => getTVDetails(id as string),
     enabled: !!id,
   });
 
