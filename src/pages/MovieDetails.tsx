@@ -1,18 +1,25 @@
 
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMovieDetails } from '@/services/tmdb';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Play } from 'lucide-react';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   
   const { data: movie, isLoading } = useQuery({
     queryKey: ['movie', id],
     queryFn: () => getMovieDetails(id as string),
     enabled: !!id,
   });
+
+  const handleWatchClick = () => {
+    navigate(`/watch/movie/${id}`);
+  };
 
   if (isLoading) {
     return (
@@ -72,6 +79,12 @@ const MovieDetails = () => {
           </div>
           
           <div className="flex gap-4">
+            <Button 
+              onClick={handleWatchClick}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Play className="mr-2 h-4 w-4" /> Watch Now
+            </Button>
             <AddToCollectionDialog 
               mediaId={movie.id}
               mediaType="movie"

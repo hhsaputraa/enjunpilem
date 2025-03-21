@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -15,6 +16,7 @@ import Watchlist from '@/pages/Watchlist';
 import Favorites from '@/pages/Favorites';
 import MovieDetails from '@/pages/MovieDetails';
 import TVShowDetails from '@/pages/TVShowDetails';
+import Watch from '@/pages/Watch';
 import Layout from '@/components/Layout';
 import SharedCollection from '@/pages/SharedCollection';
 
@@ -36,6 +38,7 @@ function App() {
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/movie/:id" element={<MovieDetails />} />
             <Route path="/tv/:id" element={<TVShowDetails />} />
+            <Route path="/watch/:type/:id" element={<Watch />} />
           </Route>
         </Routes>
       </Router>
