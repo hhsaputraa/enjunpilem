@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,43 +8,46 @@ import { ChevronLeft } from 'lucide-react';
 import { MovieCard } from '@/components/MovieCard';
 
 const SharedCollection = () => {
-  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { collectionId, userId } = location.state || {};
   const [collectionName, setCollectionName] = useState('');
   const [username, setUsername] = useState('');
-
-  useEffect(() => {
-    if (!collectionId || !userId) {
-      navigate('/');
-    }
-  }, [collectionId, userId, navigate]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ['shared-collection-items', collectionId],
+    queryKey: ['shared-collection-items', id],
     queryFn: async () => {
-      // Get collection details and items
+      if (!id) throw new Error('No collection ID provided');
+      
+      // First get the collection details to ensure it's shared
       const { data: collection, error: collectionError } = await supabase
         .from('collections')
         .select(`
+          id,
           name,
+          user_id,
+          is_shared,
           profiles!collections_user_id_fkey (username)
         `)
-        .eq('id', collectionId)
-        .eq('user_id', userId)
+        .eq('id', id)
         .eq('is_shared', true)
         .single();
 
       if (collectionError) throw collectionError;
       
+      if (!collection.is_shared) {
+        throw new Error('This collection is not shared');
+      }
+      
       setCollectionName(collection.name);
       setUsername(collection.profiles?.username || 'Unknown');
+      setUserId(collection.user_id);
 
       // Get collection items
       const { data, error } = await supabase
         .from('collection_items')
         .select('*')
-        .eq('collection_id', collectionId);
+        .eq('collection_id', id);
 
       if (error) throw error;
 
@@ -61,11 +64,24 @@ const SharedCollection = () => {
         }
       }));
     },
-    enabled: !!collectionId && !!userId,
+    enabled: !!id,
   });
 
-  if (!collectionId || !userId) {
-    return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen p-6 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 w-64 bg-gray-300 rounded mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-96 rounded-lg bg-gray-300" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -81,24 +97,18 @@ const SharedCollection = () => {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 rounded-lg bg-gray-800 animate-pulse" />
-            ))}
-          </div>
-        ) : items?.length === 0 ? (
+        {!items || items.length === 0 ? (
           <p className="text-center text-muted-foreground">No items in this collection</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items?.map((item) => (
+            {items.map((item) => (
               <div key={`${item.media_type}-${item.media_id}`}>
                 <MovieCard
                   id={item.media_id}
                   title={item.tmdb_data.title || item.tmdb_data.name || ''}
                   posterPath={item.tmdb_data.poster_path}
                   overview={item.tmdb_data.overview}
-                  mediaType={item.media_type}
+                  mediaType={item.media_type as "movie" | "tv"}
                   voteAverage={item.tmdb_data.vote_average}
                   releaseDate={item.tmdb_data.release_date || item.tmdb_data.first_air_date}
                 />

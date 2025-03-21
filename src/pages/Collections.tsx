@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,6 +101,58 @@ const Collections = () => {
     onError: (error: any) => {
       toast({
         title: "Error creating collection",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCollection = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      if (!user) throw new Error('You must be logged in to update a collection');
+      
+      const { error } = await supabase
+        .from('collections')
+        .update({ name })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      toast({ title: "Collection updated successfully" });
+      setEditingCollection(null);
+      setIsEditDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating collection",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCollection = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('You must be logged in to delete a collection');
+      
+      const { error } = await supabase
+        .from('collections')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      toast({ title: "Collection deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error deleting collection",
         description: error.message,
         variant: "destructive",
       });

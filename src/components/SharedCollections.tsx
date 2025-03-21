@@ -6,19 +6,21 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { getImageUrl } from '@/services/tmdb';
 import { useNavigate } from 'react-router-dom';
 
-interface SharedCollection {
+interface CollectionItem {
+  id: string;
+  media_id: number;
+  media_type: string;
+  poster_path: string | null;
+  title: string | null;
+  name: string | null;
+}
+
+interface SharedCollectionType {
   id: string;
   name: string;
   username: string;
   user_id: string;
-  items: {
-    id: string;
-    media_id: number;
-    media_type: string;
-    poster_path: string | null;
-    title: string | null;
-    name: string | null;
-  }[];
+  items: CollectionItem[];
 }
 
 export const SharedCollections = () => {
@@ -27,7 +29,7 @@ export const SharedCollections = () => {
   const { data: sharedCollections, isLoading } = useQuery({
     queryKey: ['shared-collections'],
     queryFn: async () => {
-      // Get shared collections focusing on user "enjun"
+      // Get shared collections
       const { data: collections, error } = await supabase
         .from('collections')
         .select(`
@@ -56,14 +58,12 @@ export const SharedCollections = () => {
         user_id: collection.user_id,
         username: collection.profiles?.username || 'Unknown',
         items: collection.collection_items || []
-      })) as SharedCollection[];
+      })) as SharedCollectionType[];
     },
   });
 
-  const handleCollectionClick = (collectionId: string, userId: string) => {
-    navigate(`/shared-collection/${collectionId}`, { 
-      state: { collectionId, userId } 
-    });
+  const handleCollectionClick = (collectionId: string) => {
+    navigate(`/shared-collection/${collectionId}`);
   };
 
   if (isLoading) {
@@ -91,9 +91,13 @@ export const SharedCollections = () => {
               <h3 className="text-lg font-medium">{collection.name} <span className="text-sm text-muted-foreground">by {collection.username}</span></h3>
             </div>
             <ScrollArea className="w-full whitespace-nowrap rounded-md">
-              <div className="flex space-x-4 pb-4" onClick={() => handleCollectionClick(collection.id, collection.user_id)}>
+              <div className="flex space-x-4 pb-4">
                 {collection.items.slice(0, 8).map((item) => (
-                  <div key={item.id} className="w-[150px] flex-shrink-0 cursor-pointer">
+                  <div 
+                    key={item.id} 
+                    className="w-[150px] flex-shrink-0 cursor-pointer"
+                    onClick={() => handleCollectionClick(collection.id)}
+                  >
                     <div className="rounded-md overflow-hidden">
                       {item.poster_path ? (
                         <img
@@ -112,7 +116,10 @@ export const SharedCollections = () => {
                   </div>
                 ))}
                 {collection.items.length > 8 && (
-                  <div className="w-[150px] flex-shrink-0 flex items-center justify-center h-[200px] bg-gray-800/50 rounded-md cursor-pointer">
+                  <div 
+                    className="w-[150px] flex-shrink-0 flex items-center justify-center h-[200px] bg-gray-800/50 rounded-md cursor-pointer"
+                    onClick={() => handleCollectionClick(collection.id)}
+                  >
                     <span className="text-gray-400">+{collection.items.length - 8} more</span>
                   </div>
                 )}
