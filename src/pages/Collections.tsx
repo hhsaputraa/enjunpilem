@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Pencil, Share2, Lock } from 'lucide-react';
 
 const Collections = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
@@ -48,6 +47,7 @@ const Collections = () => {
         .select(`
           id,
           name,
+          is_shared,
           collection_items (
             id,
             media_id,
@@ -82,7 +82,8 @@ const Collections = () => {
         .from('collections')
         .insert({ 
           name,
-          user_id: user.id 
+          user_id: user.id,
+          is_shared: false
         })
         .select()
         .single();
@@ -105,13 +106,13 @@ const Collections = () => {
     },
   });
 
-  const updateCollection = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+  const toggleShareMutation = useMutation({
+    mutationFn: async ({ id, isShared }: { id: string; isShared: boolean }) => {
       if (!user) throw new Error('You must be logged in to update a collection');
       
       const { error } = await supabase
         .from('collections')
-        .update({ name })
+        .update({ is_shared: isShared })
         .eq('id', id)
         .eq('user_id', user.id);
 
@@ -119,38 +120,14 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
-      toast({ title: "Collection updated successfully" });
-      setIsEditDialogOpen(false);
-      setEditingCollection(null);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error updating collection",
-        description: error.message,
-        variant: "destructive",
+      toast({ 
+        title: "Collection sharing updated", 
+        description: "Your collection's sharing status has been updated."
       });
     },
-  });
-
-  const deleteCollection = useMutation({
-    mutationFn: async (collectionId: string) => {
-      if (!user) throw new Error('You must be logged in to delete a collection');
-      
-      const { error } = await supabase
-        .from('collections')
-        .delete()
-        .eq('id', collectionId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['collections'] });
-      toast({ title: "Collection deleted successfully" });
-    },
     onError: (error: any) => {
       toast({
-        title: "Error deleting collection",
+        title: "Error updating collection sharing",
         description: error.message,
         variant: "destructive",
       });
@@ -229,7 +206,6 @@ const Collections = () => {
           </Dialog>
         </div>
 
-        {/* Edit Collection Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -266,8 +242,30 @@ const Collections = () => {
                 className="p-4 rounded-lg border border-border bg-card"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold">{collection.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-semibold">{collection.name}</h3>
+                    {collection.is_shared && (
+                      <div className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full text-xs">
+                        Shared
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleShareMutation.mutate({
+                        id: collection.id,
+                        isShared: !collection.is_shared
+                      })}
+                      title={collection.is_shared ? "Make private" : "Share this collection"}
+                    >
+                      {collection.is_shared ? (
+                        <Lock className="w-4 h-4" />
+                      ) : (
+                        <Share2 className="w-4 h-4" />
+                      )}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

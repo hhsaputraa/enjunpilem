@@ -1,49 +1,47 @@
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+} from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import Index from '@/pages/Index';
+import Auth from '@/pages/Auth';
+import Collections from '@/pages/Collections';
+import Profile from '@/pages/Profile';
+import Search from '@/pages/Search';
+import Watchlist from '@/pages/Watchlist';
+import Favorites from '@/pages/Favorites';
+import MovieDetails from '@/pages/MovieDetails';
+import TVShowDetails from '@/pages/TVShowDetails';
+import Layout from '@/components/Layout';
+import SharedCollection from '@/pages/SharedCollection';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import Navbar from "./components/Navbar";
-import Index from "./pages/Index";
-import Watch from "./pages/Watch";
-import Search from "./pages/Search";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import Favorites from "./pages/Favorites";
-import Watchlist from "./pages/Watchlist";
-import Collections from "./pages/Collections";
-import NavMovies from "./pages/NavMovies";
-import NavTVShows from "./pages/NavTVShows";
-import Profile from "./pages/Profile";
+function App() {
+  const queryClient = new QueryClient();
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <TooltipProvider>
-        <Navbar />
-        <main className="pt-16">
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/:type/:id" element={<Watch />} />
-            <Route path="/search" element={<Search />} />
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/watchlist" element={<Watchlist />} />
             <Route path="/collections" element={<Collections />} />
-            <Route path="/navmovies" element={<NavMovies />} />
-            <Route path="/navtvshows" element={<NavTVShows />} />
+            <Route path="/shared-collection/:id" element={<SharedCollection />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-      </TooltipProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+            <Route path="/search" element={<Search />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/movie/:id" element={<MovieDetails />} />
+            <Route path="/tv/:id" element={<TVShowDetails />} />
+          </Route>
+        </Routes>
+      </Router>
+      <Toaster />
+    </QueryClientProvider>
+  );
+}
 
 export default App;
