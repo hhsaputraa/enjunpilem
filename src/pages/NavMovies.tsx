@@ -9,65 +9,36 @@ import {
 import { MovieCard } from '@/components/MovieCard';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
-const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; isLoading: boolean }) => {
-  const [showAll, setShowAll] = useState(false);
-  const displayItems = showAll ? items : items?.slice(0, 8);
-  const hasMoreItems = items?.length > 8;
-
-  return (
-    <section className="mt-8">
-      <h2 className="text-2xl font-semibold mb-4">{title}</h2>
-      <ScrollArea className="w-full whitespace-nowrap rounded-md">
-        <div className="flex space-x-4 pb-4">
-          {isLoading ? (
-            Array(6).fill(0).map((_, i) => (
-              <Skeleton key={i} className="w-[200px] h-[300px] rounded-lg flex-shrink-0" />
-            ))
-          ) : (
-            displayItems?.map((item: any) => (
-              <div key={item.id} className="w-[200px] flex-shrink-0">
-                <MovieCard
-                  id={item.id}
-                  title={item.title || item.name}
-                  posterPath={item.poster_path}
-                  overview={item.overview}
-                  mediaType="movie"
-                  voteAverage={item.vote_average}
-                  releaseDate={item.release_date}
-                />
-              </div>
-            ))
-          )}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
-      
-      {hasMoreItems && !isLoading && (
-        <div className="mt-4 flex justify-center">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAll(!showAll)}
-            className="flex items-center gap-2"
-          >
-            {showAll ? (
-              <>
-                Show Less <ChevronUp className="h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Load More <ChevronDown className="h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-    </section>
-  );
-};
+const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; isLoading: boolean }) => (
+  <section className="mt-8">
+    <h2 className="text-2xl font-semibold mb-4">{title}</h2>
+    <ScrollArea className="w-full whitespace-nowrap rounded-md">
+      <div className="flex space-x-4 pb-4">
+        {isLoading ? (
+          Array(6).fill(0).map((_, i) => (
+            <Skeleton key={i} className="w-[200px] h-[300px] rounded-lg flex-shrink-0" />
+          ))
+        ) : (
+          items?.map((item: any) => (
+            <div key={item.id} className="w-[200px] flex-shrink-0">
+              <MovieCard
+                id={item.id}
+                title={item.title || item.name}
+                posterPath={item.poster_path}
+                overview={item.overview}
+                mediaType="movie"
+                voteAverage={item.vote_average}
+                releaseDate={item.release_date}
+              />
+            </div>
+          ))
+        )}
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  </section>
+);
 
 const NavMovies = () => {
   const { data: popularMovies, isLoading: popularLoading } = useQuery({
