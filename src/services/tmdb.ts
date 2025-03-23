@@ -92,11 +92,18 @@ export const getEnjunTop = async () => {
   const response = await axios.get(`${BASE_URL}/list/8520113?api_key=${API_KEY}`);
   return response.data.items;
 };
+
 export const getEnjunChoice = async () => {
   const response = await axios.get(`${BASE_URL}/list/8520116?api_key=${API_KEY}`);
   return response.data.items;
 };
+
 export const getIndiaAca = async () => {
   const response = await axios.get(`${BASE_URL}/list/8520117?api_key=${API_KEY}`);
   return response.data.items;
+};
+
+export const getHarryPotterCollection = async () => {
+  const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);
+  return response.data.parts;
 };

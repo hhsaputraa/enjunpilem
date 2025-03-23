@@ -1,6 +1,11 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { getPopularMovies, getTopRatedMovies, getNowPlayingMovies } from '@/services/tmdb';
+import { 
+  getPopularMovies, 
+  getTopRatedMovies, 
+  getNowPlayingMovies,
+  getHarryPotterCollection
+} from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +24,7 @@ const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; 
             <div key={item.id} className="w-[200px] flex-shrink-0">
               <MovieCard
                 id={item.id}
-                title={item.title}
+                title={item.title || item.name}
                 posterPath={item.poster_path}
                 overview={item.overview}
                 mediaType="movie"
@@ -51,6 +56,11 @@ const NavMovies = () => {
     queryFn: getNowPlayingMovies,
   });
 
+  const { data: harryPotterMovies, isLoading: harryPotterLoading } = useQuery({
+    queryKey: ['harryPotterCollection'],
+    queryFn: getHarryPotterCollection,
+  });
+
   return (
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-[1400px] mx-auto">
@@ -59,6 +69,7 @@ const NavMovies = () => {
         </h1>
         
         <ContentRow title="Now Playing" items={nowPlayingMovies || []} isLoading={nowPlayingLoading} />
+        <ContentRow title="Harry Potter Collection" items={harryPotterMovies || []} isLoading={harryPotterLoading} />
         <ContentRow title="Popular Movies" items={popularMovies || []} isLoading={popularLoading} />
         <ContentRow title="Top Rated Movies" items={topRatedMovies || []} isLoading={topRatedLoading} />
       </div>
