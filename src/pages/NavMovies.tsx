@@ -69,7 +69,7 @@ const ContentRow = ({
                     ) : (
                       <>
                         <ChevronDown className="h-6 w-6" />
-                        <span>Load More</span>
+                        <span>Load More ({items.length - initialLimit} more)</span>
                       </>
                     )}
                   </Button>
