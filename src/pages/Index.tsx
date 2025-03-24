@@ -1,4 +1,6 @@
+
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { 
   getTrending, 
   getPopularMovies, 
@@ -9,8 +11,16 @@ import { MovieCard } from '@/components/MovieCard';
 import { SearchBar } from '@/components/SearchBar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
 
-const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; isLoading: boolean }) => (
+const ContentRow = ({ title, items, isLoading, showLoadMore = false, loadMorePath = "" }: { 
+  title: string; 
+  items: any[]; 
+  isLoading: boolean;
+  showLoadMore?: boolean;
+  loadMorePath?: string;
+}) => (
   <section className="mt-8">
     <h2 className="text-2xl font-semibold mb-4">{title}</h2>
     <ScrollArea className="w-full whitespace-nowrap rounded-md">
@@ -20,19 +30,31 @@ const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; 
             <Skeleton key={i} className="w-[200px] h-[300px] rounded-lg flex-shrink-0" />
           ))
         ) : (
-          items?.map((item: any) => (
-            <div key={item.id} className="w-[200px] flex-shrink-0">
-              <MovieCard
-                id={item.id}
-                title={item.title || item.name}
-                posterPath={item.poster_path}
-                overview={item.overview}
-                mediaType={item.media_type || (item.first_air_date ? 'tv' : 'movie')}
-                voteAverage={item.vote_average}
-                releaseDate={item.release_date || item.first_air_date}
-              />
-            </div>
-          ))
+          <>
+            {items?.slice(0, 12).map((item: any) => (
+              <div key={item.id} className="w-[200px] flex-shrink-0">
+                <MovieCard
+                  id={item.id}
+                  title={item.title || item.name}
+                  posterPath={item.poster_path}
+                  overview={item.overview}
+                  mediaType={item.media_type || (item.first_air_date ? 'tv' : 'movie')}
+                  voteAverage={item.vote_average}
+                  releaseDate={item.release_date || item.first_air_date}
+                />
+              </div>
+            ))}
+            {showLoadMore && loadMorePath && (
+              <div className="w-[200px] flex-shrink-0 flex items-center justify-center h-[300px]">
+                <Link to={loadMorePath}>
+                  <Button variant="outline" className="h-20 w-36 flex flex-col items-center justify-center gap-2">
+                    <span>Load More</span>
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </div>
       <ScrollBar orientation="horizontal" />
@@ -87,10 +109,15 @@ const Index = () => {
         <ContentRow title="Trending Now" items={trending || []} isLoading={trendingLoading} />
         <ContentRow title="Popular Movies" items={popularMovies || []} isLoading={moviesLoading} />
         <ContentRow title="Top 4 Enjun" items={enjunTop || []} isLoading={enjunTopLoading} />
-        <ContentRow title="Top Choice by Enjun" items={enjunChoice || []} isLoading={enjunLoading} />
+        <ContentRow 
+          title="Top Choice by Enjun" 
+          items={enjunChoice || []} 
+          isLoading={enjunLoading}
+          showLoadMore={true}
+          loadMorePath="/more-collection"
+        />
         <ContentRow title="India ACA - ACA nehi nehi" items={indiaAca || []} isLoading={indiaAcaLoading} />
         <ContentRow title="Top Rated Movies" items={topRatedMovies || []} isLoading={topRatedLoading} />
-
       </div>
     </div>
   );
