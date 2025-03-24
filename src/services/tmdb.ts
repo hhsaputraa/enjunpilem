@@ -102,7 +102,7 @@ export const getEnjunChoice = async (page: number = 1) => {
   });
   return {
     items: response.data.items,
-    totalPages: response.data.total_pages, // Ambil total halaman
+    totalPages: response.data.total_pages,
   };
 };
 
