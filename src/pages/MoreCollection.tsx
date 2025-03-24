@@ -1,6 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getEnjunChoice } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,24 +16,33 @@ import {
 } from "@/components/ui/pagination";
 
 const MoreCollection = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 15;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const pageParam = queryParams.get('page');
+  const [currentPage, setCurrentPage] = useState(pageParam ? parseInt(pageParam) : 1);
+  const ITEMS_PER_PAGE = 20;
 
-  const { data: enjunChoice, isLoading: enjunLoading } = useQuery({
-    queryKey: ['enjunChoice'],
-    queryFn: getEnjunChoice,
+  const { data, isLoading } = useQuery({
+    queryKey: ['enjunChoice', currentPage],
+    queryFn: () => getEnjunChoice(currentPage),
   });
 
+  // Update URL when page changes
+  useEffect(() => {
+    navigate(`/more-collection?page=${currentPage}`, { replace: true });
+  }, [currentPage, navigate]);
+
   // Calculate pagination details
-  const totalItems = enjunChoice?.length || 0;
+  const totalItems = data?.items?.length || 0;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   
   // Get current page items
   const getCurrentPageItems = () => {
-    if (!enjunChoice) return [];
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return enjunChoice.slice(startIndex, endIndex);
+    if (!data?.items) return [];
+    const startIndex = 0;
+    const endIndex = ITEMS_PER_PAGE;
+    return data.items.slice(startIndex, endIndex);
   };
 
   const currentItems = getCurrentPageItems();
@@ -83,9 +93,9 @@ const MoreCollection = () => {
           Top Choice by Enjun - Complete Collection
         </h1>
         
-        {enjunLoading ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {Array(15).fill(0).map((_, i) => (
+            {Array(20).fill(0).map((_, i) => (
               <Skeleton key={i} className="w-full h-[300px] rounded-lg" />
             ))}
           </div>
