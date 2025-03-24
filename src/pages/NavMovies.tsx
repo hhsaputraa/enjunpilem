@@ -5,7 +5,8 @@ import {
   getPopularMovies, 
   getTopRatedMovies, 
   getNowPlayingMovies,
-  getHarryPotterCollection
+  getHarryPotterCollection,
+  getEnjunChoice
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -82,12 +83,25 @@ const NavMovies = () => {
     queryFn: getHarryPotterCollection,
   });
 
+  const { data: enjunChoice, isLoading: enjunLoading } = useQuery({
+    queryKey: ['enjunChoice'],
+    queryFn: () => getEnjunChoice(1),
+    });
+
   return (
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-[1400px] mx-auto">
         <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 text-transparent bg-clip-text">
           Movies
         </h1>
+        <ContentRow 
+  title="Testing koleksi" 
+  items={enjunChoice?.items || []} 
+  isLoading={enjunLoading}
+  showLoadMore={true}
+  loadMorePath={`/item-more-collection?queryKey=enjunChoice`}
+/>
+
         
         <ContentRow title="Now Playing" items={nowPlayingMovies || []} isLoading={nowPlayingLoading} />
         <ContentRow title="Harry Potter Collection" items={harryPotterMovies || []} isLoading={harryPotterLoading} />

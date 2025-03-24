@@ -85,8 +85,8 @@ const Index = () => {
 
   const { data: enjunChoice, isLoading: enjunLoading } = useQuery({
     queryKey: ['enjunChoice'],
-    queryFn: getEnjunChoice,
-  });
+    queryFn: () => getEnjunChoice(1),
+    });
   const { data: enjunTop, isLoading: enjunTopLoading } = useQuery({
     queryKey: ['enjunTop'],
     queryFn: getEnjunTop,
@@ -111,7 +111,7 @@ const Index = () => {
         <ContentRow title="Top 4 Enjun" items={enjunTop || []} isLoading={enjunTopLoading} />
         <ContentRow 
           title="Top Choice by Enjun" 
-          items={enjunChoice || []} 
+          items={enjunChoice?.items || []} 
           isLoading={enjunLoading}
           showLoadMore={true}
           loadMorePath="/more-collection"

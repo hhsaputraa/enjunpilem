@@ -93,9 +93,17 @@ export const getEnjunTop = async () => {
   return response.data.items;
 };
 
-export const getEnjunChoice = async () => {
-  const response = await axios.get(`${BASE_URL}/list/8520116?api_key=${API_KEY}`);
-  return response.data.items;
+export const getEnjunChoice = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/list/8520116`, {
+    params: {
+      api_key: API_KEY,
+      page: page,
+    },
+  });
+  return {
+    items: response.data.items,
+    totalPages: response.data.total_pages, // Ambil total halaman
+  };
 };
 
 export const getIndiaAca = async () => {

@@ -17,6 +17,7 @@ import NavMovies from "./pages/NavMovies";
 import NavTVShows from "./pages/NavTVShows";
 import MoreCollection from "./pages/MoreCollection";
 import Profile from "./pages/Profile";
+import ItemMoreCollectionRouter from "./pages/ItemMoreCollectionRouter";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,8 @@ const App = () => (
             <Route path="/more-collection" element={<MoreCollection />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
+
           </Routes>
         </main>
       </TooltipProvider>
