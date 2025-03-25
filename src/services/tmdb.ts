@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '@/integrations/supabase/client';
 
 const API_KEY = '7ade81ac5dcabfafe1963455e05c35b9';
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -114,4 +115,65 @@ export const getIndiaAca = async () => {
 export const getHarryPotterCollection = async () => {
   const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);
   return response.data.parts;
+};
+
+export const getWatchedEpisodes = async (tvId: string) => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return null;
+  
+  const { data, error } = await supabase
+    .from('watched_episodes')
+    .select('*')
+    .eq('tv_id', parseInt(tvId))
+    .eq('user_id', session.session.user.id)
+    .single();
+  
+  if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') {
+    console.error('Error fetching watched episodes:', error);
+  }
+  
+  return data;
+};
+
+export const updateWatchedEpisode = async (tvId: string, seasonNumber: number, episodeNumber: number, tvName: string) => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return null;
+  
+  const { data: existingRecord } = await supabase
+    .from('watched_episodes')
+    .select('*')
+    .eq('tv_id', parseInt(tvId))
+    .eq('user_id', session.session.user.id)
+    .single();
+  
+  if (existingRecord) {
+    const { data, error } = await supabase
+      .from('watched_episodes')
+      .update({
+        season_number: seasonNumber,
+        episode_number: episodeNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingRecord.id)
+      .select()
+      .single();
+    
+    if (error) console.error('Error updating watched episode:', error);
+    return data;
+  } else {
+    const { data, error } = await supabase
+      .from('watched_episodes')
+      .insert({
+        user_id: session.session.user.id,
+        tv_id: parseInt(tvId),
+        tv_name: tvName,
+        season_number: seasonNumber,
+        episode_number: episodeNumber
+      })
+      .select()
+      .single();
+    
+    if (error) console.error('Error inserting watched episode:', error);
+    return data;
+  }
 };

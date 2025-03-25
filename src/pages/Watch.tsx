@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
@@ -7,6 +8,8 @@ import {
   getMovieRecommendations,
   getTVRecommendations,
   getTVSeasonDetails,
+  getWatchedEpisodes,
+  updateWatchedEpisode
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Badge } from '@/components/ui/badge';
@@ -14,10 +17,11 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Star, Calendar, Clock, Heart, List, LogIn } from 'lucide-react';
+import { Star, Calendar, Clock, Heart, List, LogIn, Bookmark, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -76,7 +80,6 @@ const Watch = () => {
     queryKey: ['favorite', validType, mediaId],
     queryFn: async () => {
       if (!user || !validType || !mediaId) return false;
-      console.log('Checking favorites for:', { mediaId, type: validType });
       const { data } = await supabase
         .from('favorites')
         .select('*')
@@ -92,7 +95,6 @@ const Watch = () => {
     queryKey: ['watchlist', validType, mediaId],
     queryFn: async () => {
       if (!user || !validType || !mediaId) return false;
-      console.log('Checking watchlist for:', { mediaId, type: validType });
       const { data } = await supabase
         .from('watchlist')
         .select('*')
@@ -102,6 +104,50 @@ const Watch = () => {
       return !!data;
     },
     enabled: !!user && !!validType && !!mediaId,
+  });
+
+  const { data: watchedEpisode, isLoading: watchedEpisodeLoading } = useQuery({
+    queryKey: ['watchedEpisode', mediaId],
+    queryFn: () => getWatchedEpisodes(id!),
+    enabled: !!user && validType === 'tv' && !!mediaId,
+  });
+
+  useEffect(() => {
+    if (watchedEpisode && !watchedEpisodeLoading && validType === 'tv') {
+      setSelectedSeason(watchedEpisode.season_number);
+      setSelectedEpisode(watchedEpisode.episode_number);
+    }
+  }, [watchedEpisode, watchedEpisodeLoading, validType]);
+
+  const markAsWatched = useMutation({
+    mutationFn: async () => {
+      if (!user) {
+        handleAuthRedirect();
+        return;
+      }
+      if (validType === 'tv' && details) {
+        return updateWatchedEpisode(
+          id!, 
+          selectedSeason, 
+          selectedEpisode, 
+          details.name
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchedEpisode', mediaId] });
+      toast({
+        title: "Progress updated",
+        description: `Marked S${selectedSeason}:E${selectedEpisode} as watched`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating progress",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const toggleFavorite = useMutation({
@@ -270,41 +316,119 @@ const Watch = () => {
             )}
           </div>
 
-          {type === 'tv' && (
-            <div className="flex gap-4 mb-4">
-              <Select
-                value={selectedSeason.toString()}
-                onValueChange={(value) => setSelectedSeason(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select season" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      Season {i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {type === 'tv' && user && (
+            <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
+              <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <Bookmark className="h-5 w-5 text-blue-400" />
+                  <h3 className="font-medium">Track Your Progress</h3>
+                </div>
+                
+                {watchedEpisode && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                      Last Watched: S{watchedEpisode.season_number}:E{watchedEpisode.episode_number}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(watchedEpisode.updated_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-              <Select
-                value={selectedEpisode.toString()}
-                onValueChange={(value) => setSelectedEpisode(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select episode" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      Episode {i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-4 mb-4">
+                <Select
+                  value={selectedSeason.toString()}
+                  onValueChange={(value) => setSelectedSeason(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select season" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Season {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={selectedEpisode.toString()}
+                  onValueChange={(value) => setSelectedEpisode(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select episode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Episode {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  variant="secondary" 
+                  className="bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+                  onClick={() => markAsWatched.mutate()}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark as Watched
+                </Button>
+              </div>
             </div>
           )}
+          
+          {type === 'tv' && !user && (
+            <Alert className="mb-4">
+              <AlertDescription>
+                Sign in to track which episodes you've watched
+                <Button variant="link" onClick={handleAuthRedirect} className="p-0 h-auto font-semibold ml-2">
+                  Sign in
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex gap-4 mb-4">
+            {type === 'tv' && (
+              <div className="flex gap-4">
+                <Select
+                  value={selectedSeason.toString()}
+                  onValueChange={(value) => setSelectedSeason(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select season" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Season {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={selectedEpisode.toString()}
+                  onValueChange={(value) => setSelectedEpisode(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select episode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Episode {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
 
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
             <iframe
