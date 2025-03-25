@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -117,7 +118,19 @@ export const getHarryPotterCollection = async () => {
   return response.data.parts;
 };
 
-export const getWatchedEpisodes = async (tvId: string) => {
+// Define the type for watched episodes
+interface WatchedEpisode {
+  id: string;
+  user_id: string;
+  tv_id: number;
+  tv_name: string;
+  season_number: number;
+  episode_number: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getWatchedEpisodes = async (tvId: string): Promise<WatchedEpisode | null> => {
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
   
@@ -132,10 +145,15 @@ export const getWatchedEpisodes = async (tvId: string) => {
     console.error('Error fetching watched episodes:', error);
   }
   
-  return data;
+  return data as WatchedEpisode | null;
 };
 
-export const updateWatchedEpisode = async (tvId: string, seasonNumber: number, episodeNumber: number, tvName: string) => {
+export const updateWatchedEpisode = async (
+  tvId: string, 
+  seasonNumber: number, 
+  episodeNumber: number, 
+  tvName: string
+): Promise<WatchedEpisode | null> => {
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
   
@@ -159,7 +177,7 @@ export const updateWatchedEpisode = async (tvId: string, seasonNumber: number, e
       .single();
     
     if (error) console.error('Error updating watched episode:', error);
-    return data;
+    return data as WatchedEpisode | null;
   } else {
     const { data, error } = await supabase
       .from('watched_episodes')
@@ -174,6 +192,6 @@ export const updateWatchedEpisode = async (tvId: string, seasonNumber: number, e
       .single();
     
     if (error) console.error('Error inserting watched episode:', error);
-    return data;
+    return data as WatchedEpisode | null;
   }
 };

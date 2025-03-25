@@ -392,44 +392,6 @@ const Watch = () => {
             </Alert>
           )}
 
-          <div className="flex gap-4 mb-4">
-            {type === 'tv' && (
-              <div className="flex gap-4">
-                <Select
-                  value={selectedSeason.toString()}
-                  onValueChange={(value) => setSelectedSeason(parseInt(value))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select season" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        Season {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={selectedEpisode.toString()}
-                  onValueChange={(value) => setSelectedEpisode(parseInt(value))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select episode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        Episode {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
             <iframe
               src={type === 'movie' 
