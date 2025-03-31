@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
@@ -395,8 +394,8 @@ const Watch = () => {
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
             <iframe
               src={type === 'movie' 
-                ? `https://vidbinge.dev/embed/movie/${id}`
-                : `https://vidbinge.dev/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`
+                ? `https://vidsrc.xyz/embed/movie/${id}`
+                : `https://vidsrc.xyz/embed/tv/${id}/${selectedSeason}-${selectedEpisode}`
               }
               className="w-full h-full"
               allowFullScreen
