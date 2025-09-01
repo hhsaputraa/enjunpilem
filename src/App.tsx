@@ -55,7 +55,7 @@ const Layout = () => {
             <Route path="/profile" element={<MobileProfile />} />
             <Route path="/movie/:id" element={<MobileMovieDetail />} />
             <Route path="/tv/:id" element={<MobileMovieDetail />} />
-            <Route path="/:type/:id" element={<MobileWatch />} />
+            <Route path="/watch/:type/:id" element={<MobileWatch />} />
             <Route path="/auth" element={<MobileAuth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

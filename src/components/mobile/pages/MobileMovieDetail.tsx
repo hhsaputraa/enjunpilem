@@ -111,8 +111,8 @@ export const MobileMovieDetail: React.FC = () => {
   const movie = movieDetails ? {
     ...formatContentForMobile(movieDetails),
     runtime: movieDetails.runtime || movieDetails.episode_run_time?.[0] || 0,
-    genres: movieDetails.genres?.map((g: any) => g.name) || [],
-    cast: credits?.cast?.slice(0, 10).map((actor: any) => ({
+    genres: movieDetails.genres?.map((g: { name: string }) => g.name) || [],
+    cast: credits?.cast?.slice(0, 10).map((actor: { id: number; name: string; character: string; profile_path?: string }) => ({
       id: actor.id.toString(),
       name: actor.name,
       character: actor.character,
@@ -128,7 +128,7 @@ export const MobileMovieDetail: React.FC = () => {
 
   const handlePlay = () => {
     // Navigate to watch page
-    navigate(`/${movieType}/${movieId}`);
+    navigate(`/watch/${movieType}/${movieId}`);
   };
 
   const handleShare = () => {
@@ -141,7 +141,7 @@ export const MobileMovieDetail: React.FC = () => {
     }
   };
 
-  const handleSimilarItemClick = (item: any) => {
+  const handleSimilarItemClick = (item: { type: 'movie' | 'tv'; id: string }) => {
     navigate(`/${item.type}/${item.id}`);
   };
 
@@ -324,7 +324,7 @@ export const MobileMovieDetail: React.FC = () => {
             <section className="space-y-4">
               <h2 className="text-xl font-bold">Pemeran</h2>
               <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-                {movie.cast.map((actor: any) => (
+                {movie.cast.map((actor: { id: string; name: string; character: string; profilePath?: string }) => (
                   <div key={actor.id} className="flex-shrink-0 text-center space-y-2 w-20">
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-muted mx-auto">
                       {actor.profilePath ? (
