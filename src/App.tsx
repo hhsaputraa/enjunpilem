@@ -3,7 +3,10 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useIsMobile } from "./hooks/use-mobile";
 import Navbar from "./components/Navbar";
+
+// Desktop Pages
 import Index from "./pages/Index";
 import Watch from "./pages/Watch";
 import Search from "./pages/Search";
@@ -18,16 +21,55 @@ import MoreCollection from "./pages/MoreCollection";
 import Profile from "./pages/Profile";
 import ItemMoreCollectionRouter from "./pages/ItemMoreCollectionRouter";
 
+// Mobile Pages
+import {
+  MobileHome,
+  MobileExplore,
+  MobileSearch,
+  MobileWatchlist,
+  MobileProfile,
+  MobileMovieDetail,
+  ToastProvider
+} from "./components/mobile";
+import { MobileWatch } from "./components/mobile/pages/MobileWatch";
+import { MobileAuth } from "./components/mobile/pages/MobileAuth";
+
 const queryClient = new QueryClient();
 
 const Layout = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <ToastProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<MobileHome />} />
+            <Route path="/explore" element={<MobileExplore />} />
+            <Route path="/search" element={<MobileSearch />} />
+            <Route path="/watchlist" element={<MobileWatchlist />} />
+            <Route path="/profile" element={<MobileProfile />} />
+            <Route path="/movie/:id" element={<MobileMovieDetail />} />
+            <Route path="/tv/:id" element={<MobileMovieDetail />} />
+            <Route path="/:type/:id" element={<MobileWatch />} />
+            <Route path="/auth" element={<MobileAuth />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </ToastProvider>
+    );
+  }
+
+  // Desktop Layout
   return (
     <TooltipProvider>
       {location.pathname !== "/" && <Navbar />}
       <main className={`${location.pathname === "/" ? "" : ""}`}>
-      <Toaster />
+        <Toaster />
         <Sonner />
         <Routes>
           <Route path="/" element={<Index />} />
