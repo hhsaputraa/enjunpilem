@@ -170,6 +170,39 @@ export type Database = {
         }
         Relationships: []
       }
+      watched_episodes: {
+        Row: {
+          created_at: string
+          episode_number: number
+          id: string
+          season_number: number
+          tv_id: number
+          tv_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_number: number
+          id?: string
+          season_number: number
+          tv_id: number
+          tv_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_number?: number
+          id?: string
+          season_number?: number
+          tv_id?: number
+          tv_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       watchlist: {
         Row: {
           added_at: string

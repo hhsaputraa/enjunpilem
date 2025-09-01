@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { getImageUrl } from '@/services/tmdb';
+import { getResponsiveImageUrl } from '@/services/tmdb';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LazyImage } from './LazyImage';
+import { useState } from 'react';
 
 interface MovieCardProps {
   id: number;
@@ -13,6 +13,7 @@ interface MovieCardProps {
   mediaType: 'movie' | 'tv';
   voteAverage?: number;
   releaseDate?: string;
+  priority?: boolean;
 }
 
 export const MovieCard = ({
@@ -22,8 +23,12 @@ export const MovieCard = ({
   overview,
   mediaType,
   voteAverage,
-  releaseDate
+  releaseDate,
+  priority = false
 }: MovieCardProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
   const getRatingColor = (rating: number) => {
     if (rating >= 8) return 'text-green-400 border-green-400/30 bg-green-500/20';
     if (rating >= 7) return 'text-yellow-400 border-yellow-400/30 bg-yellow-500/20';
@@ -35,13 +40,35 @@ export const MovieCard = ({
     <div className="group relative">
       <Link to={`/${mediaType}/${id}`} className="block">
         <div className="relative h-[330px] rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg hover:shadow-xl transition-all duration-300 hover-lift hover-scale">
-          {/* Optimized Image Container */}
-          <LazyImage
-            src={getImageUrl(posterPath)}
-            alt={title}
-            className="group-hover:scale-105 transition-transform duration-300"
-            placeholder="Loading..."
-          />
+          {/* Simple Image Container */}
+          <div className="relative h-full overflow-hidden">
+            {!imageError ? (
+              <>
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gray-800/50 animate-pulse flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                  </div>
+                )}
+                <img
+                  src={getResponsiveImageUrl(posterPath)}
+                  alt={title}
+                  className={`w-full h-full object-cover transition-all duration-300 ${
+                    imageLoaded ? 'opacity-100' : 'opacity-0'
+                  } group-hover:scale-105`}
+                  loading={priority ? 'eager' : 'lazy'}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                />
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                <div className="text-center text-gray-400">
+                  <div className="text-3xl mb-2">🎬</div>
+                  <div className="text-sm">No Image</div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Simplified Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

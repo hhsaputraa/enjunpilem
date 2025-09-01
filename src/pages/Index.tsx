@@ -74,7 +74,7 @@ const ContentRow = ({
               <div
                 key={item.id}
                 className="w-[220px] flex-shrink-0 animate-scale-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
                 <MovieCard
                   id={item.id}
@@ -84,6 +84,7 @@ const ContentRow = ({
                   mediaType={item.media_type || (item.first_air_date ? "tv" : "movie")}
                   voteAverage={item.vote_average}
                   releaseDate={item.release_date || item.first_air_date}
+                  priority={index < 4} // Priority untuk 4 gambar pertama
                 />
               </div>
             ))}
