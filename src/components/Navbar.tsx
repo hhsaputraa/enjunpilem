@@ -12,8 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -72,50 +70,64 @@ const Navbar = () => {
   }
 
   return (
-    <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
-      <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+    <header className={`border-b border-white/10 backdrop-blur-xl sticky top-0 z-50 transition-all duration-500 ${
+      scrolled
+        ? 'bg-black/80 shadow-2xl shadow-black/50'
+        : 'bg-black/60'
+    }`}>
+      {/* Glassmorphism overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-pink-500/5"></div>
+
+      <div className="relative max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link
             to="/"
-            className="text-3xl font-extrabold bg-gradient-to-r from-purple-500 to-pink-600 text-transparent bg-clip-text hover:scale-105 transition-transform duration-300"
+            className="text-3xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 text-transparent bg-clip-text hover:scale-110 transition-all duration-500 hover:drop-shadow-lg relative group"
           >
             EnjunPilem
+            <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors relative py-1 group">
-              Home
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          <nav className="hidden md:flex items-center gap-8">
+            <Link to="/" className="text-sm font-semibold hover:text-primary transition-all duration-300 relative py-2 px-3 rounded-lg group hover:bg-white/5">
+              <span className="relative z-10">Home</span>
+              <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-purple-500 group-hover:w-full group-hover:left-0 transition-all duration-500 rounded-full"></span>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
             <Link
               to="/navmovies"
-              className="text-sm font-medium hover:text-primary transition-colors relative py-1 group flex items-center gap-2"
+              className="text-sm font-semibold hover:text-primary transition-all duration-300 relative py-2 px-3 rounded-lg group hover:bg-white/5 flex items-center gap-2"
             >
-              <Film className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-              Movies
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              <Film className="w-4 h-4 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500" />
+              <span className="relative z-10">Movies</span>
+              <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-purple-500 group-hover:w-full group-hover:left-0 transition-all duration-500 rounded-full"></span>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
             <Link
               to="/navtvshows"
-              className="text-sm font-medium hover:text-primary transition-colors relative py-1 group flex items-center gap-2"
+              className="text-sm font-semibold hover:text-primary transition-all duration-300 relative py-2 px-3 rounded-lg group hover:bg-white/5 flex items-center gap-2"
             >
-              <Tv className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-              TV Shows
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              <Tv className="w-4 h-4 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500" />
+              <span className="relative z-10">TV Shows</span>
+              <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-purple-500 group-hover:w-full group-hover:left-0 transition-all duration-500 rounded-full"></span>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
             <Link
               to="/collections"
-              className="text-sm font-medium hover:text-primary transition-colors relative py-1 group"
+              className="text-sm font-semibold hover:text-primary transition-all duration-300 relative py-2 px-3 rounded-lg group hover:bg-white/5"
             >
-              Collections
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              <span className="relative z-10">📚 Collections</span>
+              <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-purple-500 group-hover:w-full group-hover:left-0 transition-all duration-500 rounded-full"></span>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </nav>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="hidden sm:block w-full max-w-xs">
-            <SearchBar />
+            <div className="relative">
+              <SearchBar />
+            </div>
           </div>
 
           {user ? (
@@ -123,68 +135,93 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-2 rounded-full hover:bg-primary/10 transition-colors p-1 pr-3"
+                  className="flex items-center gap-3 rounded-full hover:bg-white/10 transition-all duration-300 p-2 pr-4 border border-white/10 hover:border-white/20 backdrop-blur-sm group"
                 >
-                  <Avatar className="h-8 w-8 border-2 border-primary/20">
+                  <Avatar className="h-9 w-9 border-2 border-primary/30 group-hover:border-primary/50 transition-colors duration-300 ring-2 ring-white/10">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-primary/10 text-primary">{getUserInitials()}</AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary font-bold">
+                      {getUserInitials()}
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium hidden sm:inline-block">
-                    {user.email?.split("@")[0] || "User"}
-                  </span>
+                  <div className="hidden sm:block text-left">
+                    <div className="text-sm font-semibold text-white group-hover:text-primary transition-colors duration-300">
+                      {user.email?.split("@")[0] || "User"}
+                    </div>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 mt-1 animate-in fade-in-80 slide-in-from-top-5">
-                <div className="px-2 pt-1 pb-2">
-                  <p className="text-sm font-medium">{user.email}</p>
-                  <p className="text-xs text-muted-foreground">Logged in</p>
+              <DropdownMenuContent
+                align="end"
+                className="w-64 mt-2 bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl animate-in fade-in-80 slide-in-from-top-5 duration-300"
+              >
+                <div className="px-4 pt-3 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border-2 border-primary/30">
+                      <AvatarImage src={user.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary font-bold">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{user.email?.split("@")[0] || "User"}</p>
+                      <p className="text-xs text-gray-400">{user.email}</p>
+                      
+                    </div>
+                  </div>
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="hover:bg-primary/5 focus:bg-primary/5">
-                  <Link to="/profile" className="flex items-center cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>View Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal mt-1">
-                  My Lists
-                </DropdownMenuLabel>
-                <DropdownMenuItem asChild className="hover:bg-primary/5 focus:bg-primary/5">
-                  <Link to="/favorites" className="flex items-center cursor-pointer">
-                    <Heart className="mr-2 h-4 w-4" />
-                    <span>Favorites</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="hover:bg-primary/5 focus:bg-primary/5">
-                  <Link to="/watchlist" className="flex items-center cursor-pointer">
-                    <Clock className="mr-2 h-4 w-4" />
-                    <span>Watch Later</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="hover:bg-primary/5 focus:bg-primary/5">
-                  <Link to="/collections" className="flex items-center cursor-pointer">
-                    <List className="mr-2 h-4 w-4" />
-                    <span>My Collection</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive hover:bg-destructive/5 focus:bg-destructive/5"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
+
+                <div className="py-2">
+                  <DropdownMenuItem asChild className="hover:bg-white/5 focus:bg-white/5 mx-2 rounded-lg transition-colors duration-200">
+                    <Link to="/profile" className="flex items-center cursor-pointer px-3 py-2">
+                      <User className="mr-3 h-4 w-4 text-primary" />
+                      <span className="text-white">View Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </div>
+
+                <div className="px-4 py-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">My Lists</div>
+                </div>
+
+                <div className="pb-2">
+                  <DropdownMenuItem asChild className="hover:bg-white/5 focus:bg-white/5 mx-2 rounded-lg transition-colors duration-200">
+                    <Link to="/favorites" className="flex items-center cursor-pointer px-3 py-2">
+                      <Heart className="mr-3 h-4 w-4 text-red-400" />
+                      <span className="text-white">Favorites</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="hover:bg-white/5 focus:bg-white/5 mx-2 rounded-lg transition-colors duration-200">
+                    <Link to="/watchlist" className="flex items-center cursor-pointer px-3 py-2">
+                      <Clock className="mr-3 h-4 w-4 text-blue-400" />
+                      <span className="text-white">Watch Later</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="hover:bg-white/5 focus:bg-white/5 mx-2 rounded-lg transition-colors duration-200">
+                    <Link to="/collections" className="flex items-center cursor-pointer px-3 py-2">
+                      <List className="mr-3 h-4 w-4 text-purple-400" />
+                      <span className="text-white">My Collection</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </div>
+
+                <div className="border-t border-white/10 pt-2">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-400 hover:bg-red-500/10 focus:bg-red-500/10 mx-2 rounded-lg transition-colors duration-200"
+                  >
+                    <LogOut className="mr-3 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button
-              variant="secondary"
               onClick={() => navigate("/auth")}
-              className="flex items-center gap-2 rounded-full shadow-sm hover:shadow transition-all"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 px-6 py-2 border border-white/20"
             >
               <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Sign In</span>
+              <span className="hidden sm:inline-block font-semibold">✨ Sign In</span>
             </Button>
           )}
 

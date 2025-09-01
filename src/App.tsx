@@ -26,7 +26,7 @@ const Layout = () => {
   return (
     <TooltipProvider>
       {location.pathname !== "/" && <Navbar />}
-      <main className={`${location.pathname === "/" ? "" : "pt-16"}`}>
+      <main className={`${location.pathname === "/" ? "" : ""}`}>
       <Toaster />
         <Sonner />
         <Routes>
