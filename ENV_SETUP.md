@@ -8,6 +8,9 @@ This document explains how to set up environment variables for the EnjunPilem ap
 - `VITE_TMDB_API_KEY` - Your TMDB API key (required)
 - `VITE_TMDB_BASE_URL` - TMDB API base URL (optional, defaults to https://api.themoviedb.org/3)
 - `VITE_TMDB_IMAGE_BASE_URL` - TMDB image base URL (optional, defaults to https://image.tmdb.org/t/p)
+- `VITE_TMDB_ACCOUNT_ID` - Your TMDB account ID (required)
+- `VITE_TMDB_SESSION_ID` - TMDB v3 session ID (required if not using access token)
+- `VITE_TMDB_ACCESS_TOKEN` - TMDB v4 access token (alternative to session ID)
 
 ### Supabase Configuration
 - `VITE_SUPABASE_URL` - Your Supabase project URL (required)
@@ -47,6 +50,10 @@ cp .env.example .env
 ```env
 # TMDB API Configuration
 VITE_TMDB_API_KEY=your_actual_tmdb_api_key_here
+VITE_TMDB_ACCOUNT_ID=your_tmdb_account_id
+# Use either session ID (v3) or access token (v4)
+VITE_TMDB_SESSION_ID=your_tmdb_session_id
+VITE_TMDB_ACCESS_TOKEN=your_tmdb_access_token
 
 # Supabase Configuration
 VITE_SUPABASE_URL=your_actual_supabase_url_here
