@@ -6,6 +6,9 @@ interface EnvConfig {
     apiKey: string;
     baseUrl: string;
     imageBaseUrl: string;
+    accountId: string;
+    sessionId?: string;
+    accessToken?: string;
   };
   
   // Supabase Configuration
@@ -51,6 +54,9 @@ export const env: EnvConfig = {
     apiKey: getEnvVar('VITE_TMDB_API_KEY'),
     baseUrl: getEnvVar('VITE_TMDB_BASE_URL', 'https://api.themoviedb.org/3'),
     imageBaseUrl: getEnvVar('VITE_TMDB_IMAGE_BASE_URL', 'https://image.tmdb.org/t/p'),
+    accountId: getEnvVar('VITE_TMDB_ACCOUNT_ID'),
+    sessionId: getOptionalEnvVar('VITE_TMDB_SESSION_ID'),
+    accessToken: getOptionalEnvVar('VITE_TMDB_ACCESS_TOKEN'),
   },
   
   supabase: {
@@ -74,6 +80,7 @@ export const env: EnvConfig = {
 export const validateEnv = (): void => {
   const requiredVars = [
     'VITE_TMDB_API_KEY',
+    'VITE_TMDB_ACCOUNT_ID',
     'VITE_SUPABASE_URL',
     'VITE_SUPABASE_ANON_KEY',
   ];
@@ -86,6 +93,10 @@ export const validateEnv = (): void => {
     console.error('💡 You can use .env.example as a template.');
   } else {
     console.log('✅ All required environment variables are configured');
+  }
+
+  if (!import.meta.env['VITE_TMDB_SESSION_ID'] && !import.meta.env['VITE_TMDB_ACCESS_TOKEN']) {
+    console.warn('⚠️  TMDB session ID or access token is not configured. Some TMDB features may not work.');
   }
 };
 

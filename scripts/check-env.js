@@ -11,6 +11,7 @@ import path from 'path';
 // Required environment variables
 const REQUIRED_VARS = [
   'VITE_TMDB_API_KEY',
+  'VITE_TMDB_ACCOUNT_ID',
   'VITE_SUPABASE_URL',
   'VITE_SUPABASE_ANON_KEY'
 ];
@@ -19,6 +20,8 @@ const REQUIRED_VARS = [
 const OPTIONAL_VARS = {
   'VITE_TMDB_BASE_URL': 'https://api.themoviedb.org/3',
   'VITE_TMDB_IMAGE_BASE_URL': 'https://image.tmdb.org/t/p',
+  'VITE_TMDB_SESSION_ID': '',
+  'VITE_TMDB_ACCESS_TOKEN': '',
   'VITE_APP_NAME': 'EnjunPilem',
   'VITE_APP_VERSION': '2.0.0',
   'VITE_DEV_MODE': 'false',
@@ -108,6 +111,11 @@ function validateEnvironmentVariables() {
       log(`⚠️  ${varName}: using default (${defaultValue})`, 'yellow');
     }
   });
+
+  if (!envVars['VITE_TMDB_SESSION_ID'] && !envVars['VITE_TMDB_ACCESS_TOKEN']) {
+    log('\n⚠️  VITE_TMDB_SESSION_ID or VITE_TMDB_ACCESS_TOKEN is required for authenticated TMDB requests', 'yellow');
+    isValid = false;
+  }
   
   return isValid;
 }
