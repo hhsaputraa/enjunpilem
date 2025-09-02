@@ -39,7 +39,7 @@ export const MobileExplore: React.FC = () => {
   const categories = ['Umum', 'Premium', 'Berjuang', 'Isekai', 'Fantasi', 'Aksi'];
 
   const handleItemClick = (item: ExploreItem) => {
-    navigate(`/watch/${item.type}/${item.id}`);
+    navigate(`/${item.type}/${item.id}`);
   };
 
   const handleWatchlistToggle = (item: ExploreItem) => {

@@ -160,7 +160,13 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+			},
+			transitionDuration: {
+      '1000': '1000ms',
+    },
+    transitionTimingFunction: {
+      'in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+    },
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
