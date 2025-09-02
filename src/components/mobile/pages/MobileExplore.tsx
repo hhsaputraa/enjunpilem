@@ -1,235 +1,252 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '../MobileLayout';
-import { GenreChips, useGenreFilter } from '../GenreChips';
-import { PosterCard } from '../PosterCard';
-import { GridSkeleton } from '../Skeletons';
-import { LoadError } from '../ErrorState';
-import { NoSearchResults } from '../EmptyState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Filter, Grid, List } from 'lucide-react';
+import { Bookmark, BookmarkCheck, ArrowLeft } from 'lucide-react';
 import { useExploreContent } from '@/hooks/useMobileApi';
+import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
+import { GridSkeleton } from '../Skeletons';
+import { LoadError } from '../ErrorState';
 import { cn } from '@/lib/utils';
 
+// Interface untuk data yang sudah di-transform oleh formatContentForMobile
 interface ExploreItem {
   id: string;
   title: string;
   poster: string;
-  rating?: number;
-  year?: string;
+  backdrop: string;
+  rating: number;
+  year: string;
   type: 'movie' | 'tv';
-  isInWatchlist?: boolean;
+  overview: string;
+  isInWatchlist: boolean;
 }
-
-type SortOption = 'popularity' | 'rating' | 'release_date' | 'title';
-type ViewMode = 'grid' | 'list';
-
-const sortOptions = [
-  { value: 'popularity', label: 'Populer' },
-  { value: 'rating', label: 'Rating' },
-  { value: 'release_date', label: 'Terbaru' },
-  { value: 'title', label: 'Judul' },
-];
-
-// Mock data
-const mockItems: ExploreItem[] = Array.from({ length: 20 }, (_, i) => ({
-  id: `${i + 1}`,
-  title: `Movie Title ${i + 1}`,
-  poster: `https://image.tmdb.org/t/p/w500/placeholder${i + 1}.jpg`,
-  rating: 7.0 + Math.random() * 2,
-  year: `${2020 + Math.floor(Math.random() * 4)}`,
-  type: Math.random() > 0.5 ? 'movie' : 'tv',
-  isInWatchlist: Math.random() > 0.7,
-}));
 
 export const MobileExplore: React.FC = () => {
   const navigate = useNavigate();
-  const [sortBy, setSortBy] = useState<SortOption>('popularity');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [showFilters, setShowFilters] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('Umum');
+  const [isTabsSticky, setIsTabsSticky] = useState(false);
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
+  const { toggleWatchlist, isInWatchlist } = useMobileWatchlist();
 
-  const { selectedGenres, toggleGenre, hasActiveFilters, clearGenres } = useGenreFilter();
+  // Use real TMDB data (sudah di-transform oleh formatContentForMobile)
+  const { data: items = [], isLoading, error } = useExploreContent('all', undefined, 'popularity', 1);
 
-  // Use real TMDB data
-  const { data: items = [], isLoading, error } = useExploreContent('all', undefined, sortBy, 1);
+  // Categories untuk tab navigation
+  const categories = ['Umum', 'Premium', 'Berjuang', 'Isekai', 'Fantasi', 'Aksi'];
 
   const handleItemClick = (item: ExploreItem) => {
-    navigate(`/${item.type}/${item.id}`);
+    navigate(`/watch/${item.type}/${item.id}`);
   };
 
-  const handleWatchlistToggle = (id: string) => {
-    // TODO: Implement watchlist toggle with Supabase
-    console.log('Toggle watchlist for:', id);
+  const handleWatchlistToggle = (item: ExploreItem) => {
+    toggleWatchlist(item);
   };
 
-  const handleLoadMore = () => {
-    // TODO: Implement pagination
-    console.log('Load more items');
+  // Get first item for hero background
+  const heroItem = items[0];
+// GANTI useEffect LAMA ANDA DENGAN YANG INI
+React.useEffect(() => {
+  const sentinel = sentinelRef.current;
+  if (!sentinel) return;
+
+  const options = {
+    root: null,
+    threshold: 0,
+    rootMargin: '-56px 0px 0px 0px' 
   };
 
-  const handleSortChange = (newSort: SortOption) => {
-    setSortBy(newSort);
-    setShowFilters(false);
-  };
+  const observer = new IntersectionObserver(([entry]) => {
+    // TAMBAHKAN BARIS DEBUG PERTAMA DI SINI
+    console.log('OBSERVER FIRED!', { isIntersecting: entry.isIntersecting });
+    
+    setIsTabsSticky(!entry.isIntersecting);
+  }, options);
 
-  const handleClearFilters = () => {
-    clearGenres();
-    setSortBy('popularity');
+  observer.observe(sentinel);
+
+  return () => {
+    if (sentinel) {
+      observer.unobserve(sentinel);
+    }
   };
+}, []);
+
+// TAMBAHKAN BARIS DEBUG KEDUA DI SINI, SEBELUM RETURN
+console.log('COMPONENT RENDERED', { isTabsSticky });
+
 
   return (
     <PageLayout
-      title="Jelajahi"
+      title=""
       showBackButton={false}
-      actions={
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            className="h-9 w-9 rounded-full"
-          >
-            {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowFilters(!showFilters)}
-            className="h-9 w-9 rounded-full relative"
-          >
-            <Filter className="h-4 w-4" />
-            {hasActiveFilters && (
-              <div className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-            )}
-          </Button>
-        </div>
-      }
+      className="pb-0"
     >
-      <div className="space-y-4">
-        {/* Filters */}
-        <div className={cn(
-          "space-y-4 transition-all duration-300",
-          showFilters ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-        )}>
-          {/* Genre Filter */}
-          <GenreChips
-            genres={[]}
-            selectedGenres={selectedGenres}
-            onGenreToggle={toggleGenre}
-          />
+      <div className="relative -mx-4 -mt-4">
+        {/* Hero Section dengan Background Dinamis */}
+        <div className="relative h-64 bg-gradient-to-br from-teal-500 to-teal-600 overflow-hidden">
+          {/* Background Image - Dinamis dari item pertama */}
+          {heroItem && (
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-50"
+              style={{
+                backgroundImage: `url('${heroItem.backdrop || heroItem.poster}')`
+              }}
+            />
+          )}
 
-          {/* Sort & Clear */}
-          <div className="flex items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Urutkan:</span>
-              <div className="flex gap-1">
-                {sortOptions.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={sortBy === option.value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleSortChange(option.value as SortOption)}
-                    className="h-8 text-xs"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
+          {/* Overlay Content */}
+          <div className="relative z-10 flex flex-col justify-center items-center h-full text-white px-4">
+            <div className="text-4xl font-bold mb-2">Jelajahi </div>
+            <div className="text-lg font-medium mb-4">
+              Film & TV Series
             </div>
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearFilters}
-                className="text-xs text-muted-foreground"
-              >
-                Hapus Filter
-              </Button>
-            )}
+            
           </div>
         </div>
 
-        {/* Active Filters Summary */}
-        {hasActiveFilters && (
-          <div className="px-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Filter aktif:</span>
-              <Badge variant="secondary" className="text-xs">
-                {selectedGenres.length} genre
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {sortOptions.find(opt => opt.value === sortBy)?.label}
-              </Badge>
-            </div>
-          </div>
-        )}
+        {/* Category Tabs - Sticky */}
+        <div
+  // Placeholder & Pemicu
+  ref={sentinelRef}
+  style={{ height: '53px' }}
+>
+  <div
+    className={cn(
+      "w-full bg-background transition-all duration-300",
+      isTabsSticky
+        ? "fixed top-[0px] -left-4 right-0 z-20 shadow-md"
+        : "relative"
+    )}
+  >
+    {/* BARU: BAGIAN HEADER (Hanya muncul saat sticky) */}
+    {isTabsSticky && (
+      <div className="relative flex h-14 items-center px-2">
+        {/* Tombol Kembali di Kiri */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10  shrink-0 rounded-full"
+          onClick={() => navigate(-1)}
+          aria-label="Kembali"
+        >
+          <ArrowLeft className="h-5 w-5 ml-7" />
+        </Button>
 
-        {/* Content */}
+        {/* Judul di Tengah */}
+        <div className="flex-1 text-center text-lg font-semibold">
+          Jelajahi
+        </div>
+
+        {/* Elemen Kosong di Kanan (untuk menyeimbangkan tombol kembali agar judul pas di tengah) */}
+        <div className="h-10 w-10 shrink-0" />
+      </div>
+    )}
+
+    {/* BAGIAN TAB KATEGORI */}
+    <div
+      className={cn(
+        "flex overflow-x-auto scrollbar-hide border-b px-4 py-3",
+        // Saat sticky, tambahkan garis pemisah di atasnya
+        isTabsSticky && "border-t"
+      )}
+    >
+      {categories.map((category) => (
+        <button
+          key={category}
+          onClick={() => setActiveCategory(category)}
+          className={cn(
+            "flex-shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors",
+            activeCategory === category
+              ? "text-foreground border-primary"
+              : "text-muted-foreground border-transparent hover:text-foreground"
+          )}
+        >
+          {category}
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
+      
+      {/* Content List */}
+      <div className="px-4 py-4 space-y-4">
         {error ? (
           <LoadError onRetry={() => window.location.reload()} resource="konten" />
-        ) : items.length === 0 && !isLoading ? (
-          <NoSearchResults
-            query="filter yang dipilih"
-            onClear={handleClearFilters}
-          />
+        ) : isLoading ? (
+          <GridSkeleton itemCount={6} columns={2} />
         ) : (
-          <>
-            {/* Items Grid */}
-            <div className={cn(
-              "px-4",
-              viewMode === 'grid' 
-                ? "grid grid-cols-2 gap-4" 
-                : "space-y-4"
-            )}>
-              {items.map((item) => (
-                <PosterCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.title}
-                  poster={item.poster}
-                  rating={item.rating}
-                  year={item.year}
-                  type={item.type}
-                  isInWatchlist={item.isInWatchlist}
-                  size={viewMode === 'grid' ? 'md' : 'sm'}
-                  showOverlay={viewMode === 'grid'}
-                  onClick={() => handleItemClick(item)}
-                  onWatchlistToggle={handleWatchlistToggle}
-                  className={viewMode === 'list' ? 'flex-row' : ''}
+          items.map((item) => (
+            <div
+              key={item.id}
+              className="flex gap-3 p-3 rounded-lg bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+              onClick={() => handleItemClick(item)}
+            >
+              {/* Poster */}
+              <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden bg-muted">
+                <img
+                  src={item.poster}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder-poster.jpg';
+                  }}
                 />
-              ))}
-            </div>
+              </div>
 
-            {/* Loading More */}
-            {isLoading && (
-              <GridSkeleton itemCount={6} columns={viewMode === 'grid' ? 2 : 2} />
-            )}
+              {/* Content Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground mb-1 line-clamp-1">
+                  {item.title}
+                </h3>
 
-            {/* Load More Button - TODO: Implement pagination */}
-            {!isLoading && items.length > 0 && items.length >= 20 && (
-              <div className="px-4 pt-4">
+                {/* Rating and Year */}
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs px-2 py-0.5 h-auto">
+                    ⭐ {item.rating.toFixed(1)}
+                  </Badge>
+                  {item.year && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
+                      {item.year}
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
+                    {item.type === 'tv' ? 'TV Series' : 'Movie'}
+                  </Badge>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                  {item.overview}
+                </p>
+              </div>
+
+              {/* Bookmark Button */}
+              <div className="flex-shrink-0">
                 <Button
-                  onClick={handleLoadMore}
-                  variant="outline"
-                  className="w-full h-12"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWatchlistToggle(item);
+                  }}
                 >
-                  Muat Lebih Banyak
+                  {isInWatchlist(item.id) ? (
+                    <BookmarkCheck className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
-            )}
-
-            {/* End of Results */}
-            {items.length > 0 && items.length < 20 && (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                Menampilkan semua hasil
-              </div>
-            )}
-          </>
+            </div>
+          ))
         )}
+      </div>
       </div>
     </PageLayout>
   );

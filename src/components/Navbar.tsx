@@ -221,7 +221,7 @@ const Navbar = () => {
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 px-6 py-2 border border-white/20"
             >
               <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline-block font-semibold">Sign In</span>
+              <span className="hidden sm:inline-block font-semibold"> Sign In</span>
             </Button>
           )}
 

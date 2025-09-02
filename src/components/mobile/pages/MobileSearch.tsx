@@ -97,7 +97,7 @@ export const MobileSearch: React.FC = () => {
 
   return (
     <PageLayout
-      title="Cari"
+      title=""
       showBackButton={false}
     >
       <div className="space-y-4">

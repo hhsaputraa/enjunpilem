@@ -77,9 +77,7 @@ export const MobileHome: React.FC = () => {
           <div className="flex items-center justify-between px-4 py-3">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">E</span>
-              </div>
+              
               <span className="font-bold text-lg bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                 EnjunPilem
               </span>
@@ -95,15 +93,6 @@ export const MobileHome: React.FC = () => {
                 aria-label="Cari"
               >
                 <Search className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full relative"
-                aria-label="Notifikasi"
-              >
-                <Bell className="h-5 w-5" />
-                <div className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full"></div>
               </Button>
             </div>
           </div>

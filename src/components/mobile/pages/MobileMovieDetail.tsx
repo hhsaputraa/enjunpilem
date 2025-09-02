@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams,useLocation  } from 'react-router-dom';
 // Using regular img tag instead of next/image
 import { DetailLayout } from '../MobileLayout';
 import { CarouselRow } from '../CarouselRow';
@@ -96,11 +96,12 @@ const mockMovieDetail: MovieDetail = {
 export const MobileMovieDetail: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams();
+  const location = useLocation();
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const movieId = params.id as string;
-  const movieType = params.type as 'movie' | 'tv' || 'movie';
+  const movieType = location.pathname.startsWith('/tv/') ? 'tv' : 'movie';
 
   // Use real TMDB data
   const { data: movieDetails, isLoading, error } = useContentDetails(movieType, movieId);
