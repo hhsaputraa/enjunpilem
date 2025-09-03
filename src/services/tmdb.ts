@@ -10,7 +10,7 @@ const IMAGE_BASE_URL = tmdbConfig.imageBaseUrl;
 const ACCOUNT_ID = tmdbConfig.accountId;
 const SESSION_ID = tmdbConfig.sessionId;
 const ACCESS_TOKEN = tmdbConfig.accessToken;
-const V4_BASE_URL = 'https://api.themoviedb.org/4';
+const V4_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Cache for account lists to avoid repeated TMDB calls
 let accountListsCache: any[] | null = null;
@@ -181,7 +181,7 @@ export const getAiringTodayTVShows = async () => {
 };
 
 export const getEnjunTop = async () => {
-  const list = await findListBySlug('enjun-top');
+  const list = await findListBySlug('top-4');
   if (!list) return [];
   const { items } = await fetchListItems(list.id);
   return items;
@@ -194,11 +194,37 @@ export const getEnjunChoice = async (page: number = 1) => {
 };
 
 export const getIndiaAca = async () => {
-  const list = await findListBySlug('india-aca');
+  const list = await findListBySlug('india-aca-aca');
   if (!list) return [];
   const { items } = await fetchListItems(list.id);
   return items;
 };
+export const getOscarWon = async () => {
+  const list = await findListBySlug('oscar-won');
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id);
+  return items;
+};
+
+export const get250LetterBox = async () => {
+  const list = await findListBySlug('250-letterbox');
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id);
+  return items;
+}
+
+// Version with pagination support
+export const get250LetterBoxPaginated = async (page: number = 1) => {
+  const list = await findListBySlug('250-letterbox');
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
+}
+
+export const getOscarWonPaginated = async (page: number = 1) => {
+  const list = await findListBySlug('oscar-won');
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
+}
 
 export const getHarryPotterCollection = async () => {
   const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);

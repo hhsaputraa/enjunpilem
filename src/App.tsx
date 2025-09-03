@@ -20,6 +20,7 @@ import NavTVShows from "./pages/NavTVShows";
 import MoreCollection from "./pages/MoreCollection";
 import Profile from "./pages/Profile";
 import ItemMoreCollectionRouter from "./pages/ItemMoreCollectionRouter";
+import DetailListCollectionRouter from "./pages/DetailListCollectionRouter";
 
 // Mobile Pages
 import {
@@ -82,6 +83,7 @@ const Layout = () => {
           <Route path="/navmovies" element={<NavMovies />} />
           <Route path="/navtvshows" element={<NavTVShows />} />
           <Route path="/more-collection" element={<MoreCollection />} />
+          <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />

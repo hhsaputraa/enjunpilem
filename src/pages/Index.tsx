@@ -9,6 +9,9 @@ import {
   getEnjunChoice,
   getEnjunTop,
   getIndiaAca,
+  getOscarWon,
+  get250LetterBox,
+  get250LetterBoxPaginated,
 } from "@/services/tmdb"
 import IndexHeader from "./index-header"
 import { MovieCard } from "@/components/MovieCard"
@@ -223,6 +226,15 @@ const Index = () => {
     queryKey: ["indiaAca"],
     queryFn: getIndiaAca,
   })
+  const { data: oscarWon, isLoading: oscarWonLoading } = useQuery({
+    queryKey: ["oscarWon"],
+    queryFn: getOscarWon,
+  })
+
+  const { data: letterbox250, isLoading: letterbox250Loading } = useQuery({
+    queryKey: ["letterbox250"],
+    queryFn: get250LetterBox,
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
@@ -287,17 +299,28 @@ const Index = () => {
           items={enjunChoice?.items || []}
           isLoading={enjunLoading}
           showLoadMore={true}
-          loadMorePath="/more-collection"
+          loadMorePath="/detail-list-collection?queryKey=enjunChoice"
           icon={<Star className="h-6 w-6 text-yellow-500" />}
         />
 
         <ContentRow
-          title="India ACA - ACA nehi nehi"
-          items={indiaAca || []}
-          isLoading={indiaAcaLoading}
-          icon={<Flame className="h-6 w-6 text-orange-500" />}
+          title="Oscar Won"
+          items={oscarWon || []}
+          isLoading={oscarWonLoading}
+          showLoadMore
+          loadMorePath="/detail-list-collection?queryKey=oscarWon"
+          icon={<Trophy className="h-6 w-6 text-rose-500" />}
         />
 
+        <ContentRow
+          title="Top 250 Letterbox"
+          items={letterbox250 || []}
+          isLoading={letterbox250Loading}
+          showLoadMore
+          loadMorePath="/detail-list-collection?queryKey=letterbox250"
+          icon={<Flame className="h-6 w-6 text-red-500" />}
+        />
+        
         <ContentRow
           title="Top Rated Movies"
           items={topRatedMovies || []}

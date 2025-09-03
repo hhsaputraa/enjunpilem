@@ -142,18 +142,18 @@ export const PosterCard: React.FC<PosterCardProps> = ({
                 </div>
 
                 {/* Watchlist Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleWatchlistToggle}
-                  className="h-8 w-8 rounded-full bg-black/60 hover:bg-black/80"
-                >
-                  {inWatchlist ? (
-                    <Check className="h-4 w-4 text-green-400" />
-                  ) : (
-                    <Plus className="h-4 w-4 text-white" />
-                  )}
-                </Button>
+                  {/* <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleWatchlistToggle}
+                    className="h-8 w-8 rounded-full bg-black/60 hover:bg-black/80"
+                  >
+                    {inWatchlist ? (
+                      <Check className="h-4 w-4 text-green-400" />
+                    ) : (
+                      <Plus className="h-4 w-4 text-white" />
+                    )}
+                  </Button> */}
               </div>
             </div>
           </div>
