@@ -10,8 +10,9 @@ import {
   getTopRatedMovies,
   getNowPlayingMovies,
   getHarryPotterCollection,
-  getEnjunChoice,
 } from "@/services/tmdb"
+import { getMovieCollections, getCollectionsByIds } from "@/config/collections"
+import { AutoContentRow } from "@/components/AutoContentRow"
 import { MovieCard } from "@/components/MovieCard"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -250,6 +251,21 @@ const HeroSlider = ({ movies }: { movies: any[] }) => {
 }
 
 const NavMovies = () => {
+  // ✅ KONFIGURASI KOLEKSI YANG INGIN DITAMPILKAN
+  // Ganti array ini untuk mengatur koleksi mana yang muncul
+  const selectedCollectionIds = [
+    'letterbox250',    // Top 250 Letterbox
+    'oscarWon',        // Oscar Won Movies
+    'enjunChoice',     // Top Choice by Enjun
+    'nolanFilm',       // Christopher Nolan Collection
+    // 'marvelMovies',  // Uncomment untuk tambah Marvel
+    // 'top100Imdb',    // Uncomment untuk tambah IMDB Top 100
+  ];
+
+  // Ambil koleksi berdasarkan ID yang dipilih
+  const selectedCollections = getCollectionsByIds(selectedCollectionIds);
+
+  // Query untuk hero slider dan content row biasa
   const { data: popularMovies, isLoading: popularLoading } = useQuery({
     queryKey: ["popularMovies"],
     queryFn: getPopularMovies,
@@ -270,26 +286,22 @@ const NavMovies = () => {
     queryFn: getHarryPotterCollection,
   })
 
-  const { data: enjunChoice, isLoading: enjunLoading } = useQuery({
-    queryKey: ["enjunChoice"],
-    queryFn: () => getEnjunChoice(1),
-  })
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
         {/* Hero Section with Background Image Slider */}
         <HeroSlider movies={popularMovies || []} />
 
-        <ContentRow
-          title="Testing koleksi"
-          items={enjunChoice?.items || []}
-          isLoading={enjunLoading}
-          showLoadMore={true}
-          loadMorePath={`/item-more-collection?queryKey=enjunChoice`}
-          icon={<Star className="h-5 w-5" />}
-        />
+        {/* ✅ AUTO CONTENT ROWS DARI KONFIGURASI */}
+        {selectedCollections.map((collection) => (
+          <AutoContentRow
+            key={collection.id}
+            collection={collection}
+            showLoadMore={true}
+          />
+        ))}
 
+        {/* Content Rows Biasa (TMDB API langsung) */}
         <ContentRow
           title="Now Playing"
           items={nowPlayingMovies || []}

@@ -6,18 +6,15 @@ import {
   getTrending,
   getPopularMovies,
   getTopRatedMovies,
-  getEnjunChoice,
   getEnjunTop,
-  getIndiaAca,
-  getOscarWon,
-  get250LetterBox,
-  get250LetterBoxPaginated,
 } from "@/services/tmdb"
+import { COLLECTIONS } from "@/config/collections"
+import { AutoContentRow } from "@/components/AutoContentRow"
 import IndexHeader from "./index-header"
 import { MovieCard } from "@/components/MovieCard"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Film, Flame, Star, Trophy, TrendingUp } from "lucide-react"
+import { ChevronRight, Film, Star, Trophy, TrendingUp } from "lucide-react"
 
 const ContentRow = ({
   title,
@@ -212,28 +209,9 @@ const Index = () => {
     queryFn: getTopRatedMovies,
   })
 
-  const { data: enjunChoice, isLoading: enjunLoading } = useQuery({
-    queryKey: ["enjunChoice"],
-    queryFn: () => getEnjunChoice(1),
-  })
-
   const { data: enjunTop, isLoading: enjunTopLoading } = useQuery({
     queryKey: ["enjunTop"],
     queryFn: getEnjunTop,
-  })
-
-  const { data: indiaAca, isLoading: indiaAcaLoading } = useQuery({
-    queryKey: ["indiaAca"],
-    queryFn: getIndiaAca,
-  })
-  const { data: oscarWon, isLoading: oscarWonLoading } = useQuery({
-    queryKey: ["oscarWon"],
-    queryFn: getOscarWon,
-  })
-
-  const { data: letterbox250, isLoading: letterbox250Loading } = useQuery({
-    queryKey: ["letterbox250"],
-    queryFn: get250LetterBox,
   })
 
   return (
@@ -294,32 +272,14 @@ const Index = () => {
           icon={<Trophy className="h-6 w-6 text-amber-500" />}
         />
 
-        <ContentRow
-          title="Top Choice by Enjun"
-          items={enjunChoice?.items || []}
-          isLoading={enjunLoading}
-          showLoadMore={true}
-          loadMorePath="/detail-list-collection?queryKey=enjunChoice"
-          icon={<Star className="h-6 w-6 text-yellow-500" />}
-        />
-
-        <ContentRow
-          title="Oscar Won"
-          items={oscarWon || []}
-          isLoading={oscarWonLoading}
-          showLoadMore
-          loadMorePath="/detail-list-collection?queryKey=oscarWon"
-          icon={<Trophy className="h-6 w-6 text-rose-500" />}
-        />
-
-        <ContentRow
-          title="Top 250 Letterbox"
-          items={letterbox250 || []}
-          isLoading={letterbox250Loading}
-          showLoadMore
-          loadMorePath="/detail-list-collection?queryKey=letterbox250"
-          icon={<Flame className="h-6 w-6 text-red-500" />}
-        />
+        {/* ✅ OTOMATIS RENDER SEMUA KOLEKSI DARI KONFIGURASI */}
+        {COLLECTIONS.map((collection) => (
+          <AutoContentRow
+            key={collection.id}
+            collection={collection}
+            showLoadMore={true}
+          />
+        ))}
         
         <ContentRow
           title="Top Rated Movies"

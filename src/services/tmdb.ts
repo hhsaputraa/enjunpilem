@@ -226,6 +226,21 @@ export const getOscarWonPaginated = async (page: number = 1) => {
   return fetchListItems(list.id, page);
 }
 
+// ✅ GENERIC FUNCTION - Otomatis untuk semua koleksi baru!
+export const getCollectionBySlug = async (slug: string, page: number = 1) => {
+  const list = await findListBySlug(slug);
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
+}
+
+// Helper function untuk non-paginated (untuk preview di home)
+export const getCollectionBySlugPreview = async (slug: string) => {
+  const list = await findListBySlug(slug);
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id, 1);
+  return items;
+}
+
 export const getHarryPotterCollection = async () => {
   const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);
   return response.data.parts;
