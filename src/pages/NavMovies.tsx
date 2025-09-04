@@ -211,8 +211,6 @@ const HeroSlider = ({ movies }: { movies: any[] }) => {
             Discover the latest releases, popular films, and curated collections. From blockbusters to indie gems, find
             your next favorite movie.
           </p>
-
-          
         </div>
       </div>
 

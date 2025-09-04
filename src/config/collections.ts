@@ -27,7 +27,7 @@ export const COLLECTIONS: CollectionConfig[] = [
   },
   {
     id: 'letterbox250',
-    title: 'Top 250 Letterbox',
+    title: 'Top 250 Letterboxd',
     slug: '250-letterbox',
     icon: 'Flame',
     color: 'text-red-500',
