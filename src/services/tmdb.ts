@@ -1,8 +1,89 @@
-import axios from 'axios';
 
-const API_KEY = '7ade81ac5dcabfafe1963455e05c35b9';
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
+import axios from 'axios';
+import { supabase } from '@/integrations/supabase/client';
+import { tmdbConfig } from '@/config/env';
+
+// Use environment configuration
+const API_KEY = tmdbConfig.apiKey;
+const BASE_URL = tmdbConfig.baseUrl;
+const IMAGE_BASE_URL = tmdbConfig.imageBaseUrl;
+const ACCOUNT_ID = tmdbConfig.accountId;
+const SESSION_ID = tmdbConfig.sessionId;
+const ACCESS_TOKEN = tmdbConfig.accessToken;
+const V4_BASE_URL = 'https://api.themoviedb.org/3';
+
+// Cache for account lists to avoid repeated TMDB calls
+let accountListsCache: any[] | null = null;
+
+const slugify = (str: string) =>
+  str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+export const getAccountLists = async (): Promise<any[]> => {
+  if (accountListsCache) return accountListsCache;
+
+  try {
+    if (ACCESS_TOKEN) {
+      const response = await axios.get(
+        `${V4_BASE_URL}/account/${ACCOUNT_ID}/lists`,
+        {
+          headers: {
+            Authorization: `Bearer ${ACCESS_TOKEN}`,
+            'Content-Type': 'application/json;charset=utf-8',
+          },
+        }
+      );
+      accountListsCache = response.data.results;
+    } else if (SESSION_ID) {
+      const response = await axios.get(
+        `${BASE_URL}/account/${ACCOUNT_ID}/lists`,
+        {
+          params: {
+            api_key: API_KEY,
+            session_id: SESSION_ID,
+          },
+        }
+      );
+      accountListsCache = response.data.results;
+    } else {
+      throw new Error('TMDB session ID or access token must be provided');
+    }
+  } catch (error) {
+    console.error('Error fetching account lists:', error);
+    accountListsCache = [];
+  }
+
+  return accountListsCache;
+};
+
+const findListBySlug = async (slug: string) => {
+  const lists = await getAccountLists();
+  return lists.find((list: any) => list.slug === slug || slugify(list.name) === slug);
+};
+
+const fetchListItems = async (listId: string, page = 1) => {
+  try {
+    if (ACCESS_TOKEN) {
+      const response = await axios.get(`${V4_BASE_URL}/list/${listId}`, {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+        params: { page },
+      });
+      return {
+        items: response.data.results || response.data.items,
+        totalPages: response.data.total_pages,
+      };
+    }
+    const response = await axios.get(`${BASE_URL}/list/${listId}`, {
+      params: { api_key: API_KEY, page },
+    });
+    return { items: response.data.items, totalPages: response.data.total_pages };
+  } catch (error) {
+    console.error('Error fetching list items:', error);
+    return { items: [], totalPages: 0 };
+  }
+};
 
 export const getTrending = async () => {
   const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}`);
@@ -48,8 +129,19 @@ export const searchContent = async (query: string) => {
   return response.data.results;
 };
 
-export const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') => {
+export const getImageUrl = (path: string, size: 'w300' | 'w500' | 'original' = 'w500') => {
   if (!path) return '/placeholder.svg';
+  return `${IMAGE_BASE_URL}/${size}${path}`;
+};
+
+// Optimized image URL for different screen sizes
+export const getResponsiveImageUrl = (path: string) => {
+  if (!path) return '/placeholder.svg';
+
+  // Gunakan ukuran yang lebih kecil untuk mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const size = isMobile ? 'w300' : 'w500';
+
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
 
@@ -89,14 +181,145 @@ export const getAiringTodayTVShows = async () => {
 };
 
 export const getEnjunTop = async () => {
-  const response = await axios.get(`${BASE_URL}/list/8520113?api_key=${API_KEY}`);
-  return response.data.items;
+  const list = await findListBySlug('top-4');
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id);
+  return items;
 };
-export const getEnjunChoice = async () => {
-  const response = await axios.get(`${BASE_URL}/list/8520116?api_key=${API_KEY}`);
-  return response.data.items;
+
+export const getEnjunChoice = async (page: number = 1) => {
+  const list = await findListBySlug('enjun-choice');
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
 };
+
 export const getIndiaAca = async () => {
-  const response = await axios.get(`${BASE_URL}/list/8520117?api_key=${API_KEY}`);
-  return response.data.items;
+  const list = await findListBySlug('india-aca-aca');
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id);
+  return items;
+};
+export const getOscarWon = async () => {
+  const list = await findListBySlug('oscar-won');
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id);
+  return items;
+};
+
+export const get250LetterBox = async () => {
+  const list = await findListBySlug('250-letterbox');
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id);
+  return items;
+}
+
+// Version with pagination support
+export const get250LetterBoxPaginated = async (page: number = 1) => {
+  const list = await findListBySlug('250-letterbox');
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
+}
+
+export const getOscarWonPaginated = async (page: number = 1) => {
+  const list = await findListBySlug('oscar-won');
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
+}
+
+// ✅ GENERIC FUNCTION - Otomatis untuk semua koleksi baru!
+export const getCollectionBySlug = async (slug: string, page: number = 1) => {
+  const list = await findListBySlug(slug);
+  if (!list) return { items: [], totalPages: 0 };
+  return fetchListItems(list.id, page);
+}
+
+// Helper function untuk non-paginated (untuk preview di home)
+export const getCollectionBySlugPreview = async (slug: string) => {
+  const list = await findListBySlug(slug);
+  if (!list) return [];
+  const { items } = await fetchListItems(list.id, 1);
+  return items;
+}
+
+export const getHarryPotterCollection = async () => {
+  const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);
+  return response.data.parts;
+};
+
+// Define the type for watched episodes
+interface WatchedEpisode {
+  id: string;
+  user_id: string;
+  tv_id: number;
+  tv_name: string;
+  season_number: number;
+  episode_number: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const getWatchedEpisodes = async (tvId: string): Promise<WatchedEpisode | null> => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return null;
+  
+  const { data, error } = await supabase
+    .from('watched_episodes')
+    .select('*')
+    .eq('tv_id', parseInt(tvId))
+    .eq('user_id', session.session.user.id)
+    .single();
+  
+  if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') {
+    console.error('Error fetching watched episodes:', error);
+  }
+  
+  return data as WatchedEpisode | null;
+};
+
+export const updateWatchedEpisode = async (
+  tvId: string, 
+  seasonNumber: number, 
+  episodeNumber: number, 
+  tvName: string
+): Promise<WatchedEpisode | null> => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return null;
+  
+  const { data: existingRecord } = await supabase
+    .from('watched_episodes')
+    .select('*')
+    .eq('tv_id', parseInt(tvId))
+    .eq('user_id', session.session.user.id)
+    .single();
+  
+  if (existingRecord) {
+    const { data, error } = await supabase
+      .from('watched_episodes')
+      .update({
+        season_number: seasonNumber,
+        episode_number: episodeNumber,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingRecord.id)
+      .select()
+      .single();
+    
+    if (error) console.error('Error updating watched episode:', error);
+    return data as WatchedEpisode | null;
+  } else {
+    const { data, error } = await supabase
+      .from('watched_episodes')
+      .insert({
+        user_id: session.session.user.id,
+        tv_id: parseInt(tvId),
+        tv_name: tvName,
+        season_number: seasonNumber,
+        episode_number: episodeNumber
+      })
+      .select()
+      .single();
+    
+    if (error) console.error('Error inserting watched episode:', error);
+    return data as WatchedEpisode | null;
+  }
 };

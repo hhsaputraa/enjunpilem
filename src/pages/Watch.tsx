@@ -7,17 +7,19 @@ import {
   getMovieRecommendations,
   getTVRecommendations,
   getTVSeasonDetails,
+  getWatchedEpisodes,
+  updateWatchedEpisode
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Star, Calendar, Clock, Heart, List, LogIn } from 'lucide-react';
+import { Star, Calendar, Clock, Heart, List, LogIn, Bookmark, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
+import { EpisodeSelector } from '@/components/EpisodeSelector';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -76,7 +78,6 @@ const Watch = () => {
     queryKey: ['favorite', validType, mediaId],
     queryFn: async () => {
       if (!user || !validType || !mediaId) return false;
-      console.log('Checking favorites for:', { mediaId, type: validType });
       const { data } = await supabase
         .from('favorites')
         .select('*')
@@ -92,7 +93,6 @@ const Watch = () => {
     queryKey: ['watchlist', validType, mediaId],
     queryFn: async () => {
       if (!user || !validType || !mediaId) return false;
-      console.log('Checking watchlist for:', { mediaId, type: validType });
       const { data } = await supabase
         .from('watchlist')
         .select('*')
@@ -102,6 +102,50 @@ const Watch = () => {
       return !!data;
     },
     enabled: !!user && !!validType && !!mediaId,
+  });
+
+  const { data: watchedEpisode, isLoading: watchedEpisodeLoading } = useQuery({
+    queryKey: ['watchedEpisode', mediaId],
+    queryFn: () => getWatchedEpisodes(id!),
+    enabled: !!user && validType === 'tv' && !!mediaId,
+  });
+
+  useEffect(() => {
+    if (watchedEpisode && !watchedEpisodeLoading && validType === 'tv') {
+      setSelectedSeason(watchedEpisode.season_number);
+      setSelectedEpisode(watchedEpisode.episode_number);
+    }
+  }, [watchedEpisode, watchedEpisodeLoading, validType]);
+
+  const markAsWatched = useMutation({
+    mutationFn: async () => {
+      if (!user) {
+        handleAuthRedirect();
+        return;
+      }
+      if (validType === 'tv' && details) {
+        return updateWatchedEpisode(
+          id!, 
+          selectedSeason, 
+          selectedEpisode, 
+          details.name
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchedEpisode', mediaId] });
+      toast({
+        title: "Progress updated",
+        description: `Marked S${selectedSeason}:E${selectedEpisode} as watched`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error updating progress",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const toggleFavorite = useMutation({
@@ -221,17 +265,17 @@ const Watch = () => {
                     variant="outline"
                     size="icon"
                     onClick={() => toggleFavorite.mutate()}
-                    className={isFavorite ? "bg-pink-500/20" : ""}
+                    className={isFavorite ? "bg-rose-500/20" : ""}
                   >
-                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
+                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => toggleWatchlist.mutate()}
-                    className={isInWatchlist ? "bg-purple-500/20" : ""}
+                    className={isInWatchlist ? "bg-primary/20" : ""}
                   >
-                    <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
+                    <List className={`h-4 w-4 ${isInWatchlist ? "fill-primary text-primary" : ""}`} />
                   </Button>
                   <AddToCollectionDialog
                     mediaId={mediaId!}
@@ -270,47 +314,11 @@ const Watch = () => {
             )}
           </div>
 
-          {type === 'tv' && (
-            <div className="flex gap-4 mb-4">
-              <Select
-                value={selectedSeason.toString()}
-                onValueChange={(value) => setSelectedSeason(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select season" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      Season {i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={selectedEpisode.toString()}
-                onValueChange={(value) => setSelectedEpisode(parseInt(value))}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select episode" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>
-                      Episode {i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
+          <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black shadow-lg">
             <iframe
               src={type === 'movie' 
-                ? `https://vidbinge.dev/embed/movie/${id}`
-                : `https://vidbinge.dev/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`
+                ? `https://vidsrc.xyz/embed/movie/${id}`
+                : `https://vidsrc.xyz/embed/tv/${id}/${selectedSeason}-${selectedEpisode}`
               }
               className="w-full h-full"
               allowFullScreen
@@ -318,16 +326,59 @@ const Watch = () => {
             />
           </div>
 
-          <div className="prose prose-invert max-w-none mb-8">
-            <p className="text-lg">{details?.overview}</p>
-            {type === 'tv' && seasonDetails?.episodes?.[selectedEpisode - 1] && (
-              <div className="mt-4">
-                <h3 className="text-xl font-semibold mb-2">
-                  Episode {selectedEpisode}: {seasonDetails.episodes[selectedEpisode - 1].name}
-                </h3>
-                <p>{seasonDetails.episodes[selectedEpisode - 1].overview}</p>
-              </div>
-            )}
+          <div className="flex flex-col gap-6 mb-8">
+             <div className="prose prose-invert max-w-none">
+                <p className="text-lg leading-relaxed text-muted-foreground">{details?.overview}</p>
+             </div>
+
+             {type === 'tv' && (
+                <div className="space-y-6">
+                   {user && (
+                     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                           <Bookmark className="h-5 w-5 text-primary" />
+                           <div className="flex flex-col">
+                              <span className="font-medium">Track Progress</span>
+                              {watchedEpisode && (
+                                <span className="text-xs text-muted-foreground">
+                                   Last watched: S{watchedEpisode.season_number} E{watchedEpisode.episode_number}
+                                </span>
+                              )}
+                           </div>
+                        </div>
+                        <Button 
+                          onClick={() => markAsWatched.mutate()}
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Mark S{selectedSeason}:E{selectedEpisode} Watched
+                        </Button>
+                     </div>
+                   )}
+
+                   <div className="bg-card/50 rounded-xl p-1">
+                      <EpisodeSelector 
+                        seasons={details?.seasons?.length > 0 ? details.seasons : Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => ({
+                            id: i,
+                            name: `Season ${i + 1}`,
+                            season_number: i + 1,
+                            episode_count: 0,
+                            poster_path: '',
+                            overview: '',
+                            air_date: '',
+                            vote_average: 0
+                        }))}
+                        selectedSeason={selectedSeason}
+                        onSeasonChange={setSelectedSeason}
+                        episodes={seasonDetails?.episodes || []}
+                        selectedEpisode={selectedEpisode}
+                        onEpisodeChange={setSelectedEpisode}
+                        isLoading={seasonLoading}
+                      />
+                   </div>
+                </div>
+             )}
           </div>
 
           {!recommendationsLoading && recommendations?.length > 0 && (
@@ -335,7 +386,7 @@ const Watch = () => {
               <h2 className="text-2xl font-semibold mb-4">More Like This</h2>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex space-x-4">
-                  {recommendations.map((item: any) => (
+                  {recommendations.map((item: any, index: number) => (
                     <div key={item.id} className="w-[200px] flex-shrink-0">
                       <MovieCard
                         id={item.id}
@@ -345,6 +396,7 @@ const Watch = () => {
                         mediaType={type as 'movie' | 'tv'}
                         voteAverage={item.vote_average}
                         releaseDate={item.release_date || item.first_air_date}
+                        priority={index < 3} // Priority untuk 3 gambar pertama
                       />
                     </div>
                   ))}

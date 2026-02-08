@@ -66,18 +66,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_shared: boolean | null
           name: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          is_shared?: boolean | null
           name: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          is_shared?: boolean | null
           name?: string
           user_id?: string | null
         }
@@ -164,6 +167,39 @@ export type Database = {
           id?: string
           username?: string | null
           watchlist_count?: number | null
+        }
+        Relationships: []
+      }
+      watched_episodes: {
+        Row: {
+          created_at: string
+          episode_number: number
+          id: string
+          season_number: number
+          tv_id: number
+          tv_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_number: number
+          id?: string
+          season_number: number
+          tv_id: number
+          tv_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_number?: number
+          id?: string
+          season_number?: number
+          tv_id?: number
+          tv_name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
