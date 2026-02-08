@@ -52,46 +52,6 @@ interface MovieDetail {
   }>;
 }
 
-// Mock data
-const mockMovieDetail: MovieDetail = {
-  id: '1',
-  title: 'Spider-Man: No Way Home',
-  poster: 'https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',
-  backdrop: 'https://image.tmdb.org/t/p/w1280/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg',
-  overview: 'Peter Parker is unmasked and no longer able to separate his normal life from the high-stakes of being a super-hero. When he asks for help from Doctor Strange the stakes become even more dangerous, forcing him to discover what it truly means to be Spider-Man.',
-  rating: 8.4,
-  year: '2021',
-  runtime: 148,
-  genres: ['Action', 'Adventure', 'Science Fiction'],
-  type: 'movie',
-  isInWatchlist: false,
-  cast: [
-    {
-      id: '1',
-      name: 'Tom Holland',
-      character: 'Peter Parker / Spider-Man',
-      profilePath: 'https://image.tmdb.org/t/p/w185/2qhIDp44cAqP2clOgt2afQI07X8.jpg',
-    },
-    {
-      id: '2',
-      name: 'Zendaya',
-      character: 'MJ',
-      profilePath: 'https://image.tmdb.org/t/p/w185/kg8ywFjQhCJCJJJJJJJJJJJJJJJ.jpg',
-    },
-    // Add more cast members...
-  ],
-  similar: [
-    {
-      id: '2',
-      title: 'Spider-Man: Far From Home',
-      poster: 'https://image.tmdb.org/t/p/w500/4q2NNj4S5dG2RLF9CpXsej7yXl.jpg',
-      rating: 7.5,
-      year: '2019',
-      type: 'movie',
-    },
-    // Add more similar movies...
-  ],
-};
 
 export const MobileMovieDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -201,23 +161,7 @@ export const MobileMovieDetail: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleShare}
-                className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60"
-              >
-                <Share className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
+            
           </div>
 
           {/* Movie Info */}
@@ -278,12 +222,7 @@ export const MobileMovieDetail: React.FC = () => {
                 )}
               </Button>
               
-              <Button
-                variant="outline"
-                className="h-12 px-4 bg-black/40 backdrop-blur-sm border-white/30 text-white hover:bg-white/10 rounded-xl"
-              >
-                <Download className="w-5 h-5" />
-              </Button>
+              
             </div>
           </div>
 

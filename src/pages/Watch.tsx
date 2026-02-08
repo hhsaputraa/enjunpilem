@@ -14,13 +14,12 @@ import { MovieCard } from '@/components/MovieCard';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Star, Calendar, Clock, Heart, List, LogIn, Bookmark, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { EpisodeSelector } from '@/components/EpisodeSelector';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -315,83 +314,7 @@ const Watch = () => {
             )}
           </div>
 
-          {type === 'tv' && user && (
-            <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
-              <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Bookmark className="h-5 w-5 text-blue-400" />
-                  <h3 className="font-medium">Track Your Progress</h3>
-                </div>
-                
-                {watchedEpisode && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                      Last Watched: S{watchedEpisode.season_number}:E{watchedEpisode.episode_number}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(watchedEpisode.updated_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-4 mb-4">
-                <Select
-                  value={selectedSeason.toString()}
-                  onValueChange={(value) => setSelectedSeason(parseInt(value))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select season" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        Season {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={selectedEpisode.toString()}
-                  onValueChange={(value) => setSelectedEpisode(parseInt(value))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select episode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: seasonDetails?.episodes?.length || 0 }, (_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        Episode {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  variant="secondary" 
-                  className="bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
-                  onClick={() => markAsWatched.mutate()}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Mark as Watched
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          {type === 'tv' && !user && (
-            <Alert className="mb-4">
-              <AlertDescription>
-                Sign in to track which episodes you've watched
-                <Button variant="link" onClick={handleAuthRedirect} className="p-0 h-auto font-semibold ml-2">
-                  Sign in
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
+          <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black shadow-lg">
             <iframe
               src={type === 'movie' 
                 ? `https://vidsrc.xyz/embed/movie/${id}`
@@ -403,16 +326,59 @@ const Watch = () => {
             />
           </div>
 
-          <div className="prose prose-invert max-w-none mb-8">
-            <p className="text-lg">{details?.overview}</p>
-            {type === 'tv' && seasonDetails?.episodes?.[selectedEpisode - 1] && (
-              <div className="mt-4">
-                <h3 className="text-xl font-semibold mb-2">
-                  Episode {selectedEpisode}: {seasonDetails.episodes[selectedEpisode - 1].name}
-                </h3>
-                <p>{seasonDetails.episodes[selectedEpisode - 1].overview}</p>
-              </div>
-            )}
+          <div className="flex flex-col gap-6 mb-8">
+             <div className="prose prose-invert max-w-none">
+                <p className="text-lg leading-relaxed text-muted-foreground">{details?.overview}</p>
+             </div>
+
+             {type === 'tv' && (
+                <div className="space-y-6">
+                   {user && (
+                     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                           <Bookmark className="h-5 w-5 text-primary" />
+                           <div className="flex flex-col">
+                              <span className="font-medium">Track Progress</span>
+                              {watchedEpisode && (
+                                <span className="text-xs text-muted-foreground">
+                                   Last watched: S{watchedEpisode.season_number} E{watchedEpisode.episode_number}
+                                </span>
+                              )}
+                           </div>
+                        </div>
+                        <Button 
+                          onClick={() => markAsWatched.mutate()}
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Mark S{selectedSeason}:E{selectedEpisode} Watched
+                        </Button>
+                     </div>
+                   )}
+
+                   <div className="bg-card rounded-xl border shadow-sm p-1">
+                      <EpisodeSelector 
+                        seasons={details?.seasons?.length > 0 ? details.seasons : Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => ({
+                            id: i,
+                            name: `Season ${i + 1}`,
+                            season_number: i + 1,
+                            episode_count: 0,
+                            poster_path: '',
+                            overview: '',
+                            air_date: '',
+                            vote_average: 0
+                        }))}
+                        selectedSeason={selectedSeason}
+                        onSeasonChange={setSelectedSeason}
+                        episodes={seasonDetails?.episodes || []}
+                        selectedEpisode={selectedEpisode}
+                        onEpisodeChange={setSelectedEpisode}
+                        isLoading={seasonLoading}
+                      />
+                   </div>
+                </div>
+             )}
           </div>
 
           {!recommendationsLoading && recommendations?.length > 0 && (

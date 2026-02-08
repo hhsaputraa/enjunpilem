@@ -10,8 +10,8 @@ import { SearchError } from '../ErrorState';
 import { NoSearchResults } from '../EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Clock, X } from 'lucide-react';
-import { useSearch as useSearchAPI, transformTMDBData } from '@/hooks/useMobileApi';
+import { TrendingUp, Clock, X, RefreshCw } from 'lucide-react';
+import { useSearch as useSearchAPI, useTrending, transformTMDBData } from '@/hooks/useMobileApi';
 import { cn } from '@/lib/utils';
 
 interface SearchResult {
@@ -25,8 +25,8 @@ interface SearchResult {
   isInWatchlist?: boolean;
 }
 
-// Mock trending searches
-const trendingSearches = [
+// Fallback trending searches (jika API gagal)
+const fallbackTrendingSearches = [
   'Spider-Man',
   'The Batman',
   'Stranger Things',
@@ -58,8 +58,30 @@ export const MobileSearch: React.FC = () => {
   // Use real TMDB search API
   const { data: searchResults, isLoading, error } = useSearchAPI(query, query.length > 2);
 
+  // Use trending data for dynamic trending searches
+  const { data: trendingData, isLoading: trendingLoading } = useTrending();
+
   // Transform TMDB data for mobile
   const results = searchResults ? transformTMDBData(searchResults) : [];
+
+  // Extract trending titles for search suggestions
+  const trendingSearches = React.useMemo(() => {
+    if (trendingData && trendingData.length > 0) {
+      return trendingData
+        .slice(0, 8) // Ambil 8 item trending teratas
+        .map((item: any) => ({
+          title: item.title || item.name,
+          type: item.media_type || (item.title ? 'movie' : 'tv'),
+          emoji: item.media_type === 'movie' || item.title ? '🎬' : '📺'
+        }))
+        .filter((item: any) => item.title); // Filter out undefined/null titles
+    }
+    return fallbackTrendingSearches.map(title => ({
+      title,
+      type: 'mixed',
+      emoji: '🔥'
+    }));
+  }, [trendingData]);
 
   useEffect(() => {
     if (query.trim() && query.length > 2) {
@@ -118,22 +140,57 @@ export const MobileSearch: React.FC = () => {
           <div className="space-y-6">
             {/* Trending Searches */}
             <section className="px-4">
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Sedang Tren
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {trendingSearches.map((term, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleTrendingClick(term)}
-                    className="h-8 text-sm bg-secondary/50 hover:bg-secondary"
-                  >
-                    {term}
-                  </Button>
-                ))}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Sedang Tren
+                  {trendingLoading && (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  )}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                  disabled={trendingLoading}
+                >
+                  <RefreshCw className={cn("h-3 w-3", trendingLoading && "animate-spin")} />
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {trendingLoading ? (
+                    // Loading skeleton untuk trending searches
+                    Array.from({ length: 8 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-8 bg-secondary/50 rounded-md animate-pulse"
+                        style={{ width: `${60 + Math.random() * 40}px` }}
+                      />
+                    ))
+                  ) : (
+                    trendingSearches.map((item: any, index: number) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTrendingClick(item.title)}
+                        className="h-8 text-sm bg-secondary/50 hover:bg-secondary transition-colors flex items-center gap-1.5 px-3"
+                      >
+                        <span className="text-xs">{item.emoji}</span>
+                        <span className="truncate max-w-[120px]">{item.title}</span>
+                      </Button>
+                    ))
+                  )}
+                </div>
+
+                {/* Info update terakhir */}
+                {!trendingLoading && trendingData && (
+                  <p className="text-xs text-muted-foreground">
+                    Diperbarui berdasarkan trending TMDB hari ini
+                  </p>
+                )}
               </div>
             </section>
 

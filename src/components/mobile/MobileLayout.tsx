@@ -94,7 +94,7 @@ export const DetailLayout: React.FC<{
   <MobileLayout
     showHeader={false}
     showMiniPlayer={showMiniPlayer}
-    contentClassName="pb-0"
+    contentClassName="pb-safe-bottom"
   >
     {children}
   </MobileLayout>
