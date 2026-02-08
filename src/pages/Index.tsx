@@ -41,7 +41,7 @@ const ContentRow = ({
           <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
             {title}
           </h2>
-          <div className="h-1 w-16 bg-gradient-to-r from-primary to-purple-500 rounded-full mt-1"></div>
+          <div className="h-1 w-16 bg-gradient-to-r from-primary to-cyan-400 rounded-full mt-1"></div>
         </div>
       </div>
       {showLoadMore && loadMorePath && (
@@ -93,7 +93,7 @@ const ContentRow = ({
                 <Link to={loadMorePath} className="group">
                   <Button
                     variant="outline"
-                    className="h-32 w-44 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-gradient-to-br from-primary/5 to-purple-500/5 hover:from-primary/10 hover:to-purple-500/10 transition-all duration-500 group-hover:scale-105 group-hover:shadow-xl group-hover:shadow-primary/20 backdrop-blur-sm"
+                    className="h-32 w-44 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-gradient-to-br from-primary/5 to-cyan-500/5 hover:from-primary/10 hover:to-cyan-500/10 transition-all duration-500 group-hover:scale-105 group-hover:shadow-xl group-hover:shadow-primary/20 backdrop-blur-sm"
                   >
                     <div className="p-3 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
                       <ChevronRight className="h-6 w-6 text-primary group-hover:translate-x-1 transition-transform duration-300" />
@@ -133,7 +133,7 @@ const HeroSection = ({ trending }: { trending: any[] }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-indigo-900 to-pink-900">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-900 via-sky-900 to-blue-900">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         </div>
       )}
@@ -142,7 +142,7 @@ const HeroSection = ({ trending }: { trending: any[] }) => {
         <div className="max-w-3xl animate-fade-in">
           {/* Enhanced Badges */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <span className="bg-gradient-to-r from-primary to-purple-600 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg backdrop-blur-sm border border-white/20">
+            <span className="bg-gradient-to-r from-primary to-cyan-600 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg backdrop-blur-sm border border-white/20">
               {featuredItem.media_type === "tv" ? "📺 TV Series" : "🎬 Movie"}
             </span>
             {featuredItem.vote_average && (
@@ -172,7 +172,7 @@ const HeroSection = ({ trending }: { trending: any[] }) => {
           {/* Enhanced Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link to={`/${featuredItem.media_type || "movie"}/${featuredItem.id}`}>
-              <Button className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-white/20 backdrop-blur-sm">
+              <Button className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 text-base sm:text-lg font-semibold bg-gradient-to-r from-primary to-cyan-600 hover:from-primary/90 hover:to-cyan-600/90 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-white/20 backdrop-blur-sm">
                 Watch Now
               </Button>
             </Link>
@@ -242,7 +242,7 @@ const Index = () => {
           </div>
         </div>
       </header> */}
-      <IndexHeader />
+
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!trendingLoading && trending && trending.length > 0 && <HeroSection trending={trending} />}
@@ -293,18 +293,18 @@ const Index = () => {
 
       <footer className="relative border-t border-white/10 mt-20 py-16 bg-gradient-to-b from-black/50 to-black/80 backdrop-blur-sm overflow-hidden">
         {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-pink-500/5"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-blue-500/5"></div>
         <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl"></div>
 
         <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-sm border border-white/10">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-cyan-500/20 backdrop-blur-sm border border-white/10">
                   <div className="text-2xl">🎬</div>
                 </div>
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 text-transparent bg-clip-text">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600 text-transparent bg-clip-text">
                   EnjunPilem
                 </h3>
               </div>

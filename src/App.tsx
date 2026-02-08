@@ -68,7 +68,7 @@ const Layout = () => {
   // Desktop Layout
   return (
     <TooltipProvider>
-      {location.pathname !== "/" && <Navbar />}
+      <Navbar />
       <main className={`${location.pathname === "/" ? "" : ""}`}>
         <Toaster />
         <Sonner />

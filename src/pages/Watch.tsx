@@ -265,17 +265,17 @@ const Watch = () => {
                     variant="outline"
                     size="icon"
                     onClick={() => toggleFavorite.mutate()}
-                    className={isFavorite ? "bg-pink-500/20" : ""}
+                    className={isFavorite ? "bg-rose-500/20" : ""}
                   >
-                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-pink-500 text-pink-500" : ""}`} />
+                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => toggleWatchlist.mutate()}
-                    className={isInWatchlist ? "bg-purple-500/20" : ""}
+                    className={isInWatchlist ? "bg-primary/20" : ""}
                   >
-                    <List className={`h-4 w-4 ${isInWatchlist ? "fill-purple-500 text-purple-500" : ""}`} />
+                    <List className={`h-4 w-4 ${isInWatchlist ? "fill-primary text-primary" : ""}`} />
                   </Button>
                   <AddToCollectionDialog
                     mediaId={mediaId!}
@@ -357,7 +357,7 @@ const Watch = () => {
                      </div>
                    )}
 
-                   <div className="bg-card rounded-xl border shadow-sm p-1">
+                   <div className="bg-card/50 rounded-xl p-1">
                       <EpisodeSelector 
                         seasons={details?.seasons?.length > 0 ? details.seasons : Array.from({ length: details?.number_of_seasons || 0 }, (_, i) => ({
                             id: i,

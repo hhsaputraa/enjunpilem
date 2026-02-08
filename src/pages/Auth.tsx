@@ -136,13 +136,14 @@ const Auth = () => {
 
       <Link
         to="/"
-        className="mb-8 text-3xl font-extrabold bg-gradient-to-r from-purple-500 to-pink-600 text-transparent bg-clip-text hover:scale-105 transition-transform duration-300"
+        className="mb-8 text-3xl font-extrabold bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600 text-transparent bg-clip-text hover:scale-105 transition-transform duration-300"
       >
         EnjunPilem
       </Link>
 
       <Card className="w-full max-w-md border-border/60 shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600" />
+
 
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2">
@@ -221,7 +222,7 @@ const Auth = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition-all duration-300"
                   disabled={loading}
                 >
                   {loading ? (
@@ -308,7 +309,7 @@ const Auth = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition-all duration-300"
                   disabled={loading}
                 >
                   {loading ? (
