@@ -1,0 +1,93 @@
+1. Tambahkan getNolanFilm ke API Mapping
+Di ItemMoreCollectionRouter.tsx, tambahkan getNolanFilm ke daftar API yang tersedia.
+
+📌 File: ItemMoreCollectionRouter.tsx
+
+import { useSearchParams } from 'react-router-dom';
+import ItemMoreCollection from '@/components/ItemMoreCollection';
+import { getEnjunChoice, getPopularMovies, getTopRatedMovies, getNolanFilm } from '@/services/tmdb';
+
+const apiMapping: Record<string, (page: number) => Promise<any>> = {
+  enjunChoice: getEnjunChoice,
+  popularMovies: getPopularMovies,
+  topRatedMovies: getTopRatedMovies,
+  nolanFilm: getNolanFilm, // ✅ Tambahkan API baru di sini
+};
+
+const ItemMoreCollectionRouter = () => {
+  const [searchParams] = useSearchParams();
+  const queryKey = searchParams.get("queryKey") || "enjunChoice";
+  const queryFn = apiMapping[queryKey] || getEnjunChoice;
+
+  return <ItemMoreCollection title="More Collection" queryKey={queryKey} queryFn={queryFn} />;
+};
+
+export default ItemMoreCollectionRouter;
+2. Tambahkan Load More di NavMovies.tsx
+Di NavMovies.tsx, tambahkan "Film Christopher Nolan" ke dalam ContentRow, lalu buat tombol Load More yang mengarahkan ke ItemMoreCollection.
+
+📌 File: NavMovies.tsx
+<ContentRow 
+  title="Christopher Nolan Collection" 
+  items={nolanFilm?.items || []} 
+  isLoading={nolanLoading}
+  showLoadMore={true}
+  loadMorePath={`/item-more-collection?queryKey=nolanFilm`} // ✅ Arahkan ke ItemMoreCollection
+/>
+3. Pastikan API Dipanggil di NavMovies.tsx
+Tambahkan pemanggilan API Nolan Films di NavMovies.tsx.
+
+📌 File: NavMovies.tsx
+
+const { data: nolanFilm, isLoading: nolanLoading } = useQuery({
+  queryKey: ['nolanFilm'],
+  queryFn: getNolanFilm,
+});
+4. Coba di Browser 🔥
+Sekarang, saat klik Load More di Christopher Nolan Collection, kamu akan diarahkan ke halaman ItemMoreCollection yang menampilkan semua film Nolan dengan pagination.
+
+✅ Fleksibel – Bisa ditambahkan API lain di masa depan.
+✅ Mudah digunakan – Cukup tambahkan ke apiMapping dan ContentRow.
+✅ Pagination sudah otomatis di ItemMoreCollection. 🚀
+
+Kalau ada pertanyaan atau error, kasih tahu aja! 😎
+
+
+
+
+
+
+You said:
+muncul diurl nya gini http://localhost:8080/item-more-collection?queryKey=enjunChoice
+ChatGPT said:
+Ya, itu sudah benar! URL seperti ini:
+http://localhost:8080/item-more-collection?queryKey=enjunChoice
+berarti sistem sudah bekerja sesuai harapan.
+
+🔍 Apa yang Terjadi?
+Ketika klik Load More, kita mengarahkan pengguna ke halaman ItemMoreCollection dengan queryKey yang menunjukkan API yang digunakan.
+
+Contoh:
+
+?queryKey=enjunChoice → Menampilkan Enjun Choice
+
+?queryKey=nolanFilm → Menampilkan Film Nolan
+
+?queryKey=popularMovies → Menampilkan Film Populer
+
+📌 Apa yang Perlu Dicek?
+Apakah film yang muncul sesuai dengan queryKey?
+
+Coba akses http://localhost:8080/item-more-collection?queryKey=nolanFilm, apakah film Nolan muncul?
+
+Apakah pagination berjalan?
+
+Coba klik Next Page, apakah halaman bertambah?
+
+Apakah tombol Load More di NavMovies sudah benar?
+
+Pastikan tombol Load More mengarahkan ke item-more-collection?queryKey=nolanFilm, dll.
+
+Kalau semuanya bekerja sesuai harapan, berarti sistem sudah FLEKSIBEL dan bisa digunakan untuk API lainnya tanpa perubahan besar. 🚀
+
+Kalau ada bug atau masalah, kasih tahu ya! 😎

@@ -1,11 +1,13 @@
+"use client"
 
-import { Link } from "react-router-dom";
-import { Search, Film, Tv, Heart, Clock, List, LogOut, LogIn, User } from "lucide-react";
-import { Button } from "./ui/button";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { Link, useLocation } from "react-router-dom"
+import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu, Compass } from "lucide-react"
+import { Button } from "./ui/button"
+import { useNavigate } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
+import { useEffect, useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { SearchBar } from "@/components/SearchBar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,134 +15,319 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
 
 const Navbar = () => {
-  const [user, setUser] = useState<any>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null)
+  const [scrolled, setScrolled] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { toast } = useToast()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+      setUser(session?.user ?? null)
+    })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
 
-    return () => subscription.unsubscribe();
-  }, []);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate('/');
+      await supabase.auth.signOut()
+      navigate("/")
       toast({
-        title: "Logged out successfully",
-      });
+        title: "Logged out",
+        description: "See you next time!",
+      })
     } catch (error: any) {
       toast({
         title: "Error logging out",
         description: error.message,
         variant: "destructive",
-      });
+      })
     }
-  };
+  }
+
+  const getUserInitials = () => {
+    if (!user || !user.email) return "U"
+    return user.email.charAt(0).toUpperCase()
+  }
+
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Movies", path: "/navmovies", icon: Film },
+    { name: "TV Shows", path: "/navtvshows", icon: Tv },
+    { name: "Collections", path: "/collections", icon: Compass },
+  ]
+
+  const isActive = (path: string) => {
+    if (path === "/" && location.pathname !== "/") return false
+    return location.pathname.startsWith(path)
+  }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-effect">
-      <div className="max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-8">
-          <Link 
-            to="/" 
-            className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text hover:scale-105 transition-transform"
-          >
-            EnjunPilem
-          </Link>
-          
-          <div className="hidden md:flex items-center space-x-6">
-            <Link 
-              to="/navmovies" 
-              className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-2 group"
-            >
-              <Film className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-              Movies
-            </Link>
-            <Link 
-              to="/navtvshows" 
-              className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-2 group"
-            >
-              <Tv className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-              TV Shows
-            </Link>
+    <header 
+      className={cn(
+        "sticky top-0 z-50 w-full transition-all duration-300 border-b border-transparent",
+        scrolled 
+          ? "bg-background/80 backdrop-blur-md border-border/40 shadow-sm" 
+          : "bg-transparent"
+      )}
+    >
+      <div className="container mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Logo */}
+        <Link 
+          to="/" 
+          className="flex items-center gap-2.5 group"
+        >
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-transform duration-300 group-hover:scale-110">
+            E
           </div>
-        </div>
+          <span className="text-xl font-bold tracking-tight text-foreground">
+            Enjun<span className="text-primary">Pilem</span>
+          </span>
+        </Link>
 
-        <div className="flex items-center space-x-4">
-          <Link to="/search">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-9 w-9 hover:bg-white/10 transition-colors"
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1.5 p-1 bg-muted/50 rounded-full border border-white/5 backdrop-blur-sm">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                isActive(link.path)
+                  ? "bg-background text-foreground shadow-sm scale-105"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              )}
             >
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Button>
-          </Link>
+              {link.icon && <link.icon className="w-4 h-4" />}
+              {link.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          <div className="hidden lg:block w-full max-w-[240px]">
+            <SearchBar />
+          </div>
+
+          <div className="lg:hidden">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/search")}>
+                  <Compass className="h-5 w-5" />
+              </Button>
+          </div>
 
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  My Profile
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full h-10 w-10 ring-2 ring-transparent hover:ring-primary/20 transition-all font-normal p-0 overflow-hidden"
+                >
+                  <Avatar className="h-full w-full">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>View Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuLabel>My Lists</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56 overflow-hidden rounded-2xl border-border/50 shadow-xl bg-card/95 backdrop-blur-xl">
+                <DropdownMenuLabel className="font-normal p-4 bg-muted/30">
+                  <div className="flex flex-col space-y-1.5">
+                    <p className="text-sm font-semibold leading-none text-foreground">{user.email?.split("@")[0]}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/favorites" className="flex items-center cursor-pointer">
-                    <Heart className="mr-2 h-4 w-4" />
-                    <span>Favorites</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/watchlist" className="flex items-center cursor-pointer">
-                    <List className="mr-2 h-4 w-4" />
-                    <span>Watch Later</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/collections" className="flex items-center cursor-pointer">
-                    <Clock className="mr-2 h-4 w-4" />
-                    <span>My Collection</span>
-                  </Link>
-                </DropdownMenuItem>
+                <div className="p-1">
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/profile" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                    </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/favorites" className="cursor-pointer">
+                        <Heart className="mr-2 h-4 w-4" />
+                        <span>Favorites</span>
+                    </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/watchlist" className="cursor-pointer">
+                        <Clock className="mr-2 h-4 w-4" />
+                        <span>Watchlist</span>
+                    </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/collections" className="cursor-pointer">
+                        <List className="mr-2 h-4 w-4" />
+                        <span>Collections</span>
+                    </Link>
+                    </DropdownMenuItem>
+                </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-500">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
+                <div className="p-1">
+                    <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive cursor-pointer rounded-xl bg-destructive/5 focus:bg-destructive/10"
+                    >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                    </DropdownMenuItem>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="secondary" onClick={() => navigate('/auth')} className="flex items-center gap-2">
-              <LogIn className="h-4 w-4" />
+            <Button
+              onClick={() => navigate("/auth")}
+              size="sm"
+              className="rounded-full px-6 font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+            >
               Sign In
             </Button>
           )}
+
+          {/* Mobile Menu Trigger */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl p-0">
+                <SheetHeader className="text-left px-6 py-6 border-b border-border/50">
+                  <SheetTitle>
+                    <Link to="/" className="flex items-center gap-2">
+                       <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold">
+                         E
+                       </div>
+                       <span className="text-xl font-bold">
+                         Enjun<span className="text-primary">Pilem</span>
+                       </span>
+                    </Link>
+                  </SheetTitle>
+                </SheetHeader>
+                
+                <div className="flex flex-col h-full overflow-y-auto pb-20">
+                  <div className="px-6 py-4">
+                    <div className="sm:hidden mb-6">
+                        <SearchBar />
+                    </div>
+
+                    <nav className="flex flex-col gap-1">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Menu</h4>
+                        {navLinks.map((link) => (
+                        <Link
+                            key={link.path}
+                            to={link.path}
+                            className={cn(
+                            "flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors",
+                            isActive(link.path)
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                            )}
+                        >
+                            {link.icon ? <link.icon className="w-4 h-4" /> : <div className="w-4" />}
+                            {link.name}
+                        </Link>
+                        ))}
+                    </nav>
+
+                    {user && (
+                        <div className="flex flex-col gap-1 mt-6">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Library</h4>
+                        <Link
+                            to="/favorites"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                            <Heart className="w-4 h-4" />
+                            Favorites
+                        </Link>
+                        <Link
+                            to="/watchlist"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                            <Clock className="w-4 h-4" />
+                            Watchlist
+                        </Link>
+                        <Link
+                            to="/collections"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                            <List className="w-4 h-4" />
+                            My Collections
+                        </Link>
+                        </div>
+                    )}
+                  </div>
+
+                  <div className="mt-auto border-t border-border/50 p-6 bg-muted/20">
+                    {user ? (
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-3 px-2">
+                          <Avatar className="h-10 w-10 border border-border">
+                            <AvatarImage src={user.user_metadata?.avatar_url} />
+                            <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{user.email?.split("@")[0]}</span>
+                            <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user.email}</span>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 rounded-xl"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Log Out
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        className="w-full shadow-lg shadow-primary/20 rounded-xl" 
+                        onClick={() => navigate("/auth")}
+                      >
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign In
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
-    </nav>
-  );
-};
+    </header>
+  )
+}
 
-export default Navbar;
+export default Navbar
+
