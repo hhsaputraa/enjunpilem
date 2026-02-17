@@ -35,6 +35,7 @@ const Watchlist = () => {
       const { data: watchlistData } = await supabase
         .from('watchlist')
         .select('*')
+        .eq('user_id', user.id)
         .order('added_at', { ascending: false });
 
       if (!watchlistData) return [];
