@@ -90,34 +90,34 @@ const Navbar = () => {
         "sticky top-0 z-50 w-full transition-all duration-300 border-b border-transparent",
         scrolled 
           ? "bg-background/80 backdrop-blur-md border-border/40 shadow-sm" 
-          : "bg-gradient-to-b from-background/80 to-transparent"
+          : "bg-transparent"
       )}
     >
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link 
           to="/" 
-          className="flex items-center gap-2 group"
+          className="flex items-center gap-2.5 group"
         >
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-transform duration-300 group-hover:scale-110">
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-transform duration-300 group-hover:scale-110">
             E
           </div>
-          <span className="text-xl font-bold tracking-tight">
+          <span className="text-xl font-bold tracking-tight text-foreground">
             Enjun<span className="text-primary">Pilem</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1.5 p-1 bg-muted/50 rounded-full border border-white/5 backdrop-blur-sm">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                "flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
                 isActive(link.path)
-                  ? "bg-secondary text-secondary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  ? "bg-background text-foreground shadow-sm scale-105"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
               )}
             >
               {link.icon && <link.icon className="w-4 h-4" />}
@@ -128,8 +128,14 @@ const Navbar = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:block w-full max-w-[200px] lg:max-w-[300px]">
+          <div className="hidden lg:block w-full max-w-[240px]">
             <SearchBar />
+          </div>
+
+          <div className="lg:hidden">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/search")}>
+                  <Compass className="h-5 w-5" />
+              </Button>
           </div>
 
           {user ? (
@@ -138,58 +144,62 @@ const Navbar = () => {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="rounded-full h-9 w-9 ring-2 ring-transparent hover:ring-primary/20 transition-all font-normal"
+                  className="rounded-full h-10 w-10 ring-2 ring-transparent hover:ring-primary/20 transition-all font-normal p-0 overflow-hidden"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-full w-full">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 overflow-hidden rounded-xl border-border/50 shadow-xl bg-card/95 backdrop-blur-sm">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.email?.split("@")[0]}</p>
+              <DropdownMenuContent align="end" className="w-56 overflow-hidden rounded-2xl border-border/50 shadow-xl bg-card/95 backdrop-blur-xl">
+                <DropdownMenuLabel className="font-normal p-4 bg-muted/30">
+                  <div className="flex flex-col space-y-1.5">
+                    <p className="text-sm font-semibold leading-none text-foreground">{user.email?.split("@")[0]}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                   <Link to="/profile" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                   <Link to="/favorites" className="cursor-pointer">
-                      <Heart className="mr-2 h-4 w-4" />
-                      <span>Favorites</span>
-                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                   <Link to="/watchlist" className="cursor-pointer">
-                      <Clock className="mr-2 h-4 w-4" />
-                      <span>Watchlist</span>
-                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                   <Link to="/collections" className="cursor-pointer">
-                      <List className="mr-2 h-4 w-4" />
-                      <span>Collections</span>
-                   </Link>
-                </DropdownMenuItem>
+                <div className="p-1">
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/profile" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                    </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/favorites" className="cursor-pointer">
+                        <Heart className="mr-2 h-4 w-4" />
+                        <span>Favorites</span>
+                    </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/watchlist" className="cursor-pointer">
+                        <Clock className="mr-2 h-4 w-4" />
+                        <span>Watchlist</span>
+                    </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-xl">
+                    <Link to="/collections" className="cursor-pointer">
+                        <List className="mr-2 h-4 w-4" />
+                        <span>Collections</span>
+                    </Link>
+                    </DropdownMenuItem>
+                </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
+                <div className="p-1">
+                    <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive cursor-pointer rounded-xl bg-destructive/5 focus:bg-destructive/10"
+                    >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                    </DropdownMenuItem>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
@@ -210,8 +220,8 @@ const Navbar = () => {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl">
-                <SheetHeader className="text-left mb-6">
+              <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl p-0">
+                <SheetHeader className="text-left px-6 py-6 border-b border-border/50">
                   <SheetTitle>
                     <Link to="/" className="flex items-center gap-2">
                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold">
@@ -224,62 +234,64 @@ const Navbar = () => {
                   </SheetTitle>
                 </SheetHeader>
                 
-                <div className="flex flex-col gap-6">
-                  <div className="sm:hidden">
-                    <SearchBar />
+                <div className="flex flex-col h-full overflow-y-auto pb-20">
+                  <div className="px-6 py-4">
+                    <div className="sm:hidden mb-6">
+                        <SearchBar />
+                    </div>
+
+                    <nav className="flex flex-col gap-1">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Menu</h4>
+                        {navLinks.map((link) => (
+                        <Link
+                            key={link.path}
+                            to={link.path}
+                            className={cn(
+                            "flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors",
+                            isActive(link.path)
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                            )}
+                        >
+                            {link.icon ? <link.icon className="w-4 h-4" /> : <div className="w-4" />}
+                            {link.name}
+                        </Link>
+                        ))}
+                    </nav>
+
+                    {user && (
+                        <div className="flex flex-col gap-1 mt-6">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Library</h4>
+                        <Link
+                            to="/favorites"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                            <Heart className="w-4 h-4" />
+                            Favorites
+                        </Link>
+                        <Link
+                            to="/watchlist"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                            <Clock className="w-4 h-4" />
+                            Watchlist
+                        </Link>
+                        <Link
+                            to="/collections"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        >
+                            <List className="w-4 h-4" />
+                            My Collections
+                        </Link>
+                        </div>
+                    )}
                   </div>
 
-                  <nav className="flex flex-col gap-1">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Menu</h4>
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                          isActive(link.path)
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        )}
-                      >
-                        {link.icon ? <link.icon className="w-4 h-4" /> : <div className="w-4" />}
-                        {link.name}
-                      </Link>
-                    ))}
-                  </nav>
-
-                  {user && (
-                    <div className="flex flex-col gap-1">
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Library</h4>
-                      <Link
-                        to="/favorites"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                         <Heart className="w-4 h-4" />
-                         Favorites
-                      </Link>
-                      <Link
-                        to="/watchlist"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                         <Clock className="w-4 h-4" />
-                         Watchlist
-                      </Link>
-                      <Link
-                        to="/collections"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      >
-                         <List className="w-4 h-4" />
-                         My Collections
-                      </Link>
-                    </div>
-                  )}
-
-                  <div className="mt-auto border-t pt-6">
+                  <div className="mt-auto border-t border-border/50 p-6 bg-muted/20">
                     {user ? (
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3 px-2">
-                          <Avatar className="h-9 w-9 border border-border">
+                          <Avatar className="h-10 w-10 border border-border">
                             <AvatarImage src={user.user_metadata?.avatar_url} />
                             <AvatarFallback>{getUserInitials()}</AvatarFallback>
                           </Avatar>
@@ -290,7 +302,7 @@ const Navbar = () => {
                         </div>
                         <Button 
                           variant="outline" 
-                          className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                          className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 rounded-xl"
                           onClick={handleLogout}
                         >
                           <LogOut className="mr-2 h-4 w-4" />
@@ -299,7 +311,7 @@ const Navbar = () => {
                       </div>
                     ) : (
                       <Button 
-                        className="w-full shadow-lg shadow-primary/20" 
+                        className="w-full shadow-lg shadow-primary/20 rounded-xl" 
                         onClick={() => navigate("/auth")}
                       >
                         <LogIn className="mr-2 h-4 w-4" />

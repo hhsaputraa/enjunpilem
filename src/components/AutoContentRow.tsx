@@ -23,7 +23,7 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['collection-preview', collection.slug],
     queryFn: () => collection.queryFn 
-      ? collection.queryFn(1).then(result => result.items || result)
+      ? collection.queryFn(1).then(result => 'items' in result ? result.items : result)
       : getCollectionBySlugPreview(collection.slug),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -32,89 +32,89 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
   const IconComponent = (Icons as any)[collection.icon] || Icons.Film;
 
   return (
-    <section className="mt-16 animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3 group">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform duration-300">
-            <IconComponent className={`h-6 w-6 ${collection.color}`} />
+    <section className="mb-12 animate-fade-in relative z-0">
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <IconComponent className="h-5 w-5" />
           </div>
-          <div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+          <div className="flex flex-col">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {collection.title}
             </h2>
-            <div className="h-1 w-16 bg-gradient-to-r from-primary to-purple-500 rounded-full mt-1"></div>
+            <div className="h-1 w-12 bg-primary rounded-full mt-1.5 opacity-80"></div>
           </div>
         </div>
+        
         {showLoadMore && (
-          <Link 
-            to={`/detail-list-collection?queryKey=${collection.id}`} 
-            className="group"
-          >
+          <Link to={`/detail-list-collection?queryKey=${collection.id}`}>
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:text-white bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 rounded-xl px-6 py-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/25"
+              className="text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors gap-1"
             >
-              <span className="font-semibold">View all</span>
-              <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+              <span className="font-medium">View all</span>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </Link>
         )}
       </div>
 
-      <div className="relative">
-        <ScrollArea className="w-full whitespace-nowrap rounded-md">
-          <div className="flex space-x-6 pb-4">
-            {isLoading ? (
-              Array(8).fill(0).map((_, i) => (
-                <div key={i} className="w-[220px] flex-shrink-0 animate-pulse">
-                  <Skeleton className="w-full aspect-[2/3] rounded-2xl mb-4" />
-                  <Skeleton className="w-3/4 h-6 mb-2" />
-                  <Skeleton className="w-1/2 h-4" />
+      <ScrollArea className="w-full whitespace-nowrap rounded-2xl pb-4">
+        <div className="flex space-x-4 pb-4">
+          {isLoading ? (
+            Array(6)
+              .fill(0)
+              .map((_, i) => (
+                <div key={i} className="w-[180px] sm:w-[220px] flex-shrink-0">
+                  <div className="h-[270px] sm:h-[330px] rounded-xl bg-muted/50 animate-pulse border border-white/5"></div>
                 </div>
               ))
-            ) : (
-              <>
-                {items.slice(0, 12).map((item: any) => (
-                  <div key={item.id} className="w-[220px] flex-shrink-0 group">
-                    <MovieCard
-                      id={item.id}
-                      title={item.title || item.name}
-                      posterPath={item.poster_path}
-                      overview={item.overview}
-                      mediaType={item.media_type || (item.title ? "movie" : "tv")}
-                      voteAverage={item.vote_average}
-                      releaseDate={item.release_date || item.first_air_date}
-                    />
-                  </div>
-                ))}
-                
-                {showLoadMore && items.length > 12 && (
-                  <div className="w-[220px] flex-shrink-0 flex items-center justify-center h-[330px] animate-fade-in">
-                    <Link 
-                      to={`/detail-list-collection?queryKey=${collection.id}`} 
-                      className="group"
+          ) : (
+            <>
+              {items?.slice(0, 12).map((item: any, index: number) => (
+                <div
+                  key={item.id}
+                  className="w-[180px] sm:w-[220px] flex-shrink-0 transition-opacity duration-500"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <MovieCard
+                    id={item.id}
+                    title={item.title || item.name}
+                    posterPath={item.poster_path}
+                    overview={item.overview}
+                    mediaType={item.media_type || (item.title ? "movie" : "tv")}
+                    voteAverage={item.vote_average}
+                    releaseDate={item.release_date || item.first_air_date}
+                  />
+                </div>
+              ))}
+              
+              {showLoadMore && (
+                <div className="w-[180px] sm:w-[220px] flex-shrink-0 flex items-center justify-center h-[270px] sm:h-[330px]">
+                  <Link 
+                    to={`/detail-list-collection?queryKey=${collection.id}`} 
+                    className="group w-full h-full p-2"
+                  >
+                    <Button
+                      variant="outline"
+                      className="w-full h-full flex flex-col items-center justify-center gap-3 rounded-xl border-dashed border-2 border-muted hover:border-primary/50 bg-transparent hover:bg-accent/5 transition-all duration-300"
                     >
-                      <Button
-                        variant="outline"
-                        className="h-32 w-44 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-gradient-to-br from-primary/5 to-purple-500/5 hover:from-primary/10 hover:to-purple-500/10 transition-all duration-500 group-hover:scale-105 group-hover:shadow-xl group-hover:shadow-primary/20 backdrop-blur-sm"
-                      >
-                        <div className="p-3 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
-                          <ChevronRight className="h-6 w-6 text-primary group-hover:translate-x-1 transition-transform duration-300" />
-                        </div>
-                        <span className="font-semibold text-primary group-hover:text-white transition-colors duration-300">
-                          See More
-                        </span>
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-          <ScrollBar orientation="horizontal" className="h-2" />
-        </ScrollArea>
-      </div>
+                      <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        <ChevronRight className="h-6 w-6 text-primary" />
+                      </div>
+                      <span className="font-semibold text-muted-foreground group-hover:text-primary transition-colors">
+                        Show More
+                      </span>
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        <ScrollBar orientation="horizontal" className="h-2.5 bg-muted/10" />
+      </ScrollArea>
     </section>
   );
 };

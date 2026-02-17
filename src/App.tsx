@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "./hooks/use-mobile";
 import Navbar from "./components/Navbar";
+import Footer from "@/components/Footer";
 
 // Desktop Pages
 import Index from "./pages/Index";
@@ -89,6 +90,7 @@ const Layout = () => {
           <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
         </Routes>
       </main>
+      <Footer />
     </TooltipProvider>
   );
 };
