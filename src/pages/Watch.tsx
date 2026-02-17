@@ -9,15 +9,12 @@ import {
   getTVSeasonDetails,
   getWatchedEpisodes,
   updateWatchedEpisode
-  getWatchedEpisodes,
-  updateWatchedEpisode
 } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Star, Calendar, Clock, Heart, List, LogIn, Bookmark, CheckCircle } from 'lucide-react';
 import { Star, Calendar, Clock, Heart, List, LogIn, Bookmark, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -105,50 +102,6 @@ const Watch = () => {
       return !!data;
     },
     enabled: !!user && !!validType && !!mediaId,
-  });
-
-  const { data: watchedEpisode, isLoading: watchedEpisodeLoading } = useQuery({
-    queryKey: ['watchedEpisode', mediaId],
-    queryFn: () => getWatchedEpisodes(id!),
-    enabled: !!user && validType === 'tv' && !!mediaId,
-  });
-
-  useEffect(() => {
-    if (watchedEpisode && !watchedEpisodeLoading && validType === 'tv') {
-      setSelectedSeason(watchedEpisode.season_number);
-      setSelectedEpisode(watchedEpisode.episode_number);
-    }
-  }, [watchedEpisode, watchedEpisodeLoading, validType]);
-
-  const markAsWatched = useMutation({
-    mutationFn: async () => {
-      if (!user) {
-        handleAuthRedirect();
-        return;
-      }
-      if (validType === 'tv' && details) {
-        return updateWatchedEpisode(
-          id!, 
-          selectedSeason, 
-          selectedEpisode, 
-          details.name
-        );
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchedEpisode', mediaId] });
-      toast({
-        title: "Progress updated",
-        description: `Marked S${selectedSeason}:E${selectedEpisode} as watched`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error updating progress",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   const { data: watchedEpisode, isLoading: watchedEpisodeLoading } = useQuery({
@@ -364,8 +317,6 @@ const Watch = () => {
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black shadow-lg">
             <iframe
               src={type === 'movie' 
-                ? `https://vidsrc.xyz/embed/movie/${id}`
-                : `https://vidsrc.xyz/embed/tv/${id}/${selectedSeason}-${selectedEpisode}`
                 ? `https://vidsrc.xyz/embed/movie/${id}`
                 : `https://vidsrc.xyz/embed/tv/${id}/${selectedSeason}-${selectedEpisode}`
               }
