@@ -146,14 +146,51 @@ export const getResponsiveImageUrl = (path: string) => {
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
 
+// Merge /similar + /recommendations, dedupe, prioritize /similar (genre/keyword based),
+// and filter out low-quality entries (no poster, very low vote_count).
+const mergeAndFilterRelated = (similar: any[] = [], recommended: any[] = []) => {
+  const seen = new Set<number>();
+  const merged: any[] = [];
+
+  const pushIfGood = (item: any) => {
+    if (!item || !item.id || seen.has(item.id)) return;
+    if (!item.poster_path) return; // buang yang tanpa poster
+    if ((item.vote_count ?? 0) < 50) return; // buang yang vote_count terlalu rendah
+    seen.add(item.id);
+    merged.push(item);
+  };
+
+  similar.forEach(pushIfGood);
+  recommended.forEach(pushIfGood);
+
+  // Sort by vote_average desc sebagai tiebreaker biar yang bagus naik
+  return merged.sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+};
+
 export const getMovieRecommendations = async (id: string) => {
-  const response = await axios.get(`${BASE_URL}/movie/${id}/recommendations?api_key=${API_KEY}`);
-  return response.data.results;
+  try {
+    const [similarRes, recRes] = await Promise.all([
+      axios.get(`${BASE_URL}/movie/${id}/similar?api_key=${API_KEY}`),
+      axios.get(`${BASE_URL}/movie/${id}/recommendations?api_key=${API_KEY}`),
+    ]);
+    return mergeAndFilterRelated(similarRes.data.results, recRes.data.results);
+  } catch (error) {
+    console.error('Error fetching movie related:', error);
+    return [];
+  }
 };
 
 export const getTVRecommendations = async (id: string) => {
-  const response = await axios.get(`${BASE_URL}/tv/${id}/recommendations?api_key=${API_KEY}`);
-  return response.data.results;
+  try {
+    const [similarRes, recRes] = await Promise.all([
+      axios.get(`${BASE_URL}/tv/${id}/similar?api_key=${API_KEY}`),
+      axios.get(`${BASE_URL}/tv/${id}/recommendations?api_key=${API_KEY}`),
+    ]);
+    return mergeAndFilterRelated(similarRes.data.results, recRes.data.results);
+  } catch (error) {
+    console.error('Error fetching TV related:', error);
+    return [];
+  }
 };
 
 export const getMovieCredits = async (id: string) => {
