@@ -149,7 +149,7 @@ const SortableListItem = ({
         <div className="w-14 h-20 sm:w-16 sm:h-24 rounded-md overflow-hidden bg-muted flex-shrink-0">
           {item.poster_path ? (
             <img
-              src={getImageUrl(item.poster_path, 'w200')}
+              src={getImageUrl(item.poster_path, 'w300')}
               alt={title}
               className="w-full h-full object-cover"
               loading="lazy"
