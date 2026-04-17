@@ -41,6 +41,7 @@ export type Database = {
           overview: string | null
           poster_path: string | null
           release_date: string | null
+          sort_order: number
           title: string | null
           vote_average: number | null
         }
@@ -55,6 +56,7 @@ export type Database = {
           overview?: string | null
           poster_path?: string | null
           release_date?: string | null
+          sort_order?: number
           title?: string | null
           vote_average?: number | null
         }
@@ -69,6 +71,7 @@ export type Database = {
           overview?: string | null
           poster_path?: string | null
           release_date?: string | null
+          sort_order?: number
           title?: string | null
           vote_average?: number | null
         }
