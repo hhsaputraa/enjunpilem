@@ -28,7 +28,7 @@ const Favorites = () => {
   }, []);
 
   const { data: favorites, isLoading } = useQuery({
-    queryKey: ['favorites'],
+    queryKey: ['favorites', user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data: favoritesData } = await supabase
@@ -51,7 +51,7 @@ const Favorites = () => {
 
       return mediaDetails;
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const deleteMutation = useMutation({
