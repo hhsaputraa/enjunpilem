@@ -53,27 +53,13 @@ export const useMobileAuth = () => {
     try {
       setLoading(true);
 
-      // Check if input is email or username
-      const isEmail = emailOrUsername.includes('@');
-      let signinEmail = emailOrUsername;
-
-      if (!isEmail) {
-        // Find email based on username from user_profiles view
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('email')
-          .eq('username', emailOrUsername)
-          .maybeSingle();
-
-        if (profileError) throw profileError;
-        if (!profile || !profile.email) throw new Error('Username tidak ditemukan');
-
-        signinEmail = profile.email;
+      // Email-only login (username login removed to prevent email enumeration)
+      if (!emailOrUsername.includes('@')) {
+        throw new Error('Masukkan alamat email yang valid');
       }
 
-      // Login using the email
       const { error } = await supabase.auth.signInWithPassword({
-        email: signinEmail,
+        email: emailOrUsername,
         password,
       });
 
