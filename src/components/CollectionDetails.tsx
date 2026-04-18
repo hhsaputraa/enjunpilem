@@ -32,6 +32,9 @@ interface CollectionDetailsProps {
   collectionId: string;
   collectionName: string;
   onBack: () => void;
+  readOnly?: boolean;
+  description?: string | null;
+  ownerName?: string | null;
 }
 
 interface CollectionItem {
@@ -55,12 +58,15 @@ type ViewMode = 'grid' | 'list';
 const SortableGridItem = ({
   item,
   onDelete,
+  readOnly = false,
 }: {
   item: CollectionItem;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
+    disabled: readOnly,
   });
 
   const style = {
@@ -82,27 +88,31 @@ const SortableGridItem = ({
           voteAverage={item.vote_average || 0}
           releaseDate={item.release_date || item.first_air_date || undefined}
         />
-        {/* Drag handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="absolute top-2 left-2 p-1.5 rounded-md bg-background/80 backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 hover:bg-background"
-          onClick={(e) => e.preventDefault()}
-          aria-label="Drag to reorder"
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
-        <Button
-          variant="destructive"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:bg-destructive/90 h-8 w-8"
-          onClick={(e) => {
-            e.preventDefault();
-            onDelete(item.id);
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!readOnly && (
+          <>
+            {/* Drag handle */}
+            <button
+              {...attributes}
+              {...listeners}
+              className="absolute top-2 left-2 p-1.5 rounded-md bg-background/80 backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 hover:bg-background"
+              onClick={(e) => e.preventDefault()}
+              aria-label="Drag to reorder"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:bg-destructive/90 h-8 w-8"
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete(item.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -112,12 +122,15 @@ const SortableGridItem = ({
 const SortableListItem = ({
   item,
   onDelete,
+  readOnly = false,
 }: {
   item: CollectionItem;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
+    disabled: readOnly,
   });
 
   const style = {
@@ -138,14 +151,16 @@ const SortableListItem = ({
       style={style}
       className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/40 transition-colors"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="p-2 rounded-md hover:bg-accent cursor-grab active:cursor-grabbing flex-shrink-0"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </button>
+      {!readOnly && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-2 rounded-md hover:bg-accent cursor-grab active:cursor-grabbing flex-shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
 
       <Link to={detailPath} className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-14 h-20 sm:w-16 sm:h-24 rounded-md overflow-hidden bg-muted flex-shrink-0">
@@ -185,15 +200,17 @@ const SortableListItem = ({
         </div>
       </Link>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-        onClick={() => onDelete(item.id)}
-        aria-label="Remove from collection"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {!readOnly && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+          onClick={() => onDelete(item.id)}
+          aria-label="Remove from collection"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };
@@ -203,6 +220,9 @@ export const CollectionDetails = ({
   collectionId,
   collectionName,
   onBack,
+  readOnly = false,
+  description,
+  ownerName,
 }: CollectionDetailsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -300,12 +320,26 @@ export const CollectionDetails = ({
           <Button variant="ghost" onClick={onBack} className="p-2">
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h2 className="text-2xl font-bold">{collectionName}</h2>
-          {localItems.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              ({localItems.length} {localItems.length === 1 ? 'item' : 'items'})
-            </span>
-          )}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-2xl font-bold">{collectionName}</h2>
+              {localItems.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  ({localItems.length} {localItems.length === 1 ? 'item' : 'items'})
+                </span>
+              )}
+              {readOnly && (
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-[#0AC4E0]/10 text-[#0AC4E0] border border-[#0AC4E0]/30">
+                  Read Only
+                </span>
+              )}
+            </div>
+            {ownerName && (
+              <span className="text-xs text-muted-foreground mt-1">
+                Shared by <span className="text-[#0AC4E0] font-semibold">@{ownerName}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 flex-1 md:flex-initial">
@@ -342,14 +376,22 @@ export const CollectionDetails = ({
         </div>
       </div>
 
-      {localItems.length > 0 && !isSearching && (
+      {description && (
+        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+          <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
+            {description}
+          </p>
+        </div>
+      )}
+
+      {!readOnly && localItems.length > 0 && !isSearching && (
         <p className="text-xs text-muted-foreground flex items-center gap-2">
           <GripVertical className="h-3 w-3 text-[#0AC4E0]" />
           Tip: drag the handle to reorder your library.
         </p>
       )}
 
-      {isSearching && (
+      {!readOnly && isSearching && (
         <p className="text-xs text-[#0AC4E0] font-medium">
           Sorting is disabled while searching.
         </p>
@@ -364,14 +406,18 @@ export const CollectionDetails = ({
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Search className="w-12 h-12 text-white/10 mb-4" />
-          <p className="text-muted-foreground font-medium">No items found matching your search.</p>
-          <Button 
-            variant="link" 
-            onClick={() => setSearchQuery('')}
-            className="text-[#0AC4E0] mt-2 font-bold uppercase text-xs"
-          >
-            Clear Search
-          </Button>
+          <p className="text-muted-foreground font-medium">
+            {localItems.length === 0 ? 'This collection is empty.' : 'No items found matching your search.'}
+          </p>
+          {searchQuery && (
+            <Button 
+              variant="link" 
+              onClick={() => setSearchQuery('')}
+              className="text-[#0AC4E0] mt-2 font-bold uppercase text-xs"
+            >
+              Clear Search
+            </Button>
+          )}
         </div>
       ) : (
         <DndContext
@@ -382,7 +428,7 @@ export const CollectionDetails = ({
           <SortableContext
             items={filteredItems.map((i) => i.id)}
             strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
-            disabled={isSearching}
+            disabled={isSearching || readOnly}
           >
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -391,6 +437,7 @@ export const CollectionDetails = ({
                     key={item.id}
                     item={item}
                     onDelete={(id) => deleteMutation.mutate(id)}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>
@@ -401,6 +448,7 @@ export const CollectionDetails = ({
                     key={item.id}
                     item={item}
                     onDelete={(id) => deleteMutation.mutate(id)}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>

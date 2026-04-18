@@ -77,6 +77,7 @@ const Navbar = () => {
     { name: "Movies", path: "/navmovies", icon: Film },
     { name: "TV Shows", path: "/navtvshows", icon: Tv },
     { name: "Collections", path: "/collections", icon: Compass },
+    { name: "Shared Films", path: "/shared-films", icon: Compass },
   ]
 
   const isActive = (path: string) => {
