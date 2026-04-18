@@ -22,6 +22,7 @@ import MoreCollection from "./pages/MoreCollection";
 import Profile from "./pages/Profile";
 import ItemMoreCollectionRouter from "./pages/ItemMoreCollectionRouter";
 import DetailListCollectionRouter from "./pages/DetailListCollectionRouter";
+import SharedFilms from "./pages/SharedFilms";
 
 // Mobile Pages
 import {
@@ -81,6 +82,7 @@ const Layout = () => {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/collections" element={<Collections />} />
+          <Route path="/shared-films" element={<SharedFilms />} />
           <Route path="/navmovies" element={<NavMovies />} />
           <Route path="/navtvshows" element={<NavTVShows />} />
           <Route path="/more-collection" element={<MoreCollection />} />

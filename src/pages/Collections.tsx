@@ -25,7 +25,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Pencil, Search, LayoutGrid, List, SortAsc, Filter, ArrowUpDown } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Lock } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,14 +40,16 @@ type SortOption = 'newest' | 'alphabetical' | 'items';
 
 const Collections = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
-  const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string } | null>(null);
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
+  const [newCollectionShared, setNewCollectionShared] = useState(false);
+  const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string; description: string | null } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(null);
+  const [editingCollection, setEditingCollection] = useState<{ id: string; name: string; description: string | null; is_shared: boolean } | null>(null);
   const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; name: string } | null>(null);
   
   // New UI/UX States
@@ -75,6 +79,8 @@ const Collections = () => {
         .select(`
           id,
           name,
+          description,
+          is_shared,
           collection_items (
             id,
             media_id,
@@ -126,13 +132,15 @@ const Collections = () => {
   }, [collections, searchQuery, sortBy]);
 
   const createCollection = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, description, is_shared }: { name: string; description: string; is_shared: boolean }) => {
       if (!user) throw new Error('You must be logged in to create a collection');
       
       const { data, error } = await supabase
         .from('collections')
         .insert({ 
           name,
+          description: description || null,
+          is_shared,
           user_id: user.id 
         })
         .select()
@@ -143,8 +151,11 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection created successfully" });
       setNewCollectionName('');
+      setNewCollectionDescription('');
+      setNewCollectionShared(false);
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
@@ -157,12 +168,12 @@ const Collections = () => {
   });
 
   const updateCollection = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name, description, is_shared }: { id: string; name: string; description: string; is_shared: boolean }) => {
       if (!user) throw new Error('You must be logged in to update a collection');
       
       const { error } = await supabase
         .from('collections')
-        .update({ name })
+        .update({ name, description: description || null, is_shared })
         .eq('id', id)
         .eq('user_id', user.id);
 
@@ -170,6 +181,7 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection updated successfully" });
       setIsEditDialogOpen(false);
       setEditingCollection(null);
@@ -180,6 +192,31 @@ const Collections = () => {
         description: error.message,
         variant: "destructive",
       });
+    },
+  });
+
+  const toggleShareMutation = useMutation({
+    mutationFn: async ({ id, is_shared }: { id: string; is_shared: boolean }) => {
+      if (!user) throw new Error('You must be logged in');
+      const { error } = await supabase
+        .from('collections')
+        .update({ is_shared })
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
+      toast({
+        title: variables.is_shared ? 'Collection is now Public' : 'Collection is now Private',
+        description: variables.is_shared
+          ? 'Visible on the Shared Films page.'
+          : 'Only you can see this collection.',
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to update sharing', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -197,6 +234,7 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection deleted successfully" });
     },
     onError: (error: any) => {
@@ -211,7 +249,11 @@ const Collections = () => {
   const handleCreateCollection = (e: React.FormEvent) => {
     e.preventDefault();
     if (newCollectionName.trim()) {
-      createCollection.mutate(newCollectionName.trim());
+      createCollection.mutate({
+        name: newCollectionName.trim(),
+        description: newCollectionDescription.trim(),
+        is_shared: newCollectionShared,
+      });
     }
   };
 
@@ -220,7 +262,9 @@ const Collections = () => {
     if (editingCollection && editingCollection.name.trim()) {
       updateCollection.mutate({
         id: editingCollection.id,
-        name: editingCollection.name.trim()
+        name: editingCollection.name.trim(),
+        description: editingCollection.description || '',
+        is_shared: editingCollection.is_shared,
       });
     }
   };
@@ -243,6 +287,7 @@ const Collections = () => {
           <CollectionDetails
             collectionId={selectedCollection.id}
             collectionName={selectedCollection.name}
+            description={selectedCollection.description}
             onBack={() => setSelectedCollection(null)}
           />
         </div>
@@ -274,7 +319,7 @@ const Collections = () => {
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Create Collection</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleCreateCollection} className="space-y-6 mt-4">
+                <form onSubmit={handleCreateCollection} className="space-y-5 mt-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Name</label>
                     <Input
@@ -282,6 +327,40 @@ const Collections = () => {
                       value={newCollectionName}
                       onChange={(e) => setNewCollectionName(e.target.value)}
                       className="bg-white/5 border-white/10 h-12 rounded-xl focus:ring-[#0AC4E0]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description (optional)</label>
+                    <Textarea
+                      placeholder="What's this collection about?"
+                      value={newCollectionDescription}
+                      onChange={(e) => setNewCollectionDescription(e.target.value)}
+                      className="bg-white/5 border-white/10 rounded-xl focus-visible:ring-[#0AC4E0] min-h-[90px] resize-none"
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex items-start gap-3">
+                      {newCollectionShared ? (
+                        <Globe className="w-5 h-5 text-[#0AC4E0] mt-0.5 shrink-0" />
+                      ) : (
+                        <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                      )}
+                      <div>
+                        <p className="text-sm font-bold text-white">
+                          {newCollectionShared ? 'Public' : 'Private'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {newCollectionShared
+                            ? 'Anyone can see this on Shared Films.'
+                            : 'Only you can see this collection.'}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={newCollectionShared}
+                      onCheckedChange={setNewCollectionShared}
+                      className="data-[state=checked]:bg-[#0AC4E0]"
                     />
                   </div>
                   <Button type="submit" className="w-full h-12 bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold rounded-xl" disabled={!newCollectionName.trim()}>
@@ -344,17 +423,55 @@ const Collections = () => {
 
         {/* Edit Collection Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="border-white/10 bg-zinc-950 p-6 sm:rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Collection</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Edit Collection</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpdateCollection} className="space-y-4">
-              <Input
-                placeholder="Collection name"
-                value={editingCollection?.name || ''}
-                onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
-              />
-              <Button type="submit" disabled={!editingCollection?.name.trim()}>
+            <form onSubmit={handleUpdateCollection} className="space-y-5 mt-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Name</label>
+                <Input
+                  placeholder="Collection name"
+                  value={editingCollection?.name || ''}
+                  onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  className="bg-white/5 border-white/10 h-12 rounded-xl focus:ring-[#0AC4E0]"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description (optional)</label>
+                <Textarea
+                  placeholder="What's this collection about?"
+                  value={editingCollection?.description || ''}
+                  onChange={(e) => setEditingCollection(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  className="bg-white/5 border-white/10 rounded-xl focus-visible:ring-[#0AC4E0] min-h-[90px] resize-none"
+                  maxLength={500}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-start gap-3">
+                  {editingCollection?.is_shared ? (
+                    <Globe className="w-5 h-5 text-[#0AC4E0] mt-0.5 shrink-0" />
+                  ) : (
+                    <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      {editingCollection?.is_shared ? 'Public' : 'Private'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {editingCollection?.is_shared
+                        ? 'Anyone can see this on Shared Films.'
+                        : 'Only you can see this collection.'}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={!!editingCollection?.is_shared}
+                  onCheckedChange={(checked) => setEditingCollection(prev => prev ? { ...prev, is_shared: checked } : null)}
+                  className="data-[state=checked]:bg-[#0AC4E0]"
+                />
+              </div>
+              <Button type="submit" className="w-full h-12 bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold rounded-xl" disabled={!editingCollection?.name.trim()}>
                 Update Collection
               </Button>
             </form>
@@ -387,7 +504,7 @@ const Collections = () => {
             {filteredAndSortedCollections?.map((collection) => (
               <div
                 key={collection.id}
-                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
                 className="group relative flex flex-col p-6 rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
               >
                 {/* Background Poster Blur */}
@@ -405,14 +522,25 @@ const Collections = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-[#0AC4E0]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 
                 <div className="relative flex justify-between items-start mb-8 z-10">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <h3 className="text-2xl font-bold text-white group-hover:text-[#0AC4E0] transition-colors leading-tight truncate pr-4 capitalize">
                       {collection.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#0AC4E0]" />
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
                         {collection.collection_items?.length || 0} items
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border",
+                          collection.is_shared
+                            ? "bg-[#0AC4E0]/10 text-[#0AC4E0] border-[#0AC4E0]/30"
+                            : "bg-white/5 text-white/50 border-white/10"
+                        )}
+                      >
+                        {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                        {collection.is_shared ? 'Public' : 'Private'}
                       </span>
                     </div>
                   </div>
@@ -421,9 +549,26 @@ const Collections = () => {
                       variant="ghost"
                       size="icon"
                       className="h-10 w-10 rounded-xl hover:bg-white/10 text-white/40 hover:text-white"
+                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEditingCollection({ id: collection.id, name: collection.name });
+                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                      }}
+                    >
+                      {collection.is_shared ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-xl hover:bg-white/10 text-white/40 hover:text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingCollection({
+                          id: collection.id,
+                          name: collection.name,
+                          description: collection.description,
+                          is_shared: !!collection.is_shared,
+                        });
                         setIsEditDialogOpen(true);
                       }}
                     >
@@ -443,6 +588,12 @@ const Collections = () => {
                     </Button>
                   </div>
                 </div>
+
+                {collection.description && (
+                  <p className="relative z-10 text-xs text-muted-foreground line-clamp-2 mb-6 italic">
+                    "{collection.description}"
+                  </p>
+                )}
                 
                 {/* Visual Stack (Centered Stacked Posters) */}
                 <div className="relative h-60 mb-8 z-10 group/stack">
@@ -482,7 +633,10 @@ const Collections = () => {
                 <Button
                   variant="ghost"
                   className="relative z-10 w-full rounded-2xl bg-white/5 hover:bg-[#0AC4E0] hover:text-black font-bold text-xs uppercase tracking-widest h-12 transition-all border border-white/5 hover:border-[#0AC4E0] hover:shadow-lg hover:shadow-[#0AC4E0]/20"
-                  onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description });
+                  }}
                 >
                   View Library
                 </Button>
@@ -495,20 +649,33 @@ const Collections = () => {
               <div
                 key={collection.id}
                 className="group flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all cursor-pointer"
-                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   <div className="w-12 h-16 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
                     {collection.collection_items?.[0]?.poster_path && (
                       <img
-                        src={getImageUrl(collection.collection_items[0].poster_path, 'w92')}
+                        src={getImageUrl(collection.collection_items[0].poster_path, 'w300')}
                         alt=""
                         className="w-full h-full object-cover"
                       />
                     )}
                   </div>
-                  <div className="flex flex-col">
-                    <h3 className="font-bold text-white group-hover:text-[#0AC4E0] transition-colors">{collection.name}</h3>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-white group-hover:text-[#0AC4E0] transition-colors truncate">{collection.name}</h3>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border",
+                          collection.is_shared
+                            ? "bg-[#0AC4E0]/10 text-[#0AC4E0] border-[#0AC4E0]/30"
+                            : "bg-white/5 text-white/50 border-white/10"
+                        )}
+                      >
+                        {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                        {collection.is_shared ? 'Public' : 'Private'}
+                      </span>
+                    </div>
                     <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                       {collection.collection_items?.length || 0} ITEMS
                     </span>
@@ -517,7 +684,19 @@ const Collections = () => {
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name }); setIsEditDialogOpen(true); }}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-lg hover:bg-white/10"
+                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                      }}
+                    >
+                      {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
