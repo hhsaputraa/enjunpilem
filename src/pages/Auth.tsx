@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 
 const Auth = () => {
   const [loading, setLoading] = useState(false)
-  const [emailOrUsername, setEmailOrUsername] = useState("")
+  const [signinEmailInput, setSigninEmailInput] = useState("")
   const [password, setPassword] = useState("")
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
@@ -81,29 +81,14 @@ const Auth = () => {
     try {
       setLoading(true)
 
-      // Check if input is email or username
-      const isEmail = emailOrUsername.includes("@")
-      let signinEmail = emailOrUsername
-
-      if (!isEmail) {
-        // Find email based on username from user_profiles view
-        const { data: profile, error: profileError } = await supabase
-          .from("user_profiles")
-          .select("email")
-          .eq("username", emailOrUsername)
-          .maybeSingle()
-
-        console.log("Profile result:", profile, profileError)
-
-        if (profileError) throw profileError
-        if (!profile || !profile.email) throw new Error("Username not found")
-
-        signinEmail = profile.email
+      // Email is required for sign-in (username login was removed to prevent
+      // email enumeration via the public user_profiles view).
+      if (!signinEmailInput.includes("@")) {
+        throw new Error("Please enter a valid email address")
       }
 
-      // Login using the email
       const { error } = await supabase.auth.signInWithPassword({
-        email: signinEmail,
+        email: signinEmailInput,
         password,
       })
 
@@ -168,18 +153,18 @@ const Auth = () => {
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="emailOrUsername">Email or Username</Label>
+                    <Label htmlFor="signinEmail">Email</Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <User className="h-4 w-4 text-muted-foreground" />
+                        <Mail className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <Input
-                        id="emailOrUsername"
-                        type="text"
+                        id="signinEmail"
+                        type="email"
                         className="pl-10"
-                        placeholder="Enter your email or username"
-                        value={emailOrUsername}
-                        onChange={(e) => setEmailOrUsername(e.target.value)}
+                        placeholder="Enter your email"
+                        value={signinEmailInput}
+                        onChange={(e) => setSigninEmailInput(e.target.value)}
                         required
                       />
                     </div>

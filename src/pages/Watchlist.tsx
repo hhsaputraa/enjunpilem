@@ -29,12 +29,13 @@ const Watchlist = () => {
   }, []);
 
   const { data: watchlist, isLoading } = useQuery({
-    queryKey: ['watchlist'],
+    queryKey: ['watchlist', user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data: watchlistData } = await supabase
         .from('watchlist')
         .select('*')
+        .eq('user_id', user.id)
         .order('added_at', { ascending: false });
 
       if (!watchlistData) return [];
@@ -51,7 +52,7 @@ const Watchlist = () => {
 
       return mediaDetails;
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const deleteMutation = useMutation({

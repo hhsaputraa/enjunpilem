@@ -81,6 +81,7 @@ const Watch = () => {
       const { data } = await supabase
         .from('favorites')
         .select('*')
+        .eq('user_id', user.id)
         .eq('media_id', mediaId)
         .eq('media_type', validType)
         .maybeSingle();
@@ -96,6 +97,7 @@ const Watch = () => {
       const { data } = await supabase
         .from('watchlist')
         .select('*')
+        .eq('user_id', user.id)
         .eq('media_id', mediaId)
         .eq('media_type', validType)
         .maybeSingle();
@@ -158,6 +160,7 @@ const Watch = () => {
         const { error } = await supabase
           .from('favorites')
           .delete()
+          .eq('user_id', user.id)
           .eq('media_id', mediaId)
           .eq('media_type', validType);
         if (error) throw error;
@@ -179,6 +182,13 @@ const Watch = () => {
       });
     },
     onError: (error: any) => {
+      if (error.code === '23505') {
+        queryClient.invalidateQueries({ queryKey: ['favorite', validType, mediaId] });
+        toast({
+          title: "Added to favorites",
+        });
+        return;
+      }
       toast({
         title: "Error updating favorites",
         description: error.message,
@@ -197,6 +207,7 @@ const Watch = () => {
         const { error } = await supabase
           .from('watchlist')
           .delete()
+          .eq('user_id', user.id)
           .eq('media_id', mediaId)
           .eq('media_type', validType);
         if (error) throw error;
@@ -218,6 +229,13 @@ const Watch = () => {
       });
     },
     onError: (error: any) => {
+      if (error.code === '23505') {
+        queryClient.invalidateQueries({ queryKey: ['watchlist', validType, mediaId] });
+        toast({
+          title: "Added to watchlist",
+        });
+        return;
+      }
       toast({
         title: "Error updating watchlist",
         description: error.message,
