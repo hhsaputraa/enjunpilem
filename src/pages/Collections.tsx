@@ -40,14 +40,16 @@ type SortOption = 'newest' | 'alphabetical' | 'items';
 
 const Collections = () => {
   const [newCollectionName, setNewCollectionName] = useState('');
-  const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string } | null>(null);
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
+  const [newCollectionShared, setNewCollectionShared] = useState(false);
+  const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string; description: string | null } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(null);
+  const [editingCollection, setEditingCollection] = useState<{ id: string; name: string; description: string | null; is_shared: boolean } | null>(null);
   const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; name: string } | null>(null);
   
   // New UI/UX States
@@ -77,6 +79,8 @@ const Collections = () => {
         .select(`
           id,
           name,
+          description,
+          is_shared,
           collection_items (
             id,
             media_id,
@@ -128,13 +132,15 @@ const Collections = () => {
   }, [collections, searchQuery, sortBy]);
 
   const createCollection = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, description, is_shared }: { name: string; description: string; is_shared: boolean }) => {
       if (!user) throw new Error('You must be logged in to create a collection');
       
       const { data, error } = await supabase
         .from('collections')
         .insert({ 
           name,
+          description: description || null,
+          is_shared,
           user_id: user.id 
         })
         .select()
@@ -145,8 +151,11 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection created successfully" });
       setNewCollectionName('');
+      setNewCollectionDescription('');
+      setNewCollectionShared(false);
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
@@ -159,12 +168,12 @@ const Collections = () => {
   });
 
   const updateCollection = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name, description, is_shared }: { id: string; name: string; description: string; is_shared: boolean }) => {
       if (!user) throw new Error('You must be logged in to update a collection');
       
       const { error } = await supabase
         .from('collections')
-        .update({ name })
+        .update({ name, description: description || null, is_shared })
         .eq('id', id)
         .eq('user_id', user.id);
 
@@ -172,6 +181,7 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection updated successfully" });
       setIsEditDialogOpen(false);
       setEditingCollection(null);
@@ -182,6 +192,31 @@ const Collections = () => {
         description: error.message,
         variant: "destructive",
       });
+    },
+  });
+
+  const toggleShareMutation = useMutation({
+    mutationFn: async ({ id, is_shared }: { id: string; is_shared: boolean }) => {
+      if (!user) throw new Error('You must be logged in');
+      const { error } = await supabase
+        .from('collections')
+        .update({ is_shared })
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
+      toast({
+        title: variables.is_shared ? 'Collection is now Public' : 'Collection is now Private',
+        description: variables.is_shared
+          ? 'Visible on the Shared Films page.'
+          : 'Only you can see this collection.',
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to update sharing', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -199,6 +234,7 @@ const Collections = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection deleted successfully" });
     },
     onError: (error: any) => {
