@@ -58,12 +58,15 @@ type ViewMode = 'grid' | 'list';
 const SortableGridItem = ({
   item,
   onDelete,
+  readOnly = false,
 }: {
   item: CollectionItem;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
+    disabled: readOnly,
   });
 
   const style = {
@@ -85,27 +88,31 @@ const SortableGridItem = ({
           voteAverage={item.vote_average || 0}
           releaseDate={item.release_date || item.first_air_date || undefined}
         />
-        {/* Drag handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="absolute top-2 left-2 p-1.5 rounded-md bg-background/80 backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 hover:bg-background"
-          onClick={(e) => e.preventDefault()}
-          aria-label="Drag to reorder"
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
-        <Button
-          variant="destructive"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:bg-destructive/90 h-8 w-8"
-          onClick={(e) => {
-            e.preventDefault();
-            onDelete(item.id);
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!readOnly && (
+          <>
+            {/* Drag handle */}
+            <button
+              {...attributes}
+              {...listeners}
+              className="absolute top-2 left-2 p-1.5 rounded-md bg-background/80 backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 hover:bg-background"
+              onClick={(e) => e.preventDefault()}
+              aria-label="Drag to reorder"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:bg-destructive/90 h-8 w-8"
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete(item.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
