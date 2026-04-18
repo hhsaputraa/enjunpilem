@@ -320,12 +320,26 @@ export const CollectionDetails = ({
           <Button variant="ghost" onClick={onBack} className="p-2">
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h2 className="text-2xl font-bold">{collectionName}</h2>
-          {localItems.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              ({localItems.length} {localItems.length === 1 ? 'item' : 'items'})
-            </span>
-          )}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-2xl font-bold">{collectionName}</h2>
+              {localItems.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  ({localItems.length} {localItems.length === 1 ? 'item' : 'items'})
+                </span>
+              )}
+              {readOnly && (
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-[#0AC4E0]/10 text-[#0AC4E0] border border-[#0AC4E0]/30">
+                  Read Only
+                </span>
+              )}
+            </div>
+            {ownerName && (
+              <span className="text-xs text-muted-foreground mt-1">
+                Shared by <span className="text-[#0AC4E0] font-semibold">@{ownerName}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 flex-1 md:flex-initial">
@@ -362,14 +376,22 @@ export const CollectionDetails = ({
         </div>
       </div>
 
-      {localItems.length > 0 && !isSearching && (
+      {description && (
+        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+          <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
+            {description}
+          </p>
+        </div>
+      )}
+
+      {!readOnly && localItems.length > 0 && !isSearching && (
         <p className="text-xs text-muted-foreground flex items-center gap-2">
           <GripVertical className="h-3 w-3 text-[#0AC4E0]" />
           Tip: drag the handle to reorder your library.
         </p>
       )}
 
-      {isSearching && (
+      {!readOnly && isSearching && (
         <p className="text-xs text-[#0AC4E0] font-medium">
           Sorting is disabled while searching.
         </p>
@@ -384,14 +406,18 @@ export const CollectionDetails = ({
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Search className="w-12 h-12 text-white/10 mb-4" />
-          <p className="text-muted-foreground font-medium">No items found matching your search.</p>
-          <Button 
-            variant="link" 
-            onClick={() => setSearchQuery('')}
-            className="text-[#0AC4E0] mt-2 font-bold uppercase text-xs"
-          >
-            Clear Search
-          </Button>
+          <p className="text-muted-foreground font-medium">
+            {localItems.length === 0 ? 'This collection is empty.' : 'No items found matching your search.'}
+          </p>
+          {searchQuery && (
+            <Button 
+              variant="link" 
+              onClick={() => setSearchQuery('')}
+              className="text-[#0AC4E0] mt-2 font-bold uppercase text-xs"
+            >
+              Clear Search
+            </Button>
+          )}
         </div>
       ) : (
         <DndContext
@@ -402,7 +428,7 @@ export const CollectionDetails = ({
           <SortableContext
             items={filteredItems.map((i) => i.id)}
             strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
-            disabled={isSearching}
+            disabled={isSearching || readOnly}
           >
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -411,6 +437,7 @@ export const CollectionDetails = ({
                     key={item.id}
                     item={item}
                     onDelete={(id) => deleteMutation.mutate(id)}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>
@@ -421,6 +448,7 @@ export const CollectionDetails = ({
                     key={item.id}
                     item={item}
                     onDelete={(id) => deleteMutation.mutate(id)}
+                    readOnly={readOnly}
                   />
                 ))}
               </div>
