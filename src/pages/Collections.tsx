@@ -319,7 +319,7 @@ const Collections = () => {
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Create Collection</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleCreateCollection} className="space-y-6 mt-4">
+                <form onSubmit={handleCreateCollection} className="space-y-5 mt-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Name</label>
                     <Input
@@ -327,6 +327,40 @@ const Collections = () => {
                       value={newCollectionName}
                       onChange={(e) => setNewCollectionName(e.target.value)}
                       className="bg-white/5 border-white/10 h-12 rounded-xl focus:ring-[#0AC4E0]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description (optional)</label>
+                    <Textarea
+                      placeholder="What's this collection about?"
+                      value={newCollectionDescription}
+                      onChange={(e) => setNewCollectionDescription(e.target.value)}
+                      className="bg-white/5 border-white/10 rounded-xl focus-visible:ring-[#0AC4E0] min-h-[90px] resize-none"
+                      maxLength={500}
+                    />
+                  </div>
+                  <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex items-start gap-3">
+                      {newCollectionShared ? (
+                        <Globe className="w-5 h-5 text-[#0AC4E0] mt-0.5 shrink-0" />
+                      ) : (
+                        <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                      )}
+                      <div>
+                        <p className="text-sm font-bold text-white">
+                          {newCollectionShared ? 'Public' : 'Private'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {newCollectionShared
+                            ? 'Anyone can see this on Shared Films.'
+                            : 'Only you can see this collection.'}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={newCollectionShared}
+                      onCheckedChange={setNewCollectionShared}
+                      className="data-[state=checked]:bg-[#0AC4E0]"
                     />
                   </div>
                   <Button type="submit" className="w-full h-12 bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold rounded-xl" disabled={!newCollectionName.trim()}>
@@ -389,17 +423,55 @@ const Collections = () => {
 
         {/* Edit Collection Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="border-white/10 bg-zinc-950 p-6 sm:rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Collection</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Edit Collection</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpdateCollection} className="space-y-4">
-              <Input
-                placeholder="Collection name"
-                value={editingCollection?.name || ''}
-                onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
-              />
-              <Button type="submit" disabled={!editingCollection?.name.trim()}>
+            <form onSubmit={handleUpdateCollection} className="space-y-5 mt-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Name</label>
+                <Input
+                  placeholder="Collection name"
+                  value={editingCollection?.name || ''}
+                  onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  className="bg-white/5 border-white/10 h-12 rounded-xl focus:ring-[#0AC4E0]"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description (optional)</label>
+                <Textarea
+                  placeholder="What's this collection about?"
+                  value={editingCollection?.description || ''}
+                  onChange={(e) => setEditingCollection(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  className="bg-white/5 border-white/10 rounded-xl focus-visible:ring-[#0AC4E0] min-h-[90px] resize-none"
+                  maxLength={500}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-start gap-3">
+                  {editingCollection?.is_shared ? (
+                    <Globe className="w-5 h-5 text-[#0AC4E0] mt-0.5 shrink-0" />
+                  ) : (
+                    <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      {editingCollection?.is_shared ? 'Public' : 'Private'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {editingCollection?.is_shared
+                        ? 'Anyone can see this on Shared Films.'
+                        : 'Only you can see this collection.'}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={!!editingCollection?.is_shared}
+                  onCheckedChange={(checked) => setEditingCollection(prev => prev ? { ...prev, is_shared: checked } : null)}
+                  className="data-[state=checked]:bg-[#0AC4E0]"
+                />
+              </div>
+              <Button type="submit" className="w-full h-12 bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold rounded-xl" disabled={!editingCollection?.name.trim()}>
                 Update Collection
               </Button>
             </form>
