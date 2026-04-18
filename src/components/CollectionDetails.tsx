@@ -32,6 +32,9 @@ interface CollectionDetailsProps {
   collectionId: string;
   collectionName: string;
   onBack: () => void;
+  readOnly?: boolean;
+  description?: string | null;
+  ownerName?: string | null;
 }
 
 interface CollectionItem {
