@@ -504,7 +504,7 @@ const Collections = () => {
             {filteredAndSortedCollections?.map((collection) => (
               <div
                 key={collection.id}
-                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
                 className="group relative flex flex-col p-6 rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
               >
                 {/* Background Poster Blur */}
@@ -522,14 +522,25 @@ const Collections = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-[#0AC4E0]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 
                 <div className="relative flex justify-between items-start mb-8 z-10">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <h3 className="text-2xl font-bold text-white group-hover:text-[#0AC4E0] transition-colors leading-tight truncate pr-4 capitalize">
                       {collection.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#0AC4E0]" />
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
                         {collection.collection_items?.length || 0} items
+                      </span>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border",
+                          collection.is_shared
+                            ? "bg-[#0AC4E0]/10 text-[#0AC4E0] border-[#0AC4E0]/30"
+                            : "bg-white/5 text-white/50 border-white/10"
+                        )}
+                      >
+                        {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                        {collection.is_shared ? 'Public' : 'Private'}
                       </span>
                     </div>
                   </div>
@@ -538,9 +549,26 @@ const Collections = () => {
                       variant="ghost"
                       size="icon"
                       className="h-10 w-10 rounded-xl hover:bg-white/10 text-white/40 hover:text-white"
+                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEditingCollection({ id: collection.id, name: collection.name });
+                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                      }}
+                    >
+                      {collection.is_shared ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-xl hover:bg-white/10 text-white/40 hover:text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingCollection({
+                          id: collection.id,
+                          name: collection.name,
+                          description: collection.description,
+                          is_shared: !!collection.is_shared,
+                        });
                         setIsEditDialogOpen(true);
                       }}
                     >
@@ -560,6 +588,12 @@ const Collections = () => {
                     </Button>
                   </div>
                 </div>
+
+                {collection.description && (
+                  <p className="relative z-10 text-xs text-muted-foreground line-clamp-2 mb-6 italic">
+                    "{collection.description}"
+                  </p>
+                )}
                 
                 {/* Visual Stack (Centered Stacked Posters) */}
                 <div className="relative h-60 mb-8 z-10 group/stack">
@@ -599,7 +633,10 @@ const Collections = () => {
                 <Button
                   variant="ghost"
                   className="relative z-10 w-full rounded-2xl bg-white/5 hover:bg-[#0AC4E0] hover:text-black font-bold text-xs uppercase tracking-widest h-12 transition-all border border-white/5 hover:border-[#0AC4E0] hover:shadow-lg hover:shadow-[#0AC4E0]/20"
-                  onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description });
+                  }}
                 >
                   View Library
                 </Button>
