@@ -14,6 +14,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Pencil } from 'lucide-react';
 
 const Collections = () => {
@@ -24,7 +34,9 @@ const Collections = () => {
   const [user, setUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<{ id: string; name: string } | null>(null);
+  const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -281,7 +293,10 @@ const Collections = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => deleteCollection.mutate(collection.id)}
+                      onClick={() => {
+                        setCollectionToDelete({ id: collection.id, name: collection.name });
+                        setIsDeleteDialogOpen(true);
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -323,6 +338,31 @@ const Collections = () => {
             ))}
           </div>
         )}
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Make sure you want to delete the "{collectionToDelete?.name}" collection? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (collectionToDelete) {
+                    deleteCollection.mutate(collectionToDelete.id);
+                    setCollectionToDelete(null);
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

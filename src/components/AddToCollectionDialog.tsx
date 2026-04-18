@@ -10,8 +10,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, FolderPlus } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Plus, FolderPlus, Search, Loader2, Folder, CheckCircle2 } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from '@/lib/utils';
 
 interface AddToCollectionDialogProps {
   mediaId: number;
@@ -36,11 +45,8 @@ export const AddToCollectionDialog = ({
   releaseDate,
   firstAirDate
 }: AddToCollectionDialogProps) => {
-  console.log("AddToCollectionDialog Props:", { 
-    mediaId, mediaType, posterPath, title, name, overview, voteAverage, releaseDate, firstAirDate 
-  });
   const [isOpen, setIsOpen] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
@@ -57,13 +63,25 @@ export const AddToCollectionDialog = ({
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+    }
+  }, [isOpen]);
+
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('collections')
-        .select('*, collection_items!collection_items_collection_id_fkey(*)')
+        .select(`
+          *,
+          collection_items!collection_items_collection_id_fkey(
+            media_id,
+            media_type
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -74,13 +92,13 @@ export const AddToCollectionDialog = ({
   });
 
   const createCollection = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (nameToCreate: string) => {
       if (!user) throw new Error('User must be logged in');
       
       const { data: collection, error: collectionError } = await supabase
         .from('collections')
         .insert({ 
-          name,
+          name: nameToCreate,
           user_id: user.id
         })
         .select()
@@ -107,8 +125,8 @@ export const AddToCollectionDialog = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
-      toast({ title: "Added to new collection" });
-      setNewCollectionName('');
+      toast({ title: "Created and added to new collection" });
+      setSearchQuery('');
       setIsOpen(false);
     },
     onError: (error: any) => {
@@ -122,18 +140,6 @@ export const AddToCollectionDialog = ({
 
   const addToCollection = useMutation({
     mutationFn: async (collectionId: string) => {
-      // Check if the media item already exists in the collection
-      const { data: existingItems } = await supabase
-        .from('collection_items')
-        .select('*')
-        .eq('collection_id', collectionId)
-        .eq('media_id', mediaId)
-        .eq('media_type', mediaType);
-
-      if (existingItems && existingItems.length > 0) {
-        throw new Error('This item is already in the collection');
-      }
-
       const { error } = await supabase
         .from('collection_items')
         .insert({
@@ -165,69 +171,164 @@ export const AddToCollectionDialog = ({
     },
   });
 
-  const handleCreateCollection = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newCollectionName.trim()) {
-      createCollection.mutate(newCollectionName.trim());
-    }
-  };
+  const exactMatch = collections?.find(c => c.name.toLowerCase() === searchQuery.toLowerCase());
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2 bg-background/50 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300">
           <FolderPlus className="w-4 h-4" />
           Add to Collection
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add to Collection</DialogTitle>
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-white/10 bg-zinc-950 shadow-2xl">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent tracking-tight">
+            Add to Collection
+          </DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          <div className="space-y-4">
-            {collections?.map((collection) => {
-              const hasItem = collection.collection_items?.some(
-                item => item.media_id === mediaId && item.media_type === mediaType
-              );
-              
-              return (
-                <Button
-                  key={collection.id}
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => addToCollection.mutate(collection.id)}
-                  disabled={hasItem}
-                >
-                  {collection.name}
-                  {hasItem && <span className="ml-2 text-sm text-muted-foreground">(Already added)</span>}
-                </Button>
-              );
-            })}
-          </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+        <Command className="bg-transparent" shouldFilter={true}>
+          <CommandInput 
+            placeholder="Search Or Create collections..." 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            className="h-12 bg-transparent outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 border-none placeholder:text-white/20 px-4"
+            containerClassName="px-6 border-none focus-within:ring-0"
+          />
+          
+          <CommandList className="max-h-[300px] overflow-visible pb-2">
+            <ScrollArea className="h-[300px] px-2">
+              <CommandEmpty className="py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 border border-white/10">
+                  <Search className="w-6 h-6 text-white/20" />
+                </div>
+                <p className="text-sm font-medium text-white/60 mb-6">No collections found.</p>
+                {searchQuery && (
+                  <Button 
+                    size="sm" 
+                    className="gap-2 bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-semibold rounded-full px-6 transition-all active:scale-95"
+                    onClick={() => createCollection.mutate(searchQuery)}
+                    disabled={createCollection.isPending}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create "{searchQuery}"
+                  </Button>
+                )}
+              </CommandEmpty>
+
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center p-12 gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#0AC4E0]" />
+                  <p className="text-sm text-muted-foreground animate-pulse">Scanning collections...</p>
+                </div>
+              ) : (
+                <>
+                  {collections && collections.length > 0 && (
+                    <CommandGroup heading="Existing" className="px-2">
+                      <div className="space-y-1">
+                        {collections.map((collection) => {
+                          const isAlreadyAdded = collection.collection_items?.some(
+                            (item: any) => item.media_id === mediaId && item.media_type === mediaType
+                          );
+
+                          return (
+                            <CommandItem
+                              key={collection.id}
+                              value={collection.name}
+                              onSelect={() => !isAlreadyAdded && addToCollection.mutate(collection.id)}
+                              disabled={isAlreadyAdded || addToCollection.isPending}
+                              className={cn(
+                                "flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group mb-1",
+                                isAlreadyAdded 
+                                  ? "opacity-50 cursor-default bg-transparent" 
+                                  : "hover:bg-white/5 aria-selected:bg-white/10"
+                              )}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={cn(
+                                  "w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200",
+                                  isAlreadyAdded 
+                                    ? "bg-white/5 border-white/5" 
+                                    : "bg-white/5 border-white/10 group-hover:border-[#0AC4E0]/30 group-hover:bg-[#0AC4E0]/10"
+                                )}>
+                                  <Folder className={cn(
+                                    "w-5 h-5 transition-colors",
+                                    isAlreadyAdded ? "text-white/20" : "text-white/40 group-hover:text-[#0AC4E0]"
+                                  )} />
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={cn(
+                                    "text-sm font-semibold transition-colors",
+                                    isAlreadyAdded ? "text-white/40" : "text-white group-hover:text-[#0AC4E0]"
+                                  )}>
+                                    {collection.name}
+                                  </span>
+                                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                    {collection.collection_items?.length || 0} items
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {isAlreadyAdded && (
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#0AC4E0]/10 border border-[#0AC4E0]/20">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0AC4E0]" />
+                                  <span className="text-[10px] font-bold text-[#0AC4E0] uppercase tracking-tighter">In Collection</span>
+                                </div>
+                              )}
+                            </CommandItem>
+                          );
+                        })}
+                      </div>
+                    </CommandGroup>
+                  )}
+
+                  {searchQuery && !exactMatch && (
+                    <CommandGroup heading="Actions" className="px-2 mt-2">
+                      <CommandItem
+                        value={searchQuery}
+                        onSelect={() => createCollection.mutate(searchQuery)}
+                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-[#0AC4E0]/10 group cursor-pointer transition-all duration-200 border border-transparent hover:border-[#0AC4E0]/20"
+                      >
+                        <div className="w-11 h-11 rounded-xl bg-[#0AC4E0]/10 flex items-center justify-center border border-[#0AC4E0]/20 group-hover:bg-[#0AC4E0]/20">
+                          <Plus className="w-5 h-5 text-[#0AC4E0]" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold text-white group-hover:text-[#0AC4E0]">New Collection</span>
+                          <span className="text-xs text-muted-foreground italic">"{searchQuery}"</span>
+                        </div>
+                      </CommandItem>
+                    </CommandGroup>
+                  )}
+                </>
+              )}
+            </ScrollArea>
+          </CommandList>
+        </Command>
+
+        <div className="mt-auto">
+          <div className="px-6 py-4 border-t border-white/5 bg-zinc-900/50 backdrop-blur-md flex items-center gap-4">
+            <div className="w-14 h-20 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0 border border-white/10 shadow-xl ring-1 ring-white/5">
+              {posterPath ? (
+                <img 
+                  src={`https://image.tmdb.org/t/p/w92${posterPath}`} 
+                  alt={title || name} 
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <FolderPlus className="w-5 h-5 text-white/10" />
+                </div>
+              )}
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or create new collection
+            <div className="flex flex-col gap-1 overflow-hidden">
+              <span className="text-[10px] font-bold text-[#0AC4E0] uppercase tracking-[0.2em]">Currently Adding</span>
+              <span className="text-sm font-bold text-white truncate leading-tight">{title || name}</span>
+              <span className="text-xs text-muted-foreground line-clamp-2 leading-relaxed opacity-70">
+                {overview || "No description available"}
               </span>
             </div>
           </div>
-
-          <form onSubmit={handleCreateCollection} className="flex gap-2">
-            <Input
-              placeholder="New collection name"
-              value={newCollectionName}
-              onChange={(e) => setNewCollectionName(e.target.value)}
-            />
-            <Button type="submit" disabled={!newCollectionName.trim()}>
-              <Plus className="w-4 h-4" />
-            </Button>
-          </form>
         </div>
       </DialogContent>
     </Dialog>
