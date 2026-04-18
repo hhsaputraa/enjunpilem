@@ -649,20 +649,33 @@ const Collections = () => {
               <div
                 key={collection.id}
                 className="group flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all cursor-pointer"
-                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name })}
+                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0">
                   <div className="w-12 h-16 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
                     {collection.collection_items?.[0]?.poster_path && (
                       <img
-                        src={getImageUrl(collection.collection_items[0].poster_path, 'w92')}
+                        src={getImageUrl(collection.collection_items[0].poster_path, 'w300')}
                         alt=""
                         className="w-full h-full object-cover"
                       />
                     )}
                   </div>
-                  <div className="flex flex-col">
-                    <h3 className="font-bold text-white group-hover:text-[#0AC4E0] transition-colors">{collection.name}</h3>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-white group-hover:text-[#0AC4E0] transition-colors truncate">{collection.name}</h3>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border",
+                          collection.is_shared
+                            ? "bg-[#0AC4E0]/10 text-[#0AC4E0] border-[#0AC4E0]/30"
+                            : "bg-white/5 text-white/50 border-white/10"
+                        )}
+                      >
+                        {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                        {collection.is_shared ? 'Public' : 'Private'}
+                      </span>
+                    </div>
                     <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                       {collection.collection_items?.length || 0} ITEMS
                     </span>
@@ -671,7 +684,19 @@ const Collections = () => {
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name }); setIsEditDialogOpen(true); }}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-lg hover:bg-white/10"
+                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                      }}
+                    >
+                      {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
