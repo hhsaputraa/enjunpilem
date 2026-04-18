@@ -1,5 +1,4 @@
 
-
 import axios from 'axios';
 import { supabase } from '@/integrations/supabase/client';
 import { tmdbConfig } from '@/config/env';

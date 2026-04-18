@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Trash2, Grid, List, GripVertical, Star } from 'lucide-react';
+import { ChevronLeft, Trash2, Grid, List, GripVertical, Star, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getImageUrl } from '@/services/tmdb';
 import {
@@ -205,6 +207,7 @@ export const CollectionDetails = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
   const [localItems, setLocalItems] = useState<CollectionItem[]>([]);
 
   const sensors = useSensors(
@@ -231,6 +234,15 @@ export const CollectionDetails = ({
   useEffect(() => {
     if (items) setLocalItems(items);
   }, [items]);
+
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return localItems;
+    return localItems.filter(item => 
+      (item.title || item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [localItems, searchQuery]);
+
+  const isSearching = searchQuery.trim().length > 0;
 
   const deleteMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -296,31 +308,50 @@ export const CollectionDetails = ({
           )}
         </div>
 
-        {localItems.length > 0 && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4 flex-1 md:flex-initial">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search in collection..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-white/5 border-white/10 h-10 rounded-xl focus:ring-[#0AC4E0]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="icon"
               onClick={() => setViewMode('grid')}
+              className={cn("h-8 w-8 rounded-lg", viewMode === 'grid' ? "bg-[#0AC4E0] text-black hover:bg-[#0AC4E0]/80" : "text-muted-foreground hover:text-white")}
               aria-label="Grid view"
             >
               <Grid className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="icon"
               onClick={() => setViewMode('list')}
+              className={cn("h-8 w-8 rounded-lg", viewMode === 'list' ? "bg-[#0AC4E0] text-black hover:bg-[#0AC4E0]/80" : "text-muted-foreground hover:text-white")}
               aria-label="List view"
             >
               <List className="h-4 w-4" />
             </Button>
           </div>
-        )}
+        </div>
       </div>
 
-      {localItems.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Tip: drag the <GripVertical className="inline h-3 w-3" /> handle to reorder.
+      {localItems.length > 0 && !isSearching && (
+        <p className="text-xs text-muted-foreground flex items-center gap-2">
+          <GripVertical className="h-3 w-3 text-[#0AC4E0]" />
+          Tip: drag the handle to reorder your library.
+        </p>
+      )}
+
+      {isSearching && (
+        <p className="text-xs text-[#0AC4E0] font-medium">
+          Sorting is disabled while searching.
         </p>
       )}
 
@@ -330,10 +361,18 @@ export const CollectionDetails = ({
             <div key={i} className="aspect-[2/3] rounded-lg bg-muted animate-pulse" />
           ))}
         </div>
-      ) : localItems.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">
-          No items in this collection yet
-        </p>
+      ) : filteredItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Search className="w-12 h-12 text-white/10 mb-4" />
+          <p className="text-muted-foreground font-medium">No items found matching your search.</p>
+          <Button 
+            variant="link" 
+            onClick={() => setSearchQuery('')}
+            className="text-[#0AC4E0] mt-2 font-bold uppercase text-xs"
+          >
+            Clear Search
+          </Button>
+        </div>
       ) : (
         <DndContext
           sensors={sensors}
@@ -341,12 +380,13 @@ export const CollectionDetails = ({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={localItems.map((i) => i.id)}
+            items={filteredItems.map((i) => i.id)}
             strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
+            disabled={isSearching}
           >
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {localItems.map((item) => (
+                {filteredItems.map((item) => (
                   <SortableGridItem
                     key={item.id}
                     item={item}
@@ -356,7 +396,7 @@ export const CollectionDetails = ({
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {localItems.map((item) => (
+                {filteredItems.map((item) => (
                   <SortableListItem
                     key={item.id}
                     item={item}
