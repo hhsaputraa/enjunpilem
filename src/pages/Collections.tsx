@@ -249,7 +249,11 @@ const Collections = () => {
   const handleCreateCollection = (e: React.FormEvent) => {
     e.preventDefault();
     if (newCollectionName.trim()) {
-      createCollection.mutate(newCollectionName.trim());
+      createCollection.mutate({
+        name: newCollectionName.trim(),
+        description: newCollectionDescription.trim(),
+        is_shared: newCollectionShared,
+      });
     }
   };
 
@@ -258,7 +262,9 @@ const Collections = () => {
     if (editingCollection && editingCollection.name.trim()) {
       updateCollection.mutate({
         id: editingCollection.id,
-        name: editingCollection.name.trim()
+        name: editingCollection.name.trim(),
+        description: editingCollection.description || '',
+        is_shared: editingCollection.is_shared,
       });
     }
   };
@@ -281,6 +287,7 @@ const Collections = () => {
           <CollectionDetails
             collectionId={selectedCollection.id}
             collectionName={selectedCollection.name}
+            description={selectedCollection.description}
             onBack={() => setSelectedCollection(null)}
           />
         </div>
