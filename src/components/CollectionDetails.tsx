@@ -206,6 +206,9 @@ export const CollectionDetails = ({
   collectionId,
   collectionName,
   onBack,
+  readOnly = false,
+  description,
+  ownerName,
 }: CollectionDetailsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
