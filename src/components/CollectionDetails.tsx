@@ -122,12 +122,15 @@ const SortableGridItem = ({
 const SortableListItem = ({
   item,
   onDelete,
+  readOnly = false,
 }: {
   item: CollectionItem;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
+    disabled: readOnly,
   });
 
   const style = {
@@ -148,14 +151,16 @@ const SortableListItem = ({
       style={style}
       className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/40 transition-colors"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="p-2 rounded-md hover:bg-accent cursor-grab active:cursor-grabbing flex-shrink-0"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </button>
+      {!readOnly && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-2 rounded-md hover:bg-accent cursor-grab active:cursor-grabbing flex-shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
 
       <Link to={detailPath} className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-14 h-20 sm:w-16 sm:h-24 rounded-md overflow-hidden bg-muted flex-shrink-0">
@@ -195,15 +200,17 @@ const SortableListItem = ({
         </div>
       </Link>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-        onClick={() => onDelete(item.id)}
-        aria-label="Remove from collection"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {!readOnly && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+          onClick={() => onDelete(item.id)}
+          aria-label="Remove from collection"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };
