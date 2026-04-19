@@ -3,7 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Globe, Users, Film as FilmIcon } from 'lucide-react';
+import { Search, LibraryBig, Users, Film as FilmIcon } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getImageUrl } from '@/services/tmdb';
 import { CollectionDetails } from '@/components/CollectionDetails';
 
@@ -105,13 +111,14 @@ const SharedFilms = () => {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-background">
+    <TooltipProvider>
+      <div className="min-h-screen p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col gap-8 mb-12">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-[#0AC4E0]/10 border border-[#0AC4E0]/30 flex items-center justify-center">
-                <Globe className="w-6 h-6 text-[#0AC4E0]" />
+                <LibraryBig className="w-6 h-6 text-[#0AC4E0]" />
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent tracking-tight">
@@ -150,7 +157,7 @@ const SharedFilms = () => {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
             <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/5 mb-6">
-              <Globe className="w-8 h-8 text-white/10" />
+              <LibraryBig className="w-8 h-8 text-white/10" />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">No shared collections yet</h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
@@ -172,10 +179,10 @@ const SharedFilms = () => {
                 <div
                   key={collection.id}
                   onClick={() => setSelected(collection)}
-                  className="group relative flex flex-col p-6 rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
+                  className="group relative flex flex-col rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
                 >
                   {/* Content Container (Subtle blur on hover) */}
-                  <div className="flex flex-col h-full transition-all duration-500 group-hover:blur-[2px] group-hover:opacity-70">
+                  <div className="flex flex-col h-full p-6 transition-all duration-500 group-hover:blur-[2px] group-hover:opacity-70">
                     {collection.collection_items?.[0]?.poster_path && (
                       <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
                         <img
@@ -195,13 +202,11 @@ const SharedFilms = () => {
                           {collection.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#0AC4E0]" />
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
-                            {collection.collection_items?.length || 0} items
+                            FROM
                           </span>
                           {ownerName && (
                             <>
-                              <span className="text-white/20">·</span>
                               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0AC4E0]/80">
                                 @{ownerName}
                               </span>
@@ -249,9 +254,16 @@ const SharedFilms = () => {
 
                   {/* Hover Overlay - More subtle */}
                   <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-zinc-950/60 backdrop-blur-[2px] p-6 text-center">
-                    <div className="w-12 h-12 rounded-full bg-[#0AC4E0] text-black flex items-center justify-center mb-4 transition-transform duration-500 shadow-xl shadow-[#0AC4E0]/20">
-                      <Search className="w-6 h-6" />
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-12 h-12 rounded-full bg-[#0AC4E0] text-black flex items-center justify-center mb-4 transition-transform duration-500 shadow-xl shadow-[#0AC4E0]/20">
+                          <Search className="w-6 h-6" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                        Browse this collection
+                      </TooltipContent>
+                    </Tooltip>
                     
                     <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0AC4E0] mb-3">
                       Browse Collection
@@ -270,6 +282,7 @@ const SharedFilms = () => {
         )}
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 

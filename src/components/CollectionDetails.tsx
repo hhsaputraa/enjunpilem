@@ -328,11 +328,6 @@ export const CollectionDetails = ({
                   ({localItems.length} {localItems.length === 1 ? 'item' : 'items'})
                 </span>
               )}
-              {readOnly && (
-                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-[#0AC4E0]/10 text-[#0AC4E0] border border-[#0AC4E0]/30">
-                  Read Only
-                </span>
-              )}
             </div>
             {ownerName && (
               <span className="text-xs text-muted-foreground mt-1">

@@ -1,7 +1,7 @@
 "use client"
 
 import { Link, useLocation } from "react-router-dom"
-import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu, Compass } from "lucide-react"
+import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu, Compass,SquareLibrary } from "lucide-react"
 import { Button } from "./ui/button"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
@@ -76,7 +76,7 @@ const Navbar = () => {
     { name: "Home", path: "/" },
     { name: "Movies", path: "/navmovies", icon: Film },
     { name: "TV Shows", path: "/navtvshows", icon: Tv },
-    { name: "Collections", path: "/collections", icon: Compass },
+    { name: "Collections", path: "/collections", icon: SquareLibrary },
     { name: "Shared Films", path: "/shared-films", icon: Compass },
   ]
 

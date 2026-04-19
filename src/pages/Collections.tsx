@@ -29,6 +29,12 @@ import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Loc
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -296,7 +302,8 @@ const Collections = () => {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-background">
+    <TooltipProvider>
+      <div className="min-h-screen p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col gap-8 mb-12">
           <div className="flex justify-between items-end">
@@ -305,16 +312,23 @@ const Collections = () => {
                 My Collections
               </h1>
               <p className="text-muted-foreground mt-1 text-sm font-medium">
-                Organize and manage your favorite media
+                Organize and manage your favorite Film
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold h-11 px-6 rounded-xl shadow-lg shadow-[#0AC4E0]/20 transition-all active:scale-95 flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  New Collection
-                </Button>
-              </DialogTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold h-11 px-6 rounded-xl shadow-lg shadow-[#0AC4E0]/20 transition-all active:scale-95 flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    New Collection
+                  </Button>
+                </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#0AC4E0] text-black font-bold text-[10px] uppercase tracking-widest border-none">
+                Create a new private or public library
+              </TooltipContent>
+            </Tooltip>
               <DialogContent className="border-white/10 bg-zinc-950 p-6 sm:rounded-2xl">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Create Collection</DialogTitle>
@@ -386,12 +400,20 @@ const Collections = () => {
 
             <div className="flex items-center gap-2 pr-2">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 gap-2 text-xs font-bold uppercase tracking-wider hover:bg-white/10 rounded-xl">
-                    <ArrowUpDown className="w-3.5 h-3.5 text-[#0AC4E0]" />
-                    Sort: {sortBy}
-                  </Button>
-                </DropdownMenuTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-9 gap-2 text-xs font-bold uppercase tracking-wider hover:bg-white/10 rounded-xl">
+                        <ArrowUpDown className="w-3.5 h-3.5 text-[#0AC4E0]" />
+                        Sort: {sortBy}
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                    Change display order
+                  </TooltipContent>
+                </Tooltip>
+                
                 <DropdownMenuContent align="end" className="w-48 bg-zinc-900 border-white/10 rounded-xl overflow-hidden p-1">
                   <DropdownMenuItem onClick={() => setSortBy('newest')} className="rounded-lg gap-2 text-xs font-medium focus:bg-[#0AC4E0] focus:text-black cursor-pointer uppercase tracking-wide">Most Recent</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setSortBy('alphabetical')} className="rounded-lg gap-2 text-xs font-medium focus:bg-[#0AC4E0] focus:text-black cursor-pointer uppercase tracking-wide">A - Z</DropdownMenuItem>
@@ -400,22 +422,37 @@ const Collections = () => {
               </DropdownMenu>
 
               <div className="flex bg-zinc-900 rounded-xl p-1 border border-white/5">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setViewMode('grid')}
-                  className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'grid' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setViewMode('compact')}
-                  className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'compact' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setViewMode('grid')}
+                      className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'grid' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                    Grid View
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setViewMode('compact')}
+                      className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'compact' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                    List View
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -505,10 +542,10 @@ const Collections = () => {
               <div
                 key={collection.id}
                 onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
-                className="group relative flex flex-col p-6 rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
+                className="group relative flex flex-col rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
               >
                 {/* Content Container (Subtle blur on hover) */}
-                <div className="flex flex-col h-full transition-all duration-500 group-hover:blur-[2px] group-hover:opacity-70">
+                <div className="flex flex-col h-full p-6 transition-all duration-500 group-hover:blur-[2px] group-hover:opacity-70">
                   {/* Background Poster Blur */}
                   {collection.collection_items?.[0]?.poster_path && (
                     <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
@@ -585,47 +622,69 @@ const Collections = () => {
 
                 {/* Hover Management Buttons (Always visible on hover) */}
                 <div className="absolute top-6 right-6 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-30">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl hover:bg-white/10 text-white/40 hover:text-white backdrop-blur-md bg-black/40 border border-white/5"
-                    title={collection.is_shared ? 'Make Private' : 'Make Public'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                    }}
-                  >
-                    {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl hover:bg-white/10 text-white/40 hover:text-white backdrop-blur-md bg-black/40 border border-white/5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingCollection({
-                        id: collection.id,
-                        name: collection.name,
-                        description: collection.description,
-                        is_shared: !!collection.is_shared,
-                      });
-                      setIsEditDialogOpen(true);
-                    }}
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl hover:bg-destructive/10 text-white/40 hover:text-destructive backdrop-blur-md bg-black/40 border border-white/5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCollectionToDelete({ id: collection.id, name: collection.name });
-                      setIsDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-white/10 text-white/40 hover:text-white backdrop-blur-md bg-black/40 border border-white/5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                        }}
+                      >
+                        {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                      {collection.is_shared ? 'Make Private' : 'Make Public'}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-white/10 text-white/40 hover:text-white backdrop-blur-md bg-black/40 border border-white/5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCollection({
+                            id: collection.id,
+                            name: collection.name,
+                            description: collection.description,
+                            is_shared: !!collection.is_shared,
+                          });
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                      Edit Collection
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-destructive/10 text-white/40 hover:text-destructive backdrop-blur-md bg-black/40 border border-white/5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCollectionToDelete({ id: collection.id, name: collection.name });
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-destructive/20 border-destructive/50 text-destructive font-bold text-[10px] uppercase tracking-widest">
+                      Delete Collection
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 {/* Hover Overlay - More subtle */}
@@ -688,24 +747,46 @@ const Collections = () => {
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-lg hover:bg-white/10"
-                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                      }}
-                    >
-                      {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
-                      <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg hover:bg-white/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                          }}
+                        >
+                          {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                        {collection.is_shared ? 'Make Private' : 'Make Public'}
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                        Edit Collection
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
+                          <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-destructive/20 border-destructive/50 text-destructive font-bold text-[10px] uppercase tracking-widest">
+                        Delete Collection
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-[#0AC4E0] group-hover:border-transparent transition-all">
                     <ArrowUpDown className="w-3.5 h-3.5 text-white group-hover:text-black hover:rotate-180 transition-transform" />
@@ -740,8 +821,9 @@ const Collections = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
