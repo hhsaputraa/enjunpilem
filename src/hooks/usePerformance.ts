@@ -67,7 +67,7 @@ export const initPerformanceObserver = () => {
       // First Input Delay
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry) => {
+        entries.forEach((entry: any) => {
           console.log('⚡ FID:', entry.processingStart - entry.startTime, 'ms');
         });
       });
