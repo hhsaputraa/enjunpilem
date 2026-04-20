@@ -24,6 +24,8 @@ import ItemMoreCollectionRouter from "./pages/ItemMoreCollectionRouter";
 import DetailListCollectionRouter from "./pages/DetailListCollectionRouter";
 import SharedFilms from "./pages/SharedFilms";
 import ImportCollection from "./pages/ImportCollection";
+import Onboarding from "./pages/Onboarding";
+import { AuthGuard } from "./components/AuthGuard";
 
 // Mobile Pages
 import {
@@ -61,6 +63,7 @@ const Layout = () => {
             <Route path="/tv/:id" element={<MobileMovieDetail />} />
             <Route path="/watch/:type/:id" element={<MobileWatch />} />
             <Route path="/auth" element={<MobileAuth />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/import-collection" element={<ImportCollection />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -91,6 +94,7 @@ const Layout = () => {
           <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/import-collection" element={<ImportCollection />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
         </Routes>
@@ -103,7 +107,9 @@ const Layout = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <Layout />
+      <AuthGuard>
+        <Layout />
+      </AuthGuard>
     </BrowserRouter>
   </QueryClientProvider>
 );
