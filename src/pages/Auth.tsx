@@ -10,15 +10,15 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Eye, EyeOff, Film, Lock, Mail, User } from "lucide-react"
+import { Eye, EyeOff, Film, Lock, Mail } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 
 const Auth = () => {
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [signinEmailInput, setSigninEmailInput] = useState("")
   const [password, setPassword] = useState("")
-  const [username, setUsername] = useState("")
-  const [email, setEmail] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
