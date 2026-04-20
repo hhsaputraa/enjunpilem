@@ -1,177 +1,142 @@
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from './useMobileAuth';
 import { useToastHelpers } from '@/components/mobile/Toast';
 
+// DB row shape (from generated types). Title/poster are NOT stored in `watchlist` table —
+// they live on TMDB. We keep the mobile API backward-compatible by carrying optional UI
+// fields in-memory only.
 export interface WatchlistItem {
   id: string;
   user_id: string;
-  tmdb_id: string;
-  media_type: 'movie' | 'tv';
-  title: string;
+  media_id: number;
+  media_type: string;
+  added_at: string;
+  // Convenience aliases used across mobile UI (derived/optional)
+  tmdb_id?: string;
+  title?: string;
   poster_path?: string;
   backdrop_path?: string;
   overview?: string;
   release_date?: string;
   vote_average?: number;
-  created_at: string;
+  created_at?: string;
 }
+
+type ToggleInput = {
+  id: string;
+  title: string;
+  poster?: string;
+  backdrop?: string;
+  overview?: string;
+  year?: string;
+  rating?: number;
+  type: 'movie' | 'tv';
+};
 
 export const useMobileWatchlist = () => {
   const { user } = useMobileAuth();
   const { showSuccess, showError } = useToastHelpers();
   const queryClient = useQueryClient();
 
-  // Fetch watchlist
-  const { data: watchlist = [], isLoading, error } = useQuery({
+  const { data: watchlist = [], isLoading, error, refetch } = useQuery({
     queryKey: ['watchlist', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<WatchlistItem[]> => {
       if (!user) return [];
-
       const { data, error } = await supabase
         .from('watchlist')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
+        .order('added_at', { ascending: false });
       if (error) throw error;
-      return data as WatchlistItem[];
+      return (data ?? []).map((r) => ({
+        ...r,
+        tmdb_id: String(r.media_id),
+        created_at: r.added_at,
+      })) as WatchlistItem[];
     },
     enabled: !!user,
   });
 
-  // Add to watchlist mutation
   const addToWatchlistMutation = useMutation({
-    mutationFn: async (item: {
-      tmdb_id: string;
-      media_type: 'movie' | 'tv';
-      title: string;
-      poster_path?: string;
-      backdrop_path?: string;
-      overview?: string;
-      release_date?: string;
-      vote_average?: number;
-    }) => {
+    mutationFn: async (item: ToggleInput) => {
       if (!user) throw new Error('User not authenticated');
-
       const { data, error } = await supabase
         .from('watchlist')
         .insert({
           user_id: user.id,
-          ...item,
+          media_id: Number(item.id),
+          media_type: item.type,
         })
         .select()
         .single();
-
       if (error) throw error;
-      return data;
+      return { ...data, title: item.title };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
       showSuccess('Ditambahkan ke Watchlist', `"${data.title}" berhasil ditambahkan`);
     },
-    onError: (error: any) => {
-      showError('Gagal menambahkan', error.message);
-    },
+    onError: (err: any) => showError('Gagal menambahkan', err.message),
   });
 
-  // Remove from watchlist mutation
   const removeFromWatchlistMutation = useMutation({
     mutationFn: async (tmdbId: string) => {
       if (!user) throw new Error('User not authenticated');
-
       const { error } = await supabase
         .from('watchlist')
         .delete()
         .eq('user_id', user.id)
-        .eq('tmdb_id', tmdbId);
-
+        .eq('media_id', Number(tmdbId));
       if (error) throw error;
       return tmdbId;
     },
-    onSuccess: (tmdbId, variables) => {
+    onSuccess: (tmdbId) => {
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
-      const item = watchlist.find(w => w.tmdb_id === tmdbId);
+      const item = watchlist.find((w) => w.tmdb_id === tmdbId);
       showSuccess('Dihapus dari Watchlist', `"${item?.title || 'Item'}" telah dihapus`);
     },
-    onError: (error: any) => {
-      showError('Gagal menghapus', error.message);
-    },
+    onError: (err: any) => showError('Gagal menghapus', err.message),
   });
 
-  // Check if item is in watchlist
-  const isInWatchlist = (tmdbId: string) => {
-    return watchlist.some(item => item.tmdb_id === tmdbId);
-  };
+  const isInWatchlist = (tmdbId: string) => watchlist.some((i) => i.tmdb_id === tmdbId);
 
-  // Toggle watchlist
-  const toggleWatchlist = async (item: {
-    id: string;
-    title: string;
-    poster?: string;
-    backdrop?: string;
-    overview?: string;
-    year?: string;
-    rating?: number;
-    type: 'movie' | 'tv';
-  }) => {
+  const toggleWatchlist = async (item: ToggleInput) => {
     if (!user) {
       showError('Login diperlukan', 'Silakan login untuk menggunakan watchlist');
       return;
     }
-
-    const inWatchlist = isInWatchlist(item.id);
-
-    if (inWatchlist) {
-      removeFromWatchlistMutation.mutate(item.id);
-    } else {
-      addToWatchlistMutation.mutate({
-        tmdb_id: item.id,
-        media_type: item.type,
-        title: item.title,
-        poster_path: item.poster?.replace('https://image.tmdb.org/t/p/w500', ''),
-        backdrop_path: item.backdrop?.replace('https://image.tmdb.org/t/p/w1280', ''),
-        overview: item.overview,
-        release_date: item.year ? `${item.year}-01-01` : undefined,
-        vote_average: item.rating,
-      });
-    }
+    if (isInWatchlist(item.id)) removeFromWatchlistMutation.mutate(item.id);
+    else addToWatchlistMutation.mutate(item);
   };
 
-  // Bulk remove from watchlist
   const bulkRemoveFromWatchlist = async (tmdbIds: string[]) => {
     if (!user) return;
-
     try {
       const { error } = await supabase
         .from('watchlist')
         .delete()
         .eq('user_id', user.id)
-        .in('tmdb_id', tmdbIds);
-
+        .in('media_id', tmdbIds.map((id) => Number(id)));
       if (error) throw error;
-
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
       showSuccess('Berhasil dihapus', `${tmdbIds.length} item telah dihapus dari watchlist`);
-    } catch (error: any) {
-      showError('Gagal menghapus', error.message);
+    } catch (err: any) {
+      showError('Gagal menghapus', err.message);
     }
   };
 
-  // Get watchlist stats
-  const getWatchlistStats = () => {
-    const total = watchlist.length;
-    const movies = watchlist.filter(item => item.media_type === 'movie').length;
-    const tvShows = watchlist.filter(item => item.media_type === 'tv').length;
-
-    return { total, movies, tvShows };
-  };
+  const getWatchlistStats = () => ({
+    total: watchlist.length,
+    movies: watchlist.filter((i) => i.media_type === 'movie').length,
+    tvShows: watchlist.filter((i) => i.media_type === 'tv').length,
+  });
 
   return {
     watchlist,
     isLoading,
     error,
+    refetch,
     isInWatchlist,
     toggleWatchlist,
     bulkRemoveFromWatchlist,
@@ -181,126 +146,80 @@ export const useMobileWatchlist = () => {
   };
 };
 
-// Hook for favorites (similar to watchlist)
 export const useMobileFavorites = () => {
   const { user } = useMobileAuth();
   const { showSuccess, showError } = useToastHelpers();
   const queryClient = useQueryClient();
 
-  // Fetch favorites
   const { data: favorites = [], isLoading, error } = useQuery({
     queryKey: ['favorites', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<WatchlistItem[]> => {
       if (!user) return [];
-
       const { data, error } = await supabase
         .from('favorites')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
+        .order('added_at', { ascending: false });
       if (error) throw error;
-      return data as WatchlistItem[];
+      return (data ?? []).map((r) => ({
+        ...r,
+        tmdb_id: String(r.media_id),
+        created_at: r.added_at,
+      })) as WatchlistItem[];
     },
     enabled: !!user,
   });
 
-  // Add to favorites mutation
   const addToFavoritesMutation = useMutation({
-    mutationFn: async (item: {
-      tmdb_id: string;
-      media_type: 'movie' | 'tv';
-      title: string;
-      poster_path?: string;
-      backdrop_path?: string;
-      overview?: string;
-      release_date?: string;
-      vote_average?: number;
-    }) => {
+    mutationFn: async (item: ToggleInput) => {
       if (!user) throw new Error('User not authenticated');
-
       const { data, error } = await supabase
         .from('favorites')
         .insert({
           user_id: user.id,
-          ...item,
+          media_id: Number(item.id),
+          media_type: item.type,
         })
         .select()
         .single();
-
       if (error) throw error;
-      return data;
+      return { ...data, title: item.title };
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] });
       showSuccess('Ditambahkan ke Favorit', `"${data.title}" berhasil ditambahkan`);
     },
-    onError: (error: any) => {
-      showError('Gagal menambahkan', error.message);
-    },
+    onError: (err: any) => showError('Gagal menambahkan', err.message),
   });
 
-  // Remove from favorites mutation
   const removeFromFavoritesMutation = useMutation({
     mutationFn: async (tmdbId: string) => {
       if (!user) throw new Error('User not authenticated');
-
       const { error } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
-        .eq('tmdb_id', tmdbId);
-
+        .eq('media_id', Number(tmdbId));
       if (error) throw error;
       return tmdbId;
     },
     onSuccess: (tmdbId) => {
       queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] });
-      const item = favorites.find(f => f.tmdb_id === tmdbId);
+      const item = favorites.find((f) => f.tmdb_id === tmdbId);
       showSuccess('Dihapus dari Favorit', `"${item?.title || 'Item'}" telah dihapus`);
     },
-    onError: (error: any) => {
-      showError('Gagal menghapus', error.message);
-    },
+    onError: (err: any) => showError('Gagal menghapus', err.message),
   });
 
-  // Check if item is in favorites
-  const isInFavorites = (tmdbId: string) => {
-    return favorites.some(item => item.tmdb_id === tmdbId);
-  };
+  const isInFavorites = (tmdbId: string) => favorites.some((i) => i.tmdb_id === tmdbId);
 
-  // Toggle favorites
-  const toggleFavorites = async (item: {
-    id: string;
-    title: string;
-    poster?: string;
-    backdrop?: string;
-    overview?: string;
-    year?: string;
-    rating?: number;
-    type: 'movie' | 'tv';
-  }) => {
+  const toggleFavorites = async (item: ToggleInput) => {
     if (!user) {
       showError('Login diperlukan', 'Silakan login untuk menggunakan favorit');
       return;
     }
-
-    const inFavorites = isInFavorites(item.id);
-
-    if (inFavorites) {
-      removeFromFavoritesMutation.mutate(item.id);
-    } else {
-      addToFavoritesMutation.mutate({
-        tmdb_id: item.id,
-        media_type: item.type,
-        title: item.title,
-        poster_path: item.poster?.replace('https://image.tmdb.org/t/p/w500', ''),
-        backdrop_path: item.backdrop?.replace('https://image.tmdb.org/t/p/w1280', ''),
-        overview: item.overview,
-        release_date: item.year ? `${item.year}-01-01` : undefined,
-        vote_average: item.rating,
-      });
-    }
+    if (isInFavorites(item.id)) removeFromFavoritesMutation.mutate(item.id);
+    else addToFavoritesMutation.mutate(item);
   };
 
   return {
