@@ -131,7 +131,7 @@ export const MobileWatchlist: React.FC = () => {
   if (error) {
     return (
       <PageLayout title="Watchlist">
-        <LoadError onRetry={loadWatchlist} resource="watchlist" />
+        <LoadError onRetry={() => window.location.reload()} resource="watchlist" />
       </PageLayout>
     );
   }
@@ -243,7 +243,7 @@ export const MobileWatchlist: React.FC = () => {
                         key={option.value}
                         variant={sortBy === option.value ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setSortBy(option.value)}
+                        onClick={() => setSortBy(option.value as SortOption)}
                         className="h-8 text-xs"
                       >
                         {option.label}
@@ -326,7 +326,7 @@ const WatchlistContent: React.FC<{
   onWatchlistToggle,
 }) => {
   if (isLoading) {
-    return <GridSkeleton itemCount={6} columns={viewMode === 'grid' ? 2 : 1} />;
+    return <GridSkeleton itemCount={6} columns={viewMode === 'grid' ? 2 : 3} />;
   }
 
   return (
