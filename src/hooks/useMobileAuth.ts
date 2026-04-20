@@ -201,6 +201,7 @@ export const useMobileAuth = () => {
     loading,
     isAuthenticated,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     resetPassword,
