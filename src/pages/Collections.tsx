@@ -41,6 +41,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type ViewMode = 'grid' | 'compact';
 type SortOption = 'newest' | 'alphabetical' | 'items';
@@ -64,6 +73,15 @@ const Collections = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
+
+  // Reset pagination when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -138,6 +156,12 @@ const Collections = () => {
 
     return result;
   }, [collections, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filteredAndSortedCollections.length / ITEMS_PER_PAGE);
+  const paginatedCollections = filteredAndSortedCollections.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const createCollection = useMutation({
     mutationFn: async ({ name, description, is_shared }: { name: string; description: string; is_shared: boolean }) => {
@@ -560,7 +584,7 @@ const Collections = () => {
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredAndSortedCollections?.map((collection) => (
+            {paginatedCollections?.map((collection) => (
               <div
                 key={collection.id}
                 onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
@@ -730,7 +754,7 @@ const Collections = () => {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filteredAndSortedCollections?.map((collection) => (
+            {paginatedCollections?.map((collection) => (
               <div
                 key={collection.id}
                 className="group flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all cursor-pointer"
@@ -818,6 +842,73 @@ const Collections = () => {
             ))}
           </div>
         )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-16 pb-12">
+            <Pagination>
+              <PaginationContent className="bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-1 rounded-2xl">
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className={cn(
+                      "rounded-xl hover:bg-white/10 transition-colors cursor-pointer",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+                
+                {[...Array(totalPages)].map((_, i) => {
+                  const page = i + 1;
+                  // Show current page, first, last, and pages around current
+                  if (
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className={cn(
+                            "rounded-xl cursor-pointer transition-all",
+                            currentPage === page 
+                              ? "bg-[#0AC4E0] text-black font-bold shadow-lg shadow-[#0AC4E0]/20 hover:bg-[#0AC4E0]/90 hover:text-black" 
+                              : "hover:bg-white/10 text-white/60 hover:text-white"
+                          )}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  } else if (
+                    page === currentPage - 2 || 
+                    page === currentPage + 2
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationEllipsis className="text-white/20" />
+                      </PaginationItem>
+                    );
+                  }
+                  return null;
+                })}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className={cn(
+                      "rounded-xl hover:bg-white/10 transition-colors cursor-pointer",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
