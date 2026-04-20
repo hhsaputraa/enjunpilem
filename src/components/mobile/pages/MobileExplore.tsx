@@ -83,9 +83,8 @@ console.log('COMPONENT RENDERED', { isTabsSticky });
     <PageLayout
       title=""
       showBackButton={false}
-      className="pb-0"
     >
-      <div className="relative -mx-4 -mt-4">
+      <div className="relative -mx-4 -mt-4 pb-0">
         {/* Hero Section dengan Background Dinamis */}
         <div className="relative h-64 bg-gradient-to-br from-teal-500 to-teal-600 overflow-hidden">
           {/* Background Image - Dinamis dari item pertama */}

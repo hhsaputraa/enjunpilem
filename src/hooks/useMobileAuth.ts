@@ -49,6 +49,24 @@ export const useMobileAuth = () => {
     return () => subscription.unsubscribe();
   }, [showSuccess]);
 
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/onboarding`,
+        },
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (error: any) {
+      showError('Gagal masuk dengan Google', error.message);
+      setLoading(false);
+      return { success: false, error: error.message };
+    }
+  };
+
   const signIn = async (emailOrUsername: string, password: string) => {
     try {
       setLoading(true);
@@ -183,6 +201,7 @@ export const useMobileAuth = () => {
     loading,
     isAuthenticated,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     resetPassword,
