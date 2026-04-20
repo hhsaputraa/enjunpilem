@@ -300,7 +300,7 @@ export const MobileMovieDetail: React.FC = () => {
             <CarouselRow
               title="Film Serupa"
               items={movie.similar}
-              onItemClick={handleSimilarItemClick}
+              onItemClick={(item) => handleSimilarItemClick(item as { type: 'movie' | 'tv'; id: string })}
               showViewAll={false}
             />
           )}
