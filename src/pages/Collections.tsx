@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Lock } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Lock, Combine } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -50,6 +51,7 @@ const Collections = () => {
   const [newCollectionShared, setNewCollectionShared] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string; description: string | null } | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -315,20 +317,39 @@ const Collections = () => {
                 Organize and manage your favorite Film
               </p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DialogTrigger asChild>
-                  <Button className="bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold h-11 px-6 rounded-xl shadow-lg shadow-[#0AC4E0]/20 transition-all active:scale-95 flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    New Collection
-                  </Button>
-                </DialogTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#0AC4E0] text-black font-bold text-[10px] uppercase tracking-widest border-none">
-                Create a new private or public library
-              </TooltipContent>
-            </Tooltip>
+              <div className="flex items-center gap-3">
+                {user?.id === import.meta.env.VITE_ALLOWED_ADMIN_ID && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate("/import-collection")}
+                        className="border-white/10 hover:bg-white/5 text-white font-bold h-11 px-6 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                      >
+                        <Combine className="w-4 h-4 text-[#0AC4E0]" />
+                        Import Items
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                      Sync collection items from Letterboxd
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                      <Button className="bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold h-11 px-6 rounded-xl shadow-lg shadow-[#0AC4E0]/20 transition-all active:scale-95 flex items-center gap-2">
+                        <Plus className="w-5 h-5" />
+                        New Collection
+                      </Button>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-[#0AC4E0] text-black font-bold text-[10px] uppercase tracking-widest border-none">
+                    Create a new private or public library
+                  </TooltipContent>
+                </Tooltip>
               <DialogContent className="border-white/10 bg-zinc-950 p-6 sm:rounded-2xl">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Create Collection</DialogTitle>
@@ -384,6 +405,7 @@ const Collections = () => {
               </DialogContent>
             </Dialog>
           </div>
+        </div>
 
           <div className="flex flex-wrap items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/5 backdrop-blur-sm">
             <div className="relative flex-1 min-w-[200px]">

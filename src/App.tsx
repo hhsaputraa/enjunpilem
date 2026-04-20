@@ -23,6 +23,7 @@ import Profile from "./pages/Profile";
 import ItemMoreCollectionRouter from "./pages/ItemMoreCollectionRouter";
 import DetailListCollectionRouter from "./pages/DetailListCollectionRouter";
 import SharedFilms from "./pages/SharedFilms";
+import ImportCollection from "./pages/ImportCollection";
 
 // Mobile Pages
 import {
@@ -60,6 +61,7 @@ const Layout = () => {
             <Route path="/tv/:id" element={<MobileMovieDetail />} />
             <Route path="/watch/:type/:id" element={<MobileWatch />} />
             <Route path="/auth" element={<MobileAuth />} />
+            <Route path="/import-collection" element={<ImportCollection />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
@@ -88,6 +90,7 @@ const Layout = () => {
           <Route path="/more-collection" element={<MoreCollection />} />
           <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/import-collection" element={<ImportCollection />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
         </Routes>

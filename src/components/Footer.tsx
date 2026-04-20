@@ -12,8 +12,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6 group w-fit">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-cyan-500/10 backdrop-blur-sm border border-white/5 group-hover:border-primary/20 transition-colors">
-                <div className="text-2xl">🎬</div>
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
+                <img src="/image.png" alt="Logo" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-2xl font-bold bg-gradient-to-r from-primary via-cyan-400 to-blue-500 text-transparent bg-clip-text">
                 EnjunPilem

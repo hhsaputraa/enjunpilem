@@ -1,7 +1,7 @@
 "use client"
 
 import { Link, useLocation } from "react-router-dom"
-import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu, Compass,SquareLibrary } from "lucide-react"
+import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu, Compass,SquareLibrary, RefreshCw, Home } from "lucide-react"
 import { Button } from "./ui/button"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
@@ -73,7 +73,7 @@ const Navbar = () => {
   }
 
   const navLinks = [
-    { name: "Home", path: "/" },
+    { name: "Home", path: "/", icon: Home },
     { name: "Movies", path: "/navmovies", icon: Film },
     { name: "TV Shows", path: "/navtvshows", icon: Tv },
     { name: "Collections", path: "/collections", icon: SquareLibrary },
@@ -100,8 +100,8 @@ const Navbar = () => {
           to="/" 
           className="flex items-center gap-2.5 group"
         >
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-transform duration-300 group-hover:scale-110">
-            E
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-110">
+            <img src="/image.png" alt="EnjunPilem Logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">
             Enjun<span className="text-primary">Pilem</span>
@@ -184,6 +184,14 @@ const Navbar = () => {
                         <span>Watchlist</span>
                     </Link>
                     </DropdownMenuItem>
+                    {user?.id === import.meta.env.VITE_ALLOWED_ADMIN_ID && (
+                      <DropdownMenuItem asChild className="rounded-xl text-[#0AC4E0] focus:text-[#0AC4E0] focus:bg-[#0AC4E0]/10">
+                        <Link to="/import-collection" className="cursor-pointer">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            <span>Import Items</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild className="rounded-xl">
                     <Link to="/collections" className="cursor-pointer">
                         <List className="mr-2 h-4 w-4" />
@@ -225,8 +233,8 @@ const Navbar = () => {
                 <SheetHeader className="text-left px-6 py-6 border-b border-border/50">
                   <SheetTitle>
                     <Link to="/" className="flex items-center gap-2">
-                       <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold">
-                         E
+                       <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
+                         <img src="/image.png" alt="Logo" className="w-full h-full object-cover" />
                        </div>
                        <span className="text-xl font-bold">
                          Enjun<span className="text-primary">Pilem</span>
@@ -277,6 +285,15 @@ const Navbar = () => {
                             <Clock className="w-4 h-4" />
                             Watchlist
                         </Link>
+                        {user?.id === import.meta.env.VITE_ALLOWED_ADMIN_ID && (
+                          <Link
+                              to="/import-collection"
+                              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-[#0AC4E0] hover:bg-[#0AC4E0]/10 transition-colors"
+                          >
+                              <RefreshCw className="w-4 h-4" />
+                              Import Items
+                          </Link>
+                        )}
                         <Link
                             to="/collections"
                             className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
