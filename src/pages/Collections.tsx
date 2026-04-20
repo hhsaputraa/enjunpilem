@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,15 +26,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Lock } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Lock, Combine } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type ViewMode = 'grid' | 'compact';
 type SortOption = 'newest' | 'alphabetical' | 'items';
@@ -44,6 +60,7 @@ const Collections = () => {
   const [newCollectionShared, setNewCollectionShared] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string; description: string | null } | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -56,6 +73,15 @@ const Collections = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
+
+  // Reset pagination when search or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -130,6 +156,12 @@ const Collections = () => {
 
     return result;
   }, [collections, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filteredAndSortedCollections.length / ITEMS_PER_PAGE);
+  const paginatedCollections = filteredAndSortedCollections.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const createCollection = useMutation({
     mutationFn: async ({ name, description, is_shared }: { name: string; description: string; is_shared: boolean }) => {
@@ -296,7 +328,8 @@ const Collections = () => {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-background">
+    <TooltipProvider>
+      <div className="min-h-screen p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col gap-8 mb-12">
           <div className="flex justify-between items-end">
@@ -305,16 +338,42 @@ const Collections = () => {
                 My Collections
               </h1>
               <p className="text-muted-foreground mt-1 text-sm font-medium">
-                Organize and manage your favorite media
+                Organize and manage your favorite Film
               </p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold h-11 px-6 rounded-xl shadow-lg shadow-[#0AC4E0]/20 transition-all active:scale-95 flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  New Collection
-                </Button>
-              </DialogTrigger>
+              <div className="flex items-center gap-3">
+                {user?.id === import.meta.env.VITE_ALLOWED_ADMIN_ID && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate("/import-collection")}
+                        className="border-white/10 hover:bg-white/5 text-white font-bold h-11 px-6 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                      >
+                        <Combine className="w-4 h-4 text-[#0AC4E0]" />
+                        Import Items
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                      Sync collection items from Letterboxd
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DialogTrigger asChild>
+                      <Button className="bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-bold h-11 px-6 rounded-xl shadow-lg shadow-[#0AC4E0]/20 transition-all active:scale-95 flex items-center gap-2">
+                        <Plus className="w-5 h-5" />
+                        New Collection
+                      </Button>
+                    </DialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-[#0AC4E0] text-black font-bold text-[10px] uppercase tracking-widest border-none">
+                    Create a new private or public library
+                  </TooltipContent>
+                </Tooltip>
               <DialogContent className="border-white/10 bg-zinc-950 p-6 sm:rounded-2xl">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Create Collection</DialogTitle>
@@ -323,14 +382,14 @@ const Collections = () => {
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Name</label>
                     <Input
-                      placeholder="e.g. Weekend Movies"
+                      placeholder="e.g. Top 20 Favorite Film"
                       value={newCollectionName}
                       onChange={(e) => setNewCollectionName(e.target.value)}
                       className="bg-white/5 border-white/10 h-12 rounded-xl focus:ring-[#0AC4E0]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description (optional)</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description</label>
                     <Textarea
                       placeholder="What's this collection about?"
                       value={newCollectionDescription}
@@ -370,6 +429,7 @@ const Collections = () => {
               </DialogContent>
             </Dialog>
           </div>
+        </div>
 
           <div className="flex flex-wrap items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/5 backdrop-blur-sm">
             <div className="relative flex-1 min-w-[200px]">
@@ -386,12 +446,20 @@ const Collections = () => {
 
             <div className="flex items-center gap-2 pr-2">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 gap-2 text-xs font-bold uppercase tracking-wider hover:bg-white/10 rounded-xl">
-                    <ArrowUpDown className="w-3.5 h-3.5 text-[#0AC4E0]" />
-                    Sort: {sortBy}
-                  </Button>
-                </DropdownMenuTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-9 gap-2 text-xs font-bold uppercase tracking-wider hover:bg-white/10 rounded-xl">
+                        <ArrowUpDown className="w-3.5 h-3.5 text-[#0AC4E0]" />
+                        Sort: {sortBy}
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                    Change display order
+                  </TooltipContent>
+                </Tooltip>
+                
                 <DropdownMenuContent align="end" className="w-48 bg-zinc-900 border-white/10 rounded-xl overflow-hidden p-1">
                   <DropdownMenuItem onClick={() => setSortBy('newest')} className="rounded-lg gap-2 text-xs font-medium focus:bg-[#0AC4E0] focus:text-black cursor-pointer uppercase tracking-wide">Most Recent</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setSortBy('alphabetical')} className="rounded-lg gap-2 text-xs font-medium focus:bg-[#0AC4E0] focus:text-black cursor-pointer uppercase tracking-wide">A - Z</DropdownMenuItem>
@@ -400,22 +468,37 @@ const Collections = () => {
               </DropdownMenu>
 
               <div className="flex bg-zinc-900 rounded-xl p-1 border border-white/5">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setViewMode('grid')}
-                  className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'grid' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setViewMode('compact')}
-                  className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'compact' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setViewMode('grid')}
+                      className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'grid' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                    Grid View
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setViewMode('compact')}
+                      className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'compact' ? "bg-[#0AC4E0] text-black shadow-lg shadow-[#0AC4E0]/20" : "text-white/40 hover:text-white hover:bg-white/5")}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                    List View
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -501,151 +584,177 @@ const Collections = () => {
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredAndSortedCollections?.map((collection) => (
+            {paginatedCollections?.map((collection) => (
               <div
                 key={collection.id}
                 onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
-                className="group relative flex flex-col p-6 rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
+                className="group relative flex flex-col rounded-[2.5rem] border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#0AC4E0]/10"
               >
-                {/* Background Poster Blur */}
-                {collection.collection_items?.[0]?.poster_path && (
-                  <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
-                    <img 
-                      src={getImageUrl(collection.collection_items[0].poster_path, 'w300')} 
-                      alt="" 
-                      className="w-full h-full object-cover blur-2xl scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/50 to-zinc-950/80" />
-                  </div>
-                )}
-                
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0AC4E0]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                
-                <div className="relative flex justify-between items-start mb-8 z-10">
-                  <div className="flex flex-col min-w-0">
-                    <h3 className="text-2xl font-bold text-white group-hover:text-[#0AC4E0] transition-colors leading-tight truncate pr-4 capitalize">
-                      {collection.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#0AC4E0]" />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
-                        {collection.collection_items?.length || 0} items
-                      </span>
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border",
-                          collection.is_shared
-                            ? "bg-[#0AC4E0]/10 text-[#0AC4E0] border-[#0AC4E0]/30"
-                            : "bg-white/5 text-white/50 border-white/10"
-                        )}
-                      >
-                        {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                        {collection.is_shared ? 'Public' : 'Private'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-xl hover:bg-white/10 text-white/40 hover:text-white"
-                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                      }}
-                    >
-                      {collection.is_shared ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-xl hover:bg-white/10 text-white/40 hover:text-white"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingCollection({
-                          id: collection.id,
-                          name: collection.name,
-                          description: collection.description,
-                          is_shared: !!collection.is_shared,
-                        });
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-xl hover:bg-destructive/10 text-white/40 hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCollectionToDelete({ id: collection.id, name: collection.name });
-                        setIsDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {collection.description && (
-                  <p className="relative z-10 text-xs text-muted-foreground line-clamp-2 mb-6 italic">
-                    "{collection.description}"
-                  </p>
-                )}
-                
-                {/* Visual Stack (Centered Stacked Posters) */}
-                <div className="relative h-60 mb-8 z-10 group/stack">
-                  {collection.collection_items && collection.collection_items.length > 0 ? (
-                    <div className="relative w-full h-full flex items-center justify-center translate-y-2">
-                      {collection.collection_items.slice(0, 3).map((item, idx) => (
-                        <div 
-                          key={item.id} 
-                          className="absolute h-[110%] aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 border border-white/10"
-                          style={{
-                            left: '50%',
-                            zIndex: 10 - idx,
-                            transform: `translateX(-50%) translateX(${(idx - 1) * 35}px) rotate(${(idx - 1) * 6}deg) scale(${1 - idx * 0.08}) translateY(${idx * 8}px)`,
-                            opacity: 1 - idx * 0.15
-                          }}
-                        >
-                          <img
-                            src={getImageUrl(item.poster_path!, 'w300')}
-                            alt={item.title || item.name || ''}
-                            className="w-full h-full object-cover group-hover/stack:scale-105 transition-transform duration-1000"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="w-full h-full rounded-3xl bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center gap-3 group-hover:border-[#0AC4E0]/40 transition-colors">
-                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                        <Plus className="w-5 h-5 text-white/20" />
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#0AC4E0]/40">No items yet</span>
+                {/* Content Container (Subtle blur on hover) */}
+                <div className="flex flex-col h-full p-6 transition-all duration-500 group-hover:blur-[2px] group-hover:opacity-70">
+                  {/* Background Poster Blur */}
+                  {collection.collection_items?.[0]?.poster_path && (
+                    <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity duration-700">
+                      <img 
+                        src={getImageUrl(collection.collection_items[0].poster_path, 'w300')} 
+                        alt="" 
+                        className="w-full h-full object-cover blur-2xl scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/50 to-zinc-950/80" />
                     </div>
                   )}
+                  
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#0AC4E0]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  
+                  <div className="relative flex justify-between items-start mb-8 z-10">
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="text-2xl font-bold text-white group-hover:text-[#0AC4E0] transition-colors leading-tight truncate pr-4 capitalize">
+                        {collection.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#0AC4E0]" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
+                          {collection.collection_items?.length || 0} items
+                        </span>
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border",
+                            collection.is_shared
+                              ? "bg-[#0AC4E0]/10 text-[#0AC4E0] border-[#0AC4E0]/30"
+                              : "bg-white/5 text-white/50 border-white/10"
+                          )}
+                        >
+                          {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                          {collection.is_shared ? 'Public' : 'Private'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative h-60 mb-2 z-10 group/stack">
+                    {collection.collection_items && collection.collection_items.length > 0 ? (
+                      <div className="relative w-full h-full flex items-center justify-center translate-y-2">
+                        {collection.collection_items.slice(0, 3).map((item, idx) => (
+                          <div 
+                            key={item.id} 
+                            className="absolute h-[110%] aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl transition-all duration-700 border border-white/10"
+                            style={{
+                              left: '50%',
+                              zIndex: 10 - idx,
+                              transform: `translateX(-50%) translateX(${(idx - 1) * 35}px) rotate(${(idx - 1) * 6}deg) scale(${1 - idx * 0.08}) translateY(${idx * 8}px)`,
+                              opacity: 1 - idx * 0.15
+                            }}
+                          >
+                            <img
+                              src={getImageUrl(item.poster_path!, 'w300')}
+                              alt={item.title || item.name || ''}
+                              className="w-full h-full object-cover group-hover/stack:scale-105 transition-transform duration-1000"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="w-full h-full rounded-3xl bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
+                          <Plus className="w-5 h-5 text-white/20" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#0AC4E0]/40">No items yet</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  className="relative z-10 w-full rounded-2xl bg-white/5 hover:bg-[#0AC4E0] hover:text-black font-bold text-xs uppercase tracking-widest h-12 transition-all border border-white/5 hover:border-[#0AC4E0] hover:shadow-lg hover:shadow-[#0AC4E0]/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description });
-                  }}
-                >
-                  View Library
-                </Button>
+                {/* Hover Management Buttons (Always visible on hover) */}
+                <div className="absolute top-6 right-6 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-30">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-white/10 text-white/40 hover:text-white backdrop-blur-md bg-black/40 border border-white/5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                        }}
+                      >
+                        {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                      {collection.is_shared ? 'Make Private' : 'Make Public'}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-white/10 text-white/40 hover:text-white backdrop-blur-md bg-black/40 border border-white/5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCollection({
+                            id: collection.id,
+                            name: collection.name,
+                            description: collection.description,
+                            is_shared: !!collection.is_shared,
+                          });
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                      Edit Collection
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-destructive/10 text-white/40 hover:text-destructive backdrop-blur-md bg-black/40 border border-white/5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCollectionToDelete({ id: collection.id, name: collection.name });
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-destructive/20 border-destructive/50 text-destructive font-bold text-[10px] uppercase tracking-widest">
+                      Delete Collection
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
+                {/* Hover Overlay - More subtle */}
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-zinc-950/60 backdrop-blur-[2px] p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-[#0AC4E0] text-black flex items-center justify-center mb-4 transition-transform duration-500 shadow-xl shadow-[#0AC4E0]/20">
+                    <LayoutGrid className="w-6 h-6" />
+                  </div>
+                  
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0AC4E0] mb-3">
+                    View Library
+                  </span>
+
+                  {collection.description && (
+                    <p className="text-sm text-white/80 line-clamp-3 italic max-w-[200px]">
+                      "{collection.description}"
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filteredAndSortedCollections?.map((collection) => (
+            {paginatedCollections?.map((collection) => (
               <div
                 key={collection.id}
                 className="group flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all cursor-pointer"
@@ -684,24 +793,46 @@ const Collections = () => {
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-lg hover:bg-white/10"
-                      title={collection.is_shared ? 'Make Private' : 'Make Public'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                      }}
-                    >
-                      {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
-                      <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg hover:bg-white/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                          }}
+                        >
+                          {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                        {collection.is_shared ? 'Make Private' : 'Make Public'}
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-900 border-white/10 text-[#0AC4E0] font-bold text-[10px] uppercase tracking-widest">
+                        Edit Collection
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
+                          <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-destructive/20 border-destructive/50 text-destructive font-bold text-[10px] uppercase tracking-widest">
+                        Delete Collection
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-[#0AC4E0] group-hover:border-transparent transition-all">
                     <ArrowUpDown className="w-3.5 h-3.5 text-white group-hover:text-black hover:rotate-180 transition-transform" />
@@ -711,6 +842,73 @@ const Collections = () => {
             ))}
           </div>
         )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-16 pb-12">
+            <Pagination>
+              <PaginationContent className="bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-1 rounded-2xl">
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className={cn(
+                      "rounded-xl hover:bg-white/10 transition-colors cursor-pointer",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+                
+                {[...Array(totalPages)].map((_, i) => {
+                  const page = i + 1;
+                  // Show current page, first, last, and pages around current
+                  if (
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className={cn(
+                            "rounded-xl cursor-pointer transition-all",
+                            currentPage === page 
+                              ? "bg-[#0AC4E0] text-black font-bold shadow-lg shadow-[#0AC4E0]/20 hover:bg-[#0AC4E0]/90 hover:text-black" 
+                              : "hover:bg-white/10 text-white/60 hover:text-white"
+                          )}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  } else if (
+                    page === currentPage - 2 || 
+                    page === currentPage + 2
+                  ) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationEllipsis className="text-white/20" />
+                      </PaginationItem>
+                    );
+                  }
+                  return null;
+                })}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className={cn(
+                      "rounded-xl hover:bg-white/10 transition-colors cursor-pointer",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
@@ -736,8 +934,9 @@ const Collections = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

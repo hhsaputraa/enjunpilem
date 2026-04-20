@@ -27,6 +27,16 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link } from 'react-router-dom';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CollectionDetailsProps {
   collectionId: string;
@@ -61,7 +71,7 @@ const SortableGridItem = ({
   readOnly = false,
 }: {
   item: CollectionItem;
-  onDelete: (id: string) => void;
+  onDelete: (item: CollectionItem) => void;
   readOnly?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -106,7 +116,7 @@ const SortableGridItem = ({
               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:bg-destructive/90 h-8 w-8"
               onClick={(e) => {
                 e.preventDefault();
-                onDelete(item.id);
+                onDelete(item);
               }}
             >
               <Trash2 className="h-4 w-4" />
@@ -125,7 +135,7 @@ const SortableListItem = ({
   readOnly = false,
 }: {
   item: CollectionItem;
-  onDelete: (id: string) => void;
+  onDelete: (item: CollectionItem) => void;
   readOnly?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -205,7 +215,7 @@ const SortableListItem = ({
           variant="ghost"
           size="icon"
           className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-          onClick={() => onDelete(item.id)}
+          onClick={() => onDelete(item)}
           aria-label="Remove from collection"
         >
           <Trash2 className="h-4 w-4" />
@@ -229,6 +239,8 @@ export const CollectionDetails = ({
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [localItems, setLocalItems] = useState<CollectionItem[]>([]);
+  const [itemToDelete, setItemToDelete] = useState<CollectionItem | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -326,11 +338,6 @@ export const CollectionDetails = ({
               {localItems.length > 0 && (
                 <span className="text-sm text-muted-foreground">
                   ({localItems.length} {localItems.length === 1 ? 'item' : 'items'})
-                </span>
-              )}
-              {readOnly && (
-                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-[#0AC4E0]/10 text-[#0AC4E0] border border-[#0AC4E0]/30">
-                  Read Only
                 </span>
               )}
             </div>
@@ -436,7 +443,10 @@ export const CollectionDetails = ({
                   <SortableGridItem
                     key={item.id}
                     item={item}
-                    onDelete={(id) => deleteMutation.mutate(id)}
+                    onDelete={(targetItem) => {
+                      setItemToDelete(targetItem);
+                      setIsDeleteDialogOpen(true);
+                    }}
                     readOnly={readOnly}
                   />
                 ))}
@@ -447,7 +457,10 @@ export const CollectionDetails = ({
                   <SortableListItem
                     key={item.id}
                     item={item}
-                    onDelete={(id) => deleteMutation.mutate(id)}
+                    onDelete={(targetItem) => {
+                      setItemToDelete(targetItem);
+                      setIsDeleteDialogOpen(true);
+                    }}
                     readOnly={readOnly}
                   />
                 ))}
@@ -456,6 +469,32 @@ export const CollectionDetails = ({
           </SortableContext>
         </DndContext>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="border-white/10 bg-zinc-950">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from collection?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <span className="text-white font-bold">"{itemToDelete?.title || itemToDelete?.name}"</span> from this collection?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10 text-white">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (itemToDelete) {
+                  deleteMutation.mutate(itemToDelete.id);
+                  setItemToDelete(null);
+                }
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
