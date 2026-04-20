@@ -277,108 +277,12 @@ export const MobileAuth: React.FC = () => {
                 </form>
               </TabsContent>
 
-              {/* Register Tab */}
-              <TabsContent value="register" className="space-y-4">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="Email"
-                        value={registerForm.email}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, email: e.target.value }))}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
+              </Tabs>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="register-username">Username</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="register-username"
-                        type="text"
-                        placeholder="Username"
-                        value={registerForm.username}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, username: e.target.value }))}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="register-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Password"
-                        value={registerForm.password}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, password: e.target.value }))}
-                        className="pl-10 pr-10"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-1 top-1 h-8 w-8"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-confirm-password">Konfirmasi Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="register-confirm-password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Konfirmasi password"
-                        value={registerForm.confirmPassword}
-                        onChange={(e) => setRegisterForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="pl-10 pr-10"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-1 top-1 h-8 w-8"
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12"
-                    disabled={
-                      loading || 
-                      !registerForm.email || 
-                      !registerForm.username || 
-                      !registerForm.password ||
-                      !registerForm.confirmPassword ||
-                      registerForm.password !== registerForm.confirmPassword
-                    }
-                  >
-                    {loading ? 'Mendaftar...' : 'Daftar'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+              <p className="text-xs text-center text-muted-foreground">
+                Pendaftaran baru hanya melalui Google. Login email/password tersedia untuk akun lama.
+              </p>
+            </div>
           )}
 
           {/* Footer */}
