@@ -65,6 +65,10 @@ export { MobileWatchlist } from './pages/MobileWatchlist';
 export { MobileProfile } from './pages/MobileProfile';
 export { MobileMovieDetail } from './pages/MobileMovieDetail';
 export { MobileWatch } from './pages/MobileWatch';
+export { MobileCollections } from './pages/MobileCollections';
+export { MobileSharedFilms } from './pages/MobileSharedFilms';
+export { MobileFavorites } from './pages/MobileFavorites';
+export { MobileHistory } from './pages/MobileHistory';
 
 // Video Player
 export { MobileVideoPlayer } from './MobileVideoPlayer';

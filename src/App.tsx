@@ -35,7 +35,11 @@ import {
   MobileWatchlist,
   MobileProfile,
   MobileMovieDetail,
-  ToastProvider
+  ToastProvider,
+  MobileCollections,
+  MobileSharedFilms,
+  MobileFavorites,
+  MobileHistory
 } from "./components/mobile";
 import { MobileWatch } from "./components/mobile/pages/MobileWatch";
 import { MobileAuth } from "./components/mobile/pages/MobileAuth";
@@ -64,7 +68,10 @@ const Layout = () => {
             <Route path="/watch/:type/:id" element={<MobileWatch />} />
             <Route path="/auth" element={<MobileAuth />} />
             <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/import-collection" element={<ImportCollection />} />
+            <Route path="/collections" element={<MobileCollections />} />
+            <Route path="/shared-films" element={<MobileSharedFilms />} />
+            <Route path="/favorites" element={<MobileFavorites />} />
+            <Route path="/history" element={<MobileHistory />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

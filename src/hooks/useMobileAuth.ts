@@ -49,19 +49,18 @@ export const useMobileAuth = () => {
     return () => subscription.unsubscribe();
   }, [showSuccess]);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogleIdToken = async (idToken: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/onboarding`,
-        },
+        token: idToken,
+        // Optional override: options: { redirectTo: ... } if needed, but not required for ID token sign-in
       });
       if (error) throw error;
       return { success: true };
     } catch (error: any) {
-      showError('Gagal masuk dengan Google', error.message);
+      showError('Gagal menyelesaikan otentikasi Google', error.message);
       setLoading(false);
       return { success: false, error: error.message };
     }
@@ -201,7 +200,7 @@ export const useMobileAuth = () => {
     loading,
     isAuthenticated,
     signIn,
-    signInWithGoogle,
+    signInWithGoogleIdToken,
     signUp,
     signOut,
     resetPassword,
