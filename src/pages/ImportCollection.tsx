@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ const ImportCollection = () => {
   if (isAuthorized === false) return null;
   if (isAuthorized === null) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-       <RefreshCw className="w-8 h-8 text-[#0AC4E0] animate-spin" />
+       <Loader className="w-8 h-8 text-[#0AC4E0] animate-spin" />
     </div>
   );
 
@@ -75,7 +75,7 @@ const ImportCollection = () => {
             <div className="relative w-16 h-16 mb-6">
               <div className="absolute inset-0 border-4 border-[#0AC4E0]/20 rounded-full" />
               <div className="absolute inset-0 border-4 border-[#0AC4E0] rounded-full border-t-transparent animate-spin" />
-              <RefreshCw className="absolute inset-0 m-auto w-6 h-6 text-[#0AC4E0] animate-pulse" />
+              <Loader className="absolute inset-0 m-auto w-6 h-6 text-[#0AC4E0] animate-pulse" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Connecting to Sync Service</h2>
             <p className="text-muted-foreground text-sm">This may take a moment to wake up the server...</p>
