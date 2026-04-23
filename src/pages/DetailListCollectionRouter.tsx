@@ -1,11 +1,25 @@
 import { useSearchParams } from 'react-router-dom';
 import DetailListCollection from '@/pages/DetailListCollection';
 import { getCollectionById } from '@/config/collections';
-import { getCollectionBySlug } from '@/services/tmdb';
+import { getCollectionBySlug, getTrending, getNowPlayingMovies, getTopRatedMovies, getPopularTVShows } from '@/services/tmdb';
 
 const DetailListCollectionRouter = () => {
   const [searchParams] = useSearchParams();
   const queryKey = searchParams.get("queryKey") || "letterbox250";
+
+  // Check if it's a dynamic TMDB category
+  if (queryKey === 'trending') {
+     return <DetailListCollection title="Film Sedang Tren" queryKey="trending" queryFn={getTrending} collectionId="trending" />;
+  }
+  if (queryKey === 'new') {
+     return <DetailListCollection title="Rilis Terbaru" queryKey="new" queryFn={getNowPlayingMovies as any} collectionId="new" />;
+  }
+  if (queryKey === 'top-rated') {
+     return <DetailListCollection title="Top Rated" queryKey="top-rated" queryFn={getTopRatedMovies} collectionId="top-rated" />;
+  }
+  if (queryKey === 'recommended') {
+     return <DetailListCollection title="Rekomendasi" queryKey="recommended" queryFn={getPopularTVShows} collectionId="recommended" />;
+  }
 
   // ✅ Ambil konfigurasi dari collections.ts
   const collection = getCollectionById(queryKey);

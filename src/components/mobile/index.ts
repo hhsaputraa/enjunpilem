@@ -14,6 +14,7 @@ export {
   RecommendedCarousel,
   ContinueWatchingCarousel 
 } from './CarouselRow';
+export { MobileAutoCarouselRow } from './MobileAutoCarouselRow';
 export { GenreChips, MovieGenreChips, TVGenreChips, useGenreFilter } from './GenreChips';
 export { SearchBar, useSearch } from './SearchBar';
 export { HeroSlider } from './HeroSlider';

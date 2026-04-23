@@ -39,9 +39,9 @@ export const useMobileAuth = () => {
         setLoading(false);
 
         if (event === 'SIGNED_IN') {
-          showSuccess('Berhasil masuk!', 'Selamat datang kembali');
+          // Toast dipindahkan ke fungsi signIn dan GoogleLogin
         } else if (event === 'SIGNED_OUT') {
-          showSuccess('Berhasil keluar', 'Sampai jumpa lagi!');
+          // Toast dipindahkan ke fungsi signOut
         }
       }
     );
@@ -58,6 +58,7 @@ export const useMobileAuth = () => {
         // Optional override: options: { redirectTo: ... } if needed, but not required for ID token sign-in
       });
       if (error) throw error;
+      showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
     } catch (error: any) {
       showError('Gagal menyelesaikan otentikasi Google', error.message);
@@ -81,7 +82,7 @@ export const useMobileAuth = () => {
       });
 
       if (error) throw error;
-
+      showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
     } catch (error: any) {
       showError('Gagal masuk', error.message);
@@ -130,6 +131,7 @@ export const useMobileAuth = () => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      showSuccess('Berhasil keluar', 'Sampai jumpa lagi!');
       navigate('/');
       return { success: true };
     } catch (error: any) {

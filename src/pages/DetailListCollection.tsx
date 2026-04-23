@@ -2,9 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MovieCard } from "@/components/MovieCard";
+import { PosterCard } from "@/components/mobile/PosterCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Grid, List, Loader2, Film } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { PageLayout } from "@/components/mobile/MobileLayout";
+import { GridSkeleton } from "@/components/mobile/Skeletons";
 
 interface DetailListCollectionProps {
   title: string;
@@ -15,9 +19,7 @@ interface DetailListCollectionProps {
 
 const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: DetailListCollectionProps) => {
   const navigate = useNavigate();
-
-  // Debug: Log received props
-  console.log('DetailListCollection received props:', { title, queryFn, queryKey, collectionId });
+  const isMobile = useIsMobile();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,6 +35,17 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
   const totalPages = data?.totalPages || 1;
 
   if (error) {
+    if (isMobile) {
+      return (
+        <PageLayout title="Error" showBackButton>
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <h2 className="text-xl font-bold mb-2">Gagal memuat data</h2>
+            <p className="text-muted-foreground text-sm mb-4">{error.message}</p>
+            <Button onClick={() => navigate(-1)}>Kembali</Button>
+          </div>
+        </PageLayout>
+      );
+    }
     return (
       <div className="min-h-screen p-6 bg-background flex items-center justify-center">
         <div className="text-center">
@@ -44,6 +57,71 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
     );
   }
 
+  // --- MOBILE VIEW ---
+  if (isMobile) {
+    return (
+      <PageLayout title={title} showBackButton>
+        <div className="px-4 py-4 space-y-4">
+          {/* Content Section */}
+          {isLoading ? (
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="aspect-[2/3] bg-muted/60 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {items.map((item: any) => (
+                <PosterCard
+                  key={item.id}
+                  id={item.id.toString()}
+                  title={item.title || item.name}
+                  poster={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : ''}
+                  type={item.media_type || (item.first_air_date ? "tv" : "movie")}
+                  rating={item.vote_average}
+                  size="sm"
+                  onClick={() => navigate(`/${item.media_type || (item.first_air_date ? "tv" : "movie")}/${item.id}`)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination Section untuk Mobile */}
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-8 mb-4 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3 bg-secondary/30 rounded-full p-1.5">
+                <Button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1 || isFetching}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full w-10 h-10 bg-background shadow-sm disabled:opacity-50"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                
+                <span className="text-sm font-medium px-2">
+                  Hal {currentPage} / {totalPages}
+                </span>
+
+                <Button
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages || isFetching}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full w-10 h-10 bg-background shadow-sm disabled:opacity-50"
+                >
+                  {isFetching ? <Loader2 className="h-5 w-5 animate-spin" /> : <ChevronRight className="h-5 w-5" />}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // --- DESKTOP VIEW ---
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
@@ -147,7 +225,6 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
               <div className="flex items-center gap-2">
                 {/* Page indicators */}
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Logic to show pages around current page
                   let pageNum: number
                   if (totalPages <= 5) {
                     pageNum = i + 1

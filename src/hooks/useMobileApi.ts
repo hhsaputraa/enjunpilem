@@ -21,7 +21,7 @@ import {
 export const useTrending = () => {
   return useQuery({
     queryKey: ['trending'],
-    queryFn: getTrending,
+    queryFn: () => getTrending(1),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -30,7 +30,7 @@ export const useTrending = () => {
 export const usePopularMovies = () => {
   return useQuery({
     queryKey: ['popular-movies'],
-    queryFn: getPopularMovies,
+    queryFn: () => getPopularMovies(1),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };
@@ -39,7 +39,7 @@ export const usePopularMovies = () => {
 export const usePopularTVShows = () => {
   return useQuery({
     queryKey: ['popular-tv'],
-    queryFn: getPopularTVShows,
+    queryFn: () => getPopularTVShows(1),
     staleTime: 10 * 60 * 1000,
   });
 };
@@ -48,7 +48,7 @@ export const usePopularTVShows = () => {
 export const useTopRatedMovies = () => {
   return useQuery({
     queryKey: ['top-rated-movies'],
-    queryFn: getTopRatedMovies,
+    queryFn: () => getTopRatedMovies(1),
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
 };
@@ -57,7 +57,7 @@ export const useTopRatedMovies = () => {
 export const useTopRatedTVShows = () => {
   return useQuery({
     queryKey: ['top-rated-tv'],
-    queryFn: getTopRatedTVShows,
+    queryFn: () => getTopRatedTVShows(1),
     staleTime: 30 * 60 * 1000,
   });
 };
@@ -121,27 +121,27 @@ export const useMixedContent = () => {
 
   return {
     trending: {
-      data: trendingQuery.data || [],
+      data: trendingQuery.data?.items || trendingQuery.data || [],
       isLoading: trendingQuery.isLoading,
       error: trendingQuery.error,
     },
     popularMovies: {
-      data: popularMoviesQuery.data || [],
+      data: popularMoviesQuery.data?.items || popularMoviesQuery.data || [],
       isLoading: popularMoviesQuery.isLoading,
       error: popularMoviesQuery.error,
     },
     popularTV: {
-      data: popularTVQuery.data || [],
+      data: popularTVQuery.data?.items || popularTVQuery.data || [],
       isLoading: popularTVQuery.isLoading,
       error: popularTVQuery.error,
     },
     topRatedMovies: {
-      data: topRatedMoviesQuery.data || [],
+      data: topRatedMoviesQuery.data?.items || topRatedMoviesQuery.data || [],
       isLoading: topRatedMoviesQuery.isLoading,
       error: topRatedMoviesQuery.error,
     },
     nowPlaying: {
-      data: nowPlayingQuery.data || [],
+      data: nowPlayingQuery.data?.items || nowPlayingQuery.data || [],
       isLoading: nowPlayingQuery.isLoading,
       error: nowPlayingQuery.error,
     },
@@ -187,13 +187,13 @@ export const useExploreContent = (
       let data = [];
       
       if (type === 'movie' || type === 'all') {
-        const movies = await getPopularMovies();
-        data = [...data, ...movies];
+        const movies = await getPopularMovies(1);
+        data = [...data, ...(movies.items || [])];
       }
       
       if (type === 'tv' || type === 'all') {
-        const tvShows = await getPopularTVShows();
-        data = [...data, ...tvShows];
+        const tvShows = await getPopularTVShows(1);
+        data = [...data, ...(tvShows.items || [])];
       }
       
       return transformTMDBData(data);

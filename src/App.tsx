@@ -72,6 +72,7 @@ const Layout = () => {
             <Route path="/shared-films" element={<MobileSharedFilms />} />
             <Route path="/favorites" element={<MobileFavorites />} />
             <Route path="/history" element={<MobileHistory />} />
+            <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
