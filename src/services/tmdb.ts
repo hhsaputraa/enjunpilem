@@ -261,6 +261,7 @@ export const getOscarWonPaginated = async (page: number = 1) => {
   const list = await findListBySlug('oscar-won');
   if (!list) return { items: [], totalPages: 0 };
   return fetchListItems(list.id, page);
+
 }
 
 // ✅ GENERIC FUNCTION - Otomatis untuk semua koleksi baru!
