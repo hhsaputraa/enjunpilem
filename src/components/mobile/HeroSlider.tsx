@@ -188,7 +188,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
             style={{
               transform: `translateX(${-100 + dragPct / 3}%)`,
               opacity: dragPct <= 0 ? 0 : Math.max(0.3, Math.min(1, dragPct / 100)),
-              transition: isDragging.current ? 'none' : 'all 600ms cubic-bezier(0.22,1,0.36,1)',
+              transition: isDragging.current ? 'none' : 'transform 600ms cubic-bezier(0.22,1,0.36,1), opacity 600ms cubic-bezier(0.22,1,0.36,1)',
               pointerEvents: 'none',
               willChange: 'transform, opacity',
             }}
@@ -224,7 +224,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
             style={{
               transform: `translateX(${100 + dragPct / 3}%)`,
               opacity: dragPct >= 0 ? 0 : Math.max(0.3, Math.min(1, -dragPct / 100)),
-              transition: isDragging.current ? 'none' : 'all 600ms cubic-bezier(0.22,1,0.36,1)',
+              transition: isDragging.current ? 'none' : 'transform 600ms cubic-bezier(0.22,1,0.36,1), opacity 600ms cubic-bezier(0.22,1,0.36,1)',
               pointerEvents: 'none',
               willChange: 'transform, opacity',
             }}
@@ -294,7 +294,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
                 window.setTimeout(() => setIsUserInteracting(false), 250);
               }}
               className={cn(
-                'w-2 h-2 rounded-full transition-all duration-200',
+                'w-2 h-2 rounded-full transition-[width,background-color] duration-200',
                 index === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
               )}
               aria-label={`Go to slide ${index + 1}`}

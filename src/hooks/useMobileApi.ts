@@ -69,7 +69,7 @@ export const useTopRatedTVShows = () => {
 export const useNowPlayingMovies = () => {
   return useQuery({
     queryKey: ['now-playing'],
-    queryFn: getNowPlayingMovies,
+    queryFn: () => getNowPlayingMovies(1),
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -158,7 +158,7 @@ export const formatContentForMobile = (item: any) => {
     id: item.id.toString(),
     title: item.title || item.name || 'Unknown Title',
     poster: getResponsiveImageUrl(item.poster_path),
-    backdrop: getImageUrl(item.backdrop_path, 'original'),
+    backdrop: getImageUrl(item.backdrop_path, 'w780'), // Optimized for mobile (original is too large)
     rating: item.vote_average,
     year: item.release_date ? new Date(item.release_date).getFullYear().toString() : 
           item.first_air_date ? new Date(item.first_air_date).getFullYear().toString() : '',

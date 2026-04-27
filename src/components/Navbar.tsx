@@ -88,10 +88,10 @@ const Navbar = () => {
   return (
     <header 
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300 border-b border-transparent",
+        "sticky top-0 z-50 w-full transition-colors duration-300",
         scrolled 
-          ? "bg-background/80 backdrop-blur-md border-border/40 shadow-sm" 
-          : "bg-transparent"
+          ? "bg-background/80 backdrop-blur-md border-b border-border/40 shadow-sm transition-shadow duration-300" 
+          : "bg-transparent border-b border-transparent"
       )}
     >
       <div className="container mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">

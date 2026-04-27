@@ -129,7 +129,7 @@ export const searchContent = async (query: string) => {
   return response.data.results;
 };
 
-export const getImageUrl = (path: string, size: 'w300' | 'w500' | 'original' = 'w500') => {
+export const getImageUrl = (path: string, size: 'w185' | 'w300' | 'w500' | 'w780' | 'w1280' | 'original' = 'w500') => {
   if (!path) return '/placeholder.svg';
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
