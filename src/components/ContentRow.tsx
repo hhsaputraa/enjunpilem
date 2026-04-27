@@ -50,7 +50,7 @@ export const ContentRow = ({
       )}
     </div>
 
-    <div className="w-full relative group">
+    <div className="w-full relative">
       <div 
         className="flex space-x-4 pb-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
