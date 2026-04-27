@@ -11,17 +11,22 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
 
   const featuredItem = trending[0]
   const backdropUrl = featuredItem?.backdrop_path
-    ? `https://image.tmdb.org/t/p/original${featuredItem.backdrop_path}`
+    ? `https://image.tmdb.org/t/p/w1280${featuredItem.backdrop_path}`
     : null
 
   return (
-    <div className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[70vh] min-h-[500px] rounded-3xl overflow-hidden mb-16 shadow-2xl ring-1 ring-white/5 group bg-background">
+    <div className="relative w-full h-full min-h-[500px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5 group bg-background">
       {/* Background Image with optimized loading and overlay */}
       {backdropUrl ? (
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
-          style={{ backgroundImage: `url(${backdropUrl})` }}
-        >
+        <div className="absolute inset-0 transition-transform duration-1000 group-hover:scale-105">
+          <img 
+            src={backdropUrl} 
+            alt={featuredItem.title || featuredItem.name || "Featured"}
+            className="w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>

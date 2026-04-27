@@ -40,10 +40,12 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         
-        {/* Helper function to check if data exists */}
-        {!trendingLoading && trending?.items && trending.items.length > 0 && (
-          <HeroSection trending={trending.items} />
-        )}
+        {/* Hero Section Wrapper to prevent Layout Shift */}
+        <div className="min-h-[500px] sm:min-h-[60vh] lg:min-h-[70vh] mb-16 w-full">
+          {!trendingLoading && trending?.items && trending.items.length > 0 && (
+            <HeroSection trending={trending.items} />
+          )}
+        </div>
 
         <div className="space-y-4 sm:space-y-8">
           <ContentRow
