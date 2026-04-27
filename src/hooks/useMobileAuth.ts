@@ -28,6 +28,7 @@ export const useMobileAuth = () => {
       });
       if (error) throw error;
       showSuccess('Berhasil masuk!', 'Selamat datang kembali');
+      showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
     } catch (error: any) {
       showError('Gagal menyelesaikan otentikasi Google', error.message);
