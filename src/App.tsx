@@ -39,7 +39,8 @@ import {
   MobileCollections,
   MobileSharedFilms,
   MobileFavorites,
-  MobileHistory
+  MobileHistory,
+  BottomNav
 } from "./components/mobile";
 import { MobileWatch } from "./components/mobile/pages/MobileWatch";
 import { MobileAuth } from "./components/mobile/pages/MobileAuth";
@@ -75,6 +76,7 @@ const Layout = () => {
             <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <BottomNav />
         </TooltipProvider>
       </ToastProvider>
     );

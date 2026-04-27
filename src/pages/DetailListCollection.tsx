@@ -64,13 +64,13 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
         <div className="px-4 py-4 space-y-4">
           {/* Content Section */}
           {isLoading ? (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               {Array.from({ length: 15 }).map((_, i) => (
-                <div key={i} className="aspect-[2/3] bg-muted/60 rounded-lg animate-pulse" />
+                <div key={i} className="aspect-[2/3] bg-muted/60 rounded-xl animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               {items.map((item: any) => (
                 <PosterCard
                   key={item.id}
@@ -79,7 +79,7 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
                   poster={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : ''}
                   type={item.media_type || (item.first_air_date ? "tv" : "movie")}
                   rating={item.vote_average}
-                  size="sm"
+                  size="responsive"
                   onClick={() => navigate(`/${item.media_type || (item.first_air_date ? "tv" : "movie")}/${item.id}`)}
                 />
               ))}
@@ -89,29 +89,32 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
           {/* Pagination Section untuk Mobile */}
           {!isLoading && totalPages > 1 && (
             <div className="mt-8 mb-4 flex flex-col items-center gap-3">
-              <div className="flex items-center gap-3 bg-secondary/30 rounded-full p-1.5">
+              <div className="flex items-center justify-between w-full max-w-[280px] bg-secondary/30 rounded-2xl p-2 shadow-sm border border-border/50 backdrop-blur-sm">
                 <Button
                   onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || isFetching}
                   variant="ghost"
                   size="icon"
-                  className="rounded-full w-10 h-10 bg-background shadow-sm disabled:opacity-50"
+                  className="rounded-xl w-12 h-12 bg-background shadow-md disabled:opacity-50 hover:bg-background/80"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-6 w-6" />
                 </Button>
                 
-                <span className="text-sm font-medium px-2">
-                  Hal {currentPage} / {totalPages}
-                </span>
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Halaman</span>
+                  <span className="text-sm font-bold">
+                    {currentPage} <span className="text-muted-foreground font-medium mx-1">/</span> {totalPages}
+                  </span>
+                </div>
 
                 <Button
                   onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages || isFetching}
                   variant="ghost"
                   size="icon"
-                  className="rounded-full w-10 h-10 bg-background shadow-sm disabled:opacity-50"
+                  className="rounded-xl w-12 h-12 bg-background shadow-md disabled:opacity-50 hover:bg-background/80"
                 >
-                  {isFetching ? <Loader2 className="h-5 w-5 animate-spin" /> : <ChevronRight className="h-5 w-5" />}
+                  {isFetching ? <Loader2 className="h-6 w-6 animate-spin" /> : <ChevronRight className="h-6 w-6" />}
                 </Button>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageLayout } from '../MobileLayout';
+import { MobileLayout } from '../MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bookmark, BookmarkCheck, ArrowLeft } from 'lucide-react';
@@ -11,6 +11,7 @@ import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { GridSkeleton } from '../Skeletons';
 import { LoadError } from '../ErrorState';
 import { cn } from '@/lib/utils';
+import { PosterCard } from '../PosterCard';
 
 // Interface untuk data yang sudah di-transform oleh formatContentForMobile
 interface ExploreItem {
@@ -27,16 +28,30 @@ interface ExploreItem {
 
 export const MobileExplore: React.FC = () => {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState('Umum');
+  // Categories bersumber TMDB Genres
+  const categories = [
+    { id: '', name: 'Semua' },
+    { id: '28', name: 'Aksi' },
+    { id: '35', name: 'Komedi' },
+    { id: '27', name: 'Horor' },
+    { id: '12', name: 'Petualangan' },
+    { id: '16', name: 'Animasi' },
+    { id: '10749', name: 'Romantis' },
+    { id: '878', name: 'Sci-Fi' }
+  ];
+
+  const [activeCategory, setActiveCategory] = useState(categories[0]);
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const sentinelRef = React.useRef<HTMLDivElement>(null);
   const { toggleWatchlist, isInWatchlist } = useMobileWatchlist();
 
-  // Use real TMDB data (sudah di-transform oleh formatContentForMobile)
-  const { data: items = [], isLoading, error } = useExploreContent('all', undefined, 'popularity', 1);
-
-  // Categories untuk tab navigation
-  const categories = ['Umum', 'Premium', 'Berjuang', 'Isekai', 'Fantasi', 'Aksi'];
+  // Use real TMDB API discovery
+  const { data: items = [], isLoading, error } = useExploreContent(
+    'all', 
+    activeCategory.id, 
+    'popularity', 
+    1
+  );
 
   const handleItemClick = (item: ExploreItem) => {
     navigate(`/${item.type}/${item.id}`);
@@ -56,13 +71,10 @@ React.useEffect(() => {
   const options = {
     root: null,
     threshold: 0,
-    rootMargin: '-56px 0px 0px 0px' 
+    rootMargin: '0px 0px 0px 0px' 
   };
 
   const observer = new IntersectionObserver(([entry]) => {
-    // TAMBAHKAN BARIS DEBUG PERTAMA DI SINI
-    console.log('OBSERVER FIRED!', { isIntersecting: entry.isIntersecting });
-    
     setIsTabsSticky(!entry.isIntersecting);
   }, options);
 
@@ -80,11 +92,10 @@ console.log('COMPONENT RENDERED', { isTabsSticky });
 
 
   return (
-    <PageLayout
-      title=""
-      showBackButton={false}
+    <MobileLayout
+      showHeader={false}
     >
-      <div className="relative -mx-4 -mt-4 pb-0">
+      <div className="relative pb-0">
         {/* Hero Section dengan Background Dinamis */}
         <div className="relative h-64 bg-gradient-to-br from-teal-500 to-teal-600 overflow-hidden">
           {/* Background Image - Dinamis dari item pertama */}
@@ -155,98 +166,50 @@ console.log('COMPONENT RENDERED', { isTabsSticky });
     >
       {categories.map((category) => (
         <button
-          key={category}
+          key={category.id || category.name}
           onClick={() => setActiveCategory(category)}
           className={cn(
             "flex-shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors",
-            activeCategory === category
+            activeCategory.name === category.name
               ? "text-foreground border-primary"
               : "text-muted-foreground border-transparent hover:text-foreground"
           )}
         >
-          {category}
+          {category.name}
         </button>
       ))}
     </div>
   </div>
 </div>
       
-      {/* Content List */}
-      <div className="px-4 py-4 space-y-4">
+      {/* Content List Array (Grid Layout) */}
+      <div className="px-4 py-4">
         {error ? (
           <LoadError onRetry={() => window.location.reload()} resource="konten" />
         ) : isLoading ? (
-          <GridSkeleton itemCount={6} columns={2} />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+             {Array.from({ length: 8 }).map((_, i) => (
+               <div key={i} className="aspect-[2/3] bg-muted/60 rounded-xl animate-pulse" />
+             ))}
+          </div>
         ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className="flex gap-3 p-3 rounded-lg bg-card hover:bg-accent/50 transition-colors cursor-pointer"
-              onClick={() => handleItemClick(item)}
-            >
-              {/* Poster */}
-              <div className="flex-shrink-0 w-16 h-20 rounded-md overflow-hidden bg-muted">
-                <img
-                  src={item.poster}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-poster.jpg';
-                  }}
-                />
-              </div>
-
-              {/* Content Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground mb-1 line-clamp-1">
-                  {item.title}
-                </h3>
-
-                {/* Rating and Year */}
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5 h-auto">
-                    ⭐ {item.rating.toFixed(1)}
-                  </Badge>
-                  {item.year && (
-                    <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
-                      {item.year}
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto">
-                    {item.type === 'tv' ? 'TV Series' : 'Movie'}
-                  </Badge>
-                </div>
-
-                {/* Description */}
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                  {item.overview}
-                </p>
-              </div>
-
-              {/* Bookmark Button */}
-              <div className="flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleWatchlistToggle(item);
-                  }}
-                >
-                  {isInWatchlist(item.id) ? (
-                    <BookmarkCheck className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Bookmark className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          ))
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {items.map((item) => (
+              <PosterCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                poster={item.poster}
+                type={item.type}
+                rating={item.rating}
+                size="responsive"
+                onClick={() => handleItemClick(item)}
+              />
+            ))}
+          </div>
         )}
       </div>
       </div>
-    </PageLayout>
+    </MobileLayout>
   );
 };

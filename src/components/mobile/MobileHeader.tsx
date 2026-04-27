@@ -37,7 +37,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
   return (
     <header className={cn(
-      "sticky top-0 z-50 w-full",
+      "fixed top-0 left-0 right-0 z-50 w-full",
       "flex items-center justify-between",
       "h-14 px-4 pt-safe-top",
       transparent 

@@ -279,6 +279,18 @@ export const getCollectionBySlugPreview = async (slug: string) => {
   return items;
 }
 
+export const getDiscoverMovies = async (genreId?: string, page: number = 1) => {
+  const genreParam = genreId ? `&with_genres=${genreId}` : '';
+  const response = await axios.get(`${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${page}${genreParam}&sort_by=popularity.desc`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
+};
+
+export const getDiscoverTV = async (genreId?: string, page: number = 1) => {
+  const genreParam = genreId ? `&with_genres=${genreId}` : '';
+  const response = await axios.get(`${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${page}${genreParam}&sort_by=popularity.desc`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
+};
+
 export const getHarryPotterCollection = async () => {
   const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);
   return response.data.parts;

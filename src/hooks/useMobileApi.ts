@@ -6,6 +6,7 @@ import {
   getTopRatedMovies,
   getTopRatedTVShows,
   getNowPlayingMovies,
+
   getMovieDetails,
   getTVDetails,
   getMovieCredits,
@@ -15,6 +16,8 @@ import {
   searchContent,
   getImageUrl,
   getResponsiveImageUrl,
+  getDiscoverMovies,
+  getDiscoverTV,
 } from '@/services/tmdb';
 
 // Hook for trending content (hero slider)
@@ -177,25 +180,30 @@ export const useExploreContent = (
   sortBy: string = 'popularity',
   page: number = 1
 ) => {
-  // For now, we'll use existing endpoints
-  // In a real implementation, you'd want to add genre filtering and sorting to the API
   const queryKey = ['explore', type, genre, sortBy, page];
   
   return useQuery({
     queryKey,
     queryFn: async () => {
-      let data = [];
+      let data: any[] = [];
       
+      // Jika sebuah genre disematkan (tidak kosong / undefined), kita pakai Discover API.
+      // Jika kosong (semua), kita pakai Popular Endpoint standar.
       if (type === 'movie' || type === 'all') {
-        const movies = await getPopularMovies(1);
+        const movies = genre 
+          ? await getDiscoverMovies(genre, page)
+          : await getPopularMovies(page);
         data = [...data, ...(movies.items || [])];
       }
       
       if (type === 'tv' || type === 'all') {
-        const tvShows = await getPopularTVShows(1);
+        const tvShows = genre 
+          ? await getDiscoverTV(genre, page)
+          : await getPopularTVShows(page);
         data = [...data, ...(tvShows.items || [])];
       }
       
+      // Bila mode 'all', ini akan mereturn gabungan movie dan TV yang relevan dengan genre tersebut.
       return transformTMDBData(data);
     },
     staleTime: 10 * 60 * 1000,
