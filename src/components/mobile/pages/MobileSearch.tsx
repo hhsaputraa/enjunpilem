@@ -66,15 +66,17 @@ export const MobileSearch: React.FC = () => {
 
   // Extract trending titles for search suggestions
   const trendingSearches = React.useMemo(() => {
-    if (trendingData && trendingData.length > 0) {
-      return trendingData
-        .slice(0, 8) // Ambil 8 item trending teratas
+    // useTrending() returns { items: [...], totalPages } so we grab .items
+    const items = (trendingData as any)?.items;
+    if (items && items.length > 0) {
+      return items
+        .slice(0, 8)
         .map((item: any) => ({
           title: item.title || item.name,
           type: item.media_type || (item.title ? 'movie' : 'tv'),
           emoji: item.media_type === 'movie' || item.title ? '🎬' : '📺'
         }))
-        .filter((item: any) => item.title); // Filter out undefined/null titles
+        .filter((item: any) => item.title);
     }
     return fallbackTrendingSearches.map(title => ({
       title,
@@ -82,6 +84,9 @@ export const MobileSearch: React.FC = () => {
       emoji: '🔥'
     }));
   }, [trendingData]);
+
+  // Also show "updated from TMDB" info correctly
+  const trendingItems = (trendingData as any)?.items;
 
   useEffect(() => {
     if (query.trim() && query.length > 2) {
@@ -186,7 +191,7 @@ export const MobileSearch: React.FC = () => {
                 </div>
 
                 {/* Info update terakhir */}
-                {!trendingLoading && trendingData && (
+                {!trendingLoading && trendingItems && (
                   <p className="text-xs text-muted-foreground">
                     Diperbarui berdasarkan trending TMDB hari ini
                   </p>

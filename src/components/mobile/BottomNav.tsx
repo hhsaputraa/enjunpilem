@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Compass, Search, Bookmark, User } from 'lucide-react';
+import { Home, Compass, Search, Bookmark, User, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavItem {
   id: string;
@@ -11,9 +12,10 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   href: string;
   badge?: number;
+  protected?: boolean; // route yang butuh login
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   {
     id: 'home',
     label: 'Beranda',
@@ -37,12 +39,14 @@ const navItems: NavItem[] = [
     label: 'Watchlist',
     icon: Bookmark,
     href: '/watchlist',
+    protected: true,
   },
   {
     id: 'profile',
     label: 'Profil',
     icon: User,
     href: '/profile',
+    // profile tidak di-protect agar bisa tampil "Belum Login" screen
   },
 ];
 
@@ -50,16 +54,31 @@ export const BottomNav: React.FC = () => {
   const { shouldShow } = useBottomNav();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   if (!shouldShow) return null;
 
-  const handleNavigation = (href: string) => {
-    // Add haptic feedback if available
+  // Buat navItems dinamis: icon Profil berubah jika belum login
+  const navItems = baseNavItems.map(item => {
+    if (item.id === 'profile' && !user) {
+      return { ...item, label: 'Masuk', icon: LogIn };
+    }
+    return item;
+  });
+
+  const handleNavigation = (item: NavItem) => {
+    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
 
-    navigate(href);
+    // Redirect ke auth jika route protected dan belum login
+    if (item.protected && !user) {
+      navigate('/auth', { state: { redirectTo: item.href } });
+      return;
+    }
+
+    navigate(item.href);
   };
 
   const isActive = (href: string) => {
@@ -84,7 +103,7 @@ export const BottomNav: React.FC = () => {
           return (
             <button
               key={item.id}
-              onClick={() => handleNavigation(item.href)}
+              onClick={() => handleNavigation(item)}
               className={cn(
                 "flex flex-col items-center justify-center",
                 "min-w-0 flex-1 py-1 px-1",
@@ -96,7 +115,6 @@ export const BottomNav: React.FC = () => {
                   : "text-muted-foreground hover:text-foreground"
               )}
               aria-label={item.label}
-              role="tab"
               aria-selected={active}
             >
               {/* Active indicator */}
@@ -145,13 +163,12 @@ export const useBottomNav = () => {
   const location = useLocation();
 
   const shouldShowBottomNav = () => {
-    // Hide on certain pages
     const hiddenPaths = ['/auth', '/onboarding', '/watch/'];
     return !hiddenPaths.some(path => location.pathname.startsWith(path));
   };
 
   const getCurrentTab = () => {
-    const currentItem = navItems.find(item => {
+    const currentItem = baseNavItems.find(item => {
       if (item.href === '/') {
         return location.pathname === '/';
       }

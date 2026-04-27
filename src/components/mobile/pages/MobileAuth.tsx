@@ -34,7 +34,8 @@ export const MobileAuth: React.FC = () => {
     const result = await signIn(loginForm.emailOrUsername, loginForm.password);
     if (result.success) {
       const redirectTo = location.state?.redirectTo || '/';
-      navigate(redirectTo);
+      const stateToForward = location.state?.showAddSheet ? { showAddSheet: true } : {};
+      navigate(redirectTo, { state: stateToForward });
     }
   };
 
@@ -71,7 +72,8 @@ export const MobileAuth: React.FC = () => {
                   signInWithGoogleIdToken(credentialResponse.credential).then(res => {
                     if (res.success) {
                       const redirectTo = location.state?.redirectTo || '/';
-                      navigate(redirectTo);
+                      const stateToForward = location.state?.showAddSheet ? { showAddSheet: true } : {};
+                      navigate(redirectTo, { state: stateToForward });
                     }
                   });
                 }

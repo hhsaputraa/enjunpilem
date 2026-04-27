@@ -22,6 +22,8 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { useContentDetails, useContentCredits, useContentRecommendations, formatContentForMobile } from '@/hooks/useMobileApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { MobileAddToSheet } from '@/components/mobile/MobileAddToSheet';
 import { cn } from '@/lib/utils';
 
 interface MovieDetail {
@@ -59,9 +61,21 @@ export const MobileMovieDetail: React.FC = () => {
   const location = useLocation();
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const { user } = useAuth();
 
   const movieId = params.id as string;
   const movieType = location.pathname.startsWith('/tv/') ? 'tv' : 'movie';
+
+  // Auto-open sheet if redirected back from auth with showAddSheet flag
+  React.useEffect(() => {
+    if ((location.state as any)?.showAddSheet && user) {
+      setIsSheetOpen(true);
+      // Clear state so it doesn't re-trigger on navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [user, location.state]);
 
   // Use real TMDB data
   const { data: movieDetails, isLoading, error } = useContentDetails(movieType, movieId);
@@ -83,8 +97,7 @@ export const MobileMovieDetail: React.FC = () => {
   } : null;
 
   const handleWatchlistToggle = () => {
-    // TODO: Implement watchlist toggle with Supabase
-    console.log('Toggle watchlist for movie:', movieId);
+    setIsSheetOpen(true);
   };
 
   const handlePlay = () => {
@@ -306,6 +319,17 @@ export const MobileMovieDetail: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Add to Watchlist / Collection Sheet */}
+      <MobileAddToSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        mediaId={Number(movieId)}
+        mediaType={movieType}
+        title={movie.title}
+        posterPath={movieDetails?.poster_path}
+        overview={movie.overview}
+      />
     </DetailLayout>
   );
 };

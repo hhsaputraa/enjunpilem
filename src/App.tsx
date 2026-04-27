@@ -26,6 +26,8 @@ import SharedFilms from "./pages/SharedFilms";
 import ImportCollection from "./pages/ImportCollection";
 import Onboarding from "./pages/Onboarding";
 import { AuthGuard } from "./components/AuthGuard";
+import { ScrollToTop } from "./components/ScrollToTop";
+import { AuthProvider } from "./contexts/AuthContext";
 
 // Mobile Pages
 import {
@@ -58,6 +60,7 @@ const Layout = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<MobileHome />} />
             <Route path="/explore" element={<MobileExplore />} />
@@ -82,9 +85,9 @@ const Layout = () => {
     );
   }
 
-  // Desktop Layout
   return (
     <TooltipProvider>
+      <ScrollToTop />
       <Navbar />
       <main className={`${location.pathname === "/" ? "" : ""}`}>
         <Toaster />
@@ -117,9 +120,11 @@ const Layout = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <AuthGuard>
-        <Layout />
-      </AuthGuard>
+      <AuthProvider>
+        <AuthGuard>
+          <Layout />
+        </AuthGuard>
+      </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>
 );

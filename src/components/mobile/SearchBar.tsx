@@ -26,20 +26,6 @@ interface SearchBarProps {
   showSuggestions?: boolean;
 }
 
-const mockSuggestions: SearchSuggestion[] = [
-  { id: '1', text: 'Spider-Man', type: 'trending' },
-  { id: '2', text: 'Avengers', type: 'trending' },
-  { id: '3', text: 'The Batman', type: 'trending' },
-  { id: '4', text: 'Stranger Things', type: 'trending' },
-  { id: '5', text: 'Wednesday', type: 'trending' },
-];
-
-const mockRecentSearches = [
-  'Spider-Man No Way Home',
-  'The Witcher',
-  'Dune',
-  'Top Gun Maverick',
-];
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = "Cari film, serial TV...",
@@ -48,8 +34,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
   onFocus,
   onBlur,
-  suggestions = mockSuggestions,
-  recentSearches = mockRecentSearches,
+  suggestions = [],
+  recentSearches = [],
   className,
   autoFocus = false,
   showSuggestions = true,
