@@ -32,7 +32,8 @@ const ImportCollection = lazy(() => import("./pages/ImportCollection"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 // Mobile Layout Components (Non-lazy for shell stability)
-import { BottomNav, ToastProvider } from "./components/mobile";
+import { BottomNav } from "./components/mobile/BottomNav";
+import { ToastProvider } from "./components/mobile/Toast";
 
 // Mobile Pages (Lazy)
 const MobileHome = lazy(() => import("./components/mobile/pages/MobileHome").then(m => ({ default: m.MobileHome })));

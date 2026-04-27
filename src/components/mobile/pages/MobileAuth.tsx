@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Fingerprint, Binary, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMobileAuth, useGuestGuard } from '@/hooks/useMobileAuth';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 
 export const MobileAuth: React.FC = () => {
   const navigate = useNavigate();
@@ -66,25 +66,27 @@ export const MobileAuth: React.FC = () => {
         <CardContent className="space-y-6">
           {/* Primary: Google Sign In */}
           <div className="w-full flex justify-center">
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                if (credentialResponse.credential) {
-                  signInWithGoogleIdToken(credentialResponse.credential).then(res => {
-                    if (res.success) {
-                      const redirectTo = location.state?.redirectTo || '/';
-                      const stateToForward = location.state?.showAddSheet ? { showAddSheet: true } : {};
-                      navigate(redirectTo, { state: stateToForward });
-                    }
-                  });
-                }
-              }}
-              onError={() => {
-                console.error('Layanan Google Login gagal');
-              }}
-              theme="filled_black"
-              shape="pill"
-              text="continue_with"
-            />
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    signInWithGoogleIdToken(credentialResponse.credential).then(res => {
+                      if (res.success) {
+                        const redirectTo = location.state?.redirectTo || '/';
+                        const stateToForward = location.state?.showAddSheet ? { showAddSheet: true } : {};
+                        navigate(redirectTo, { state: stateToForward });
+                      }
+                    });
+                  }
+                }}
+                onError={() => {
+                  console.error('Layanan Google Login gagal');
+                }}
+                theme="filled_black"
+                shape="pill"
+                text="continue_with"
+              />
+            </GoogleOAuthProvider>
           </div>
 
           <div className="pt-2">
