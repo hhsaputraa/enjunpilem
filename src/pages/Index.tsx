@@ -38,7 +38,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 min-h-[150vh] md:min-h-[250vh]">
         
         {/* Hero Section Wrapper to prevent Layout Shift */}
         <div className="min-h-[500px] sm:min-h-[60vh] lg:min-h-[70vh] mb-16 w-full">
