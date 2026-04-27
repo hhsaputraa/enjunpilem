@@ -17,7 +17,7 @@ interface PosterCardProps {
   type?: 'movie' | 'tv';
   isInWatchlist?: boolean;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'responsive';
   showOverlay?: boolean;
   onClick?: () => void;
   onWatchlistToggle?: (id: string) => void;
@@ -27,6 +27,7 @@ const sizeClasses = {
   sm: 'w-24 h-36', // 2:3 ratio
   md: 'w-32 h-48',
   lg: 'w-40 h-60',
+  responsive: 'w-full aspect-[2/3]',
 };
 
 export const PosterCard: React.FC<PosterCardProps> = ({
@@ -205,7 +206,7 @@ export const PosterCard: React.FC<PosterCardProps> = ({
 };
 
 // Skeleton version
-export const PosterCardSkeleton: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ 
+export const PosterCardSkeleton: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'responsive' }> = ({ 
   size = 'md' 
 }) => (
   <div className={cn("animate-pulse", sizeClasses[size])}>

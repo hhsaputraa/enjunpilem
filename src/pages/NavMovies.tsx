@@ -266,17 +266,17 @@ const NavMovies = () => {
   // Query untuk hero slider dan content row biasa
   const { data: popularMovies, isLoading: popularLoading } = useQuery({
     queryKey: ["popularMovies"],
-    queryFn: getPopularMovies,
+    queryFn: () => getPopularMovies(1),
   })
 
   const { data: topRatedMovies, isLoading: topRatedLoading } = useQuery({
     queryKey: ["topRatedMovies"],
-    queryFn: getTopRatedMovies,
+    queryFn: () => getTopRatedMovies(1),
   })
 
   const { data: nowPlayingMovies, isLoading: nowPlayingLoading } = useQuery({
     queryKey: ["nowPlayingMovies"],
-    queryFn: getNowPlayingMovies,
+    queryFn: () => getNowPlayingMovies(1),
   })
 
   const { data: harryPotterMovies, isLoading: harryPotterLoading } = useQuery({
@@ -288,7 +288,7 @@ const NavMovies = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
         {/* Hero Section with Background Image Slider */}
-        <HeroSlider movies={popularMovies || []} />
+        <HeroSlider movies={popularMovies?.items || []} />
 
         {/* ✅ AUTO CONTENT ROWS DARI KONFIGURASI */}
         {selectedCollections.map((collection) => (
@@ -302,7 +302,7 @@ const NavMovies = () => {
         {/* Content Rows Biasa (TMDB API langsung) */}
         <ContentRow
           title="Now Playing"
-          items={nowPlayingMovies || []}
+          items={nowPlayingMovies?.items || []}
           isLoading={nowPlayingLoading}
           icon={<Ticket className="h-5 w-5" />}
         />
@@ -316,14 +316,14 @@ const NavMovies = () => {
 
         <ContentRow
           title="Popular Movies"
-          items={popularMovies || []}
+          items={popularMovies?.items || []}
           isLoading={popularLoading}
           icon={<Popcorn className="h-5 w-5" />}
         />
 
         <ContentRow
           title="Top Rated Movies"
-          items={topRatedMovies || []}
+          items={topRatedMovies?.items || []}
           isLoading={topRatedLoading}
           icon={<Star className="h-5 w-5" />}
         />

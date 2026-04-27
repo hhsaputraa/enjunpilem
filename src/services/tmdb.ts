@@ -85,24 +85,24 @@ const fetchListItems = async (listId: string, page = 1) => {
   }
 };
 
-export const getTrending = async () => {
-  const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}`);
-  return response.data.results;
+export const getTrending = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getPopularMovies = async () => {
-  const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
-  return response.data.results;
+export const getPopularMovies = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getPopularTVShows = async () => {
-  const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}`);
-  return response.data.results;
+export const getPopularTVShows = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getTopRatedMovies = async () => {
-  const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
-  return response.data.results;
+export const getTopRatedMovies = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
 export const getMovieDetails = async (id: string) => {
@@ -202,19 +202,19 @@ export const getTVCredits = async (id: string) => {
   return response.data;
 };
 
-export const getNowPlayingMovies = async () => {
-  const response = await axios.get(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}`);
-  return response.data.results;
+export const getNowPlayingMovies = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getTopRatedTVShows = async () => {
-  const response = await axios.get(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}`);
-  return response.data.results;
+export const getTopRatedTVShows = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getAiringTodayTVShows = async () => {
-  const response = await axios.get(`${BASE_URL}/tv/airing_today?api_key=${API_KEY}`);
-  return response.data.results;
+export const getAiringTodayTVShows = async (page: number = 1) => {
+  const response = await axios.get(`${BASE_URL}/tv/airing_today?api_key=${API_KEY}&page=${page}`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
 export const getEnjunTop = async () => {
@@ -261,6 +261,7 @@ export const getOscarWonPaginated = async (page: number = 1) => {
   const list = await findListBySlug('oscar-won');
   if (!list) return { items: [], totalPages: 0 };
   return fetchListItems(list.id, page);
+
 }
 
 // ✅ GENERIC FUNCTION - Otomatis untuk semua koleksi baru!
@@ -277,6 +278,18 @@ export const getCollectionBySlugPreview = async (slug: string) => {
   const { items } = await fetchListItems(list.id, 1);
   return items;
 }
+
+export const getDiscoverMovies = async (genreId?: string, page: number = 1) => {
+  const genreParam = genreId ? `&with_genres=${genreId}` : '';
+  const response = await axios.get(`${BASE_URL}/discover/movie?api_key=${API_KEY}&page=${page}${genreParam}&sort_by=popularity.desc`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
+};
+
+export const getDiscoverTV = async (genreId?: string, page: number = 1) => {
+  const genreParam = genreId ? `&with_genres=${genreId}` : '';
+  const response = await axios.get(`${BASE_URL}/discover/tv?api_key=${API_KEY}&page=${page}${genreParam}&sort_by=popularity.desc`);
+  return { items: response.data.results, totalPages: response.data.total_pages };
+};
 
 export const getHarryPotterCollection = async () => {
   const response = await axios.get(`${BASE_URL}/collection/1241?api_key=${API_KEY}`);

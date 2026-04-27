@@ -47,8 +47,11 @@ const navItems: NavItem[] = [
 ];
 
 export const BottomNav: React.FC = () => {
+  const { shouldShow } = useBottomNav();
   const location = useLocation();
   const navigate = useNavigate();
+
+  if (!shouldShow) return null;
 
   const handleNavigation = (href: string) => {
     // Add haptic feedback if available
@@ -143,7 +146,7 @@ export const useBottomNav = () => {
 
   const shouldShowBottomNav = () => {
     // Hide on certain pages
-    const hiddenPaths = ['/auth', '/onboarding'];
+    const hiddenPaths = ['/auth', '/onboarding', '/watch/'];
     return !hiddenPaths.some(path => location.pathname.startsWith(path));
   };
 

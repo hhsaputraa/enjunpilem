@@ -521,7 +521,7 @@ const Collections = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description (optional)</label>
+                <label className="text-xs font-bold uppercase tracking-widest text-[#0AC4E0]">Description</label>
                 <Textarea
                   placeholder="What's this collection about?"
                   value={editingCollection?.description || ''}

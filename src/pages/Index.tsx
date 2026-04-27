@@ -18,17 +18,17 @@ const Index = () => {
 
   const { data: trending, isLoading: trendingLoading } = useQuery({
     queryKey: ["trending"],
-    queryFn: getTrending,
+    queryFn: () => getTrending(1),
   })
 
   const { data: popularMovies, isLoading: moviesLoading } = useQuery({
     queryKey: ["popularMovies"],
-    queryFn: getPopularMovies,
+    queryFn: () => getPopularMovies(1),
   })
 
   const { data: topRatedMovies, isLoading: topRatedLoading } = useQuery({
     queryKey: ["topRatedMovies"],
-    queryFn: getTopRatedMovies,
+    queryFn: () => getTopRatedMovies(1),
   })
 
   const { data: enjunTop, isLoading: enjunTopLoading } = useQuery({
@@ -41,21 +41,21 @@ const Index = () => {
       <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         
         {/* Helper function to check if data exists */}
-        {!trendingLoading && trending && trending.length > 0 && (
-          <HeroSection trending={trending} />
+        {!trendingLoading && trending?.items && trending.items.length > 0 && (
+          <HeroSection trending={trending.items} />
         )}
 
         <div className="space-y-4 sm:space-y-8">
           <ContentRow
             title="Trending Now"
-            items={trending || []}
+            items={trending?.items || []}
             isLoading={trendingLoading}
             icon={<TrendingUp className="h-5 w-5" />}
           />
 
           <ContentRow
             title="Popular Movies"
-            items={popularMovies || []}
+            items={popularMovies?.items || []}
             isLoading={moviesLoading}
             icon={<Film className="h-5 w-5" />}
           />
@@ -78,7 +78,7 @@ const Index = () => {
           
           <ContentRow
             title="Top Rated Movies"
-            items={topRatedMovies || []}
+            items={topRatedMovies?.items || []}
             isLoading={topRatedLoading}
             icon={<Star className="h-5 w-5 text-emerald-500" />}
           />

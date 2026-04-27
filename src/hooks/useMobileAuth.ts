@@ -39,9 +39,9 @@ export const useMobileAuth = () => {
         setLoading(false);
 
         if (event === 'SIGNED_IN') {
-          showSuccess('Berhasil masuk!', 'Selamat datang kembali');
+          // Toast dipindahkan ke fungsi signIn dan GoogleLogin
         } else if (event === 'SIGNED_OUT') {
-          showSuccess('Berhasil keluar', 'Sampai jumpa lagi!');
+          // Toast dipindahkan ke fungsi signOut
         }
       }
     );
@@ -49,19 +49,19 @@ export const useMobileAuth = () => {
     return () => subscription.unsubscribe();
   }, [showSuccess]);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogleIdToken = async (idToken: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/onboarding`,
-        },
+        token: idToken,
+        // Optional override: options: { redirectTo: ... } if needed, but not required for ID token sign-in
       });
       if (error) throw error;
+      showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
     } catch (error: any) {
-      showError('Gagal masuk dengan Google', error.message);
+      showError('Gagal menyelesaikan otentikasi Google', error.message);
       setLoading(false);
       return { success: false, error: error.message };
     }
@@ -82,7 +82,7 @@ export const useMobileAuth = () => {
       });
 
       if (error) throw error;
-
+      showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
     } catch (error: any) {
       showError('Gagal masuk', error.message);
@@ -131,6 +131,7 @@ export const useMobileAuth = () => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      showSuccess('Berhasil keluar', 'Sampai jumpa lagi!');
       navigate('/');
       return { success: true };
     } catch (error: any) {
@@ -201,7 +202,7 @@ export const useMobileAuth = () => {
     loading,
     isAuthenticated,
     signIn,
-    signInWithGoogle,
+    signInWithGoogleIdToken,
     signUp,
     signOut,
     resetPassword,

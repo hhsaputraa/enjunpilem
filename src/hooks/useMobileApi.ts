@@ -6,6 +6,7 @@ import {
   getTopRatedMovies,
   getTopRatedTVShows,
   getNowPlayingMovies,
+
   getMovieDetails,
   getTVDetails,
   getMovieCredits,
@@ -15,13 +16,15 @@ import {
   searchContent,
   getImageUrl,
   getResponsiveImageUrl,
+  getDiscoverMovies,
+  getDiscoverTV,
 } from '@/services/tmdb';
 
 // Hook for trending content (hero slider)
 export const useTrending = () => {
   return useQuery({
     queryKey: ['trending'],
-    queryFn: getTrending,
+    queryFn: () => getTrending(1),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -30,7 +33,7 @@ export const useTrending = () => {
 export const usePopularMovies = () => {
   return useQuery({
     queryKey: ['popular-movies'],
-    queryFn: getPopularMovies,
+    queryFn: () => getPopularMovies(1),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };
@@ -39,7 +42,7 @@ export const usePopularMovies = () => {
 export const usePopularTVShows = () => {
   return useQuery({
     queryKey: ['popular-tv'],
-    queryFn: getPopularTVShows,
+    queryFn: () => getPopularTVShows(1),
     staleTime: 10 * 60 * 1000,
   });
 };
@@ -48,7 +51,7 @@ export const usePopularTVShows = () => {
 export const useTopRatedMovies = () => {
   return useQuery({
     queryKey: ['top-rated-movies'],
-    queryFn: getTopRatedMovies,
+    queryFn: () => getTopRatedMovies(1),
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
 };
@@ -57,7 +60,7 @@ export const useTopRatedMovies = () => {
 export const useTopRatedTVShows = () => {
   return useQuery({
     queryKey: ['top-rated-tv'],
-    queryFn: getTopRatedTVShows,
+    queryFn: () => getTopRatedTVShows(1),
     staleTime: 30 * 60 * 1000,
   });
 };
@@ -121,27 +124,27 @@ export const useMixedContent = () => {
 
   return {
     trending: {
-      data: trendingQuery.data || [],
+      data: trendingQuery.data?.items || trendingQuery.data || [],
       isLoading: trendingQuery.isLoading,
       error: trendingQuery.error,
     },
     popularMovies: {
-      data: popularMoviesQuery.data || [],
+      data: popularMoviesQuery.data?.items || popularMoviesQuery.data || [],
       isLoading: popularMoviesQuery.isLoading,
       error: popularMoviesQuery.error,
     },
     popularTV: {
-      data: popularTVQuery.data || [],
+      data: popularTVQuery.data?.items || popularTVQuery.data || [],
       isLoading: popularTVQuery.isLoading,
       error: popularTVQuery.error,
     },
     topRatedMovies: {
-      data: topRatedMoviesQuery.data || [],
+      data: topRatedMoviesQuery.data?.items || topRatedMoviesQuery.data || [],
       isLoading: topRatedMoviesQuery.isLoading,
       error: topRatedMoviesQuery.error,
     },
     nowPlaying: {
-      data: nowPlayingQuery.data || [],
+      data: nowPlayingQuery.data?.items || nowPlayingQuery.data || [],
       isLoading: nowPlayingQuery.isLoading,
       error: nowPlayingQuery.error,
     },
@@ -177,25 +180,30 @@ export const useExploreContent = (
   sortBy: string = 'popularity',
   page: number = 1
 ) => {
-  // For now, we'll use existing endpoints
-  // In a real implementation, you'd want to add genre filtering and sorting to the API
   const queryKey = ['explore', type, genre, sortBy, page];
   
   return useQuery({
     queryKey,
     queryFn: async () => {
-      let data = [];
+      let data: any[] = [];
       
+      // Jika sebuah genre disematkan (tidak kosong / undefined), kita pakai Discover API.
+      // Jika kosong (semua), kita pakai Popular Endpoint standar.
       if (type === 'movie' || type === 'all') {
-        const movies = await getPopularMovies();
-        data = [...data, ...movies];
+        const movies = genre 
+          ? await getDiscoverMovies(genre, page)
+          : await getPopularMovies(page);
+        data = [...data, ...(movies.items || [])];
       }
       
       if (type === 'tv' || type === 'all') {
-        const tvShows = await getPopularTVShows();
-        data = [...data, ...tvShows];
+        const tvShows = genre 
+          ? await getDiscoverTV(genre, page)
+          : await getPopularTVShows(page);
+        data = [...data, ...(tvShows.items || [])];
       }
       
+      // Bila mode 'all', ini akan mereturn gabungan movie dan TV yang relevan dengan genre tersebut.
       return transformTMDBData(data);
     },
     staleTime: 10 * 60 * 1000,

@@ -2,7 +2,6 @@
 
 import React, { ReactNode } from 'react';
 import { MobileHeader } from './MobileHeader';
-import { BottomNav } from './BottomNav';
 import { MiniPlayer } from './MiniPlayer';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +31,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   return (
     <div className={cn(
       "min-h-dvh bg-background text-foreground",
-      "flex flex-col relative overflow-hidden",
+      "flex flex-col relative",
       className
     )}>
       {/* Mobile Header */}
@@ -46,28 +45,26 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 
       {/* Main Content Area */}
       <main className={cn(
-        "flex-1 overflow-y-auto overflow-x-hidden",
+        "flex-1 w-full flex flex-col",
+        showHeader && "pt-14", // Prevent content from overlapping under fixed header
         showBottomNav && "pb-20", // Space for bottom nav
         showMiniPlayer && "pb-32", // Extra space for mini player
         contentClassName
       )}>
-        <div className="pb-safe-bottom">
+        <div className="pb-safe-bottom flex-1">
           {children}
         </div>
       </main>
 
       {/* Mini Player */}
       {showMiniPlayer && <MiniPlayer />}
-
-      {/* Bottom Navigation */}
-      {showBottomNav && <BottomNav />}
     </div>
   );
 };
 
 // Layout variants for different pages
 export const HomeLayout: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <MobileLayout showHeader={false}>
+  <MobileLayout>
     {children}
   </MobileLayout>
 );

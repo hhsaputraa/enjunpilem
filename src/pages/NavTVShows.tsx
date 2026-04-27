@@ -38,17 +38,17 @@ const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; 
 const NavTVShows = () => {
   const { data: popularTVShows, isLoading: popularLoading } = useQuery({
     queryKey: ['popularTV'],
-    queryFn: getPopularTVShows,
+    queryFn: () => getPopularTVShows(1),
   });
 
   const { data: topRatedTVShows, isLoading: topRatedLoading } = useQuery({
     queryKey: ['topRatedTV'],
-    queryFn: getTopRatedTVShows,
+    queryFn: () => getTopRatedTVShows(1),
   });
 
   const { data: airingTodayTVShows, isLoading: airingTodayLoading } = useQuery({
     queryKey: ['airingTodayTV'],
-    queryFn: getAiringTodayTVShows,
+    queryFn: () => getAiringTodayTVShows(1),
   });
 
   return (
@@ -58,9 +58,9 @@ const NavTVShows = () => {
           TV Shows
         </h1>
         
-        <ContentRow title="Airing Today" items={airingTodayTVShows || []} isLoading={airingTodayLoading} />
-        <ContentRow title="Popular TV Shows" items={popularTVShows || []} isLoading={popularLoading} />
-        <ContentRow title="Top Rated TV Shows" items={topRatedTVShows || []} isLoading={topRatedLoading} />
+        <ContentRow title="Airing Today" items={airingTodayTVShows?.items || []} isLoading={airingTodayLoading} />
+        <ContentRow title="Popular TV Shows" items={popularTVShows?.items || []} isLoading={popularLoading} />
+        <ContentRow title="Top Rated TV Shows" items={topRatedTVShows?.items || []} isLoading={topRatedLoading} />
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ export {
   RecommendedCarousel,
   ContinueWatchingCarousel 
 } from './CarouselRow';
+export { MobileAutoCarouselRow } from './MobileAutoCarouselRow';
 export { GenreChips, MovieGenreChips, TVGenreChips, useGenreFilter } from './GenreChips';
 export { SearchBar, useSearch } from './SearchBar';
 export { HeroSlider } from './HeroSlider';
@@ -65,6 +66,10 @@ export { MobileWatchlist } from './pages/MobileWatchlist';
 export { MobileProfile } from './pages/MobileProfile';
 export { MobileMovieDetail } from './pages/MobileMovieDetail';
 export { MobileWatch } from './pages/MobileWatch';
+export { MobileCollections } from './pages/MobileCollections';
+export { MobileSharedFilms } from './pages/MobileSharedFilms';
+export { MobileFavorites } from './pages/MobileFavorites';
+export { MobileHistory } from './pages/MobileHistory';
 
 // Video Player
 export { MobileVideoPlayer } from './MobileVideoPlayer';

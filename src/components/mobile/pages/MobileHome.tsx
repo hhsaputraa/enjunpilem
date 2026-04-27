@@ -1,49 +1,44 @@
-'use client';
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { HomeLayout } from '../MobileLayout';
 import { HeroSlider } from '../HeroSlider';
-import {
-  TrendingCarousel,
-  NewReleasesCarousel,
-  TopRatedCarousel,
-  RecommendedCarousel,
-  ContinueWatchingCarousel
-} from '../CarouselRow';
+import { CarouselRow } from '../CarouselRow';
+import { MobileAutoCarouselRow } from '../MobileAutoCarouselRow';
 import { HeroSkeleton, CarouselRowSkeleton } from '../Skeletons';
 import { NetworkError } from '../ErrorState';
 import { Button } from '@/components/ui/button';
-import { Search, Bell } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useMixedContent, transformTMDBData } from '@/hooks/useMobileApi';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
-
-// Real TMDB data will be loaded from API
+import { getEnjunTop } from '@/services/tmdb';
+import { COLLECTIONS } from '@/config/collections';
 
 export const MobileHome: React.FC = () => {
   const navigate = useNavigate();
   const { toggleWatchlist } = useMobileWatchlist();
 
-  // Use real TMDB data
+  // Load basic TMDB data
   const {
     trending,
     popularMovies,
-    popularTV,
-    topRatedMovies,
-    nowPlaying,
     isLoading
   } = useMixedContent();
 
-  // Transform data for mobile components
-  const heroItems = trending.data ? transformTMDBData(trending.data.slice(0, 5)) : [];
-  const trendingItems = trending.data ? transformTMDBData(trending.data.slice(0, 20)) : [];
-  const newReleases = nowPlaying.data ? transformTMDBData(nowPlaying.data.slice(0, 20)) : [];
-  const topRated = topRatedMovies.data ? transformTMDBData(topRatedMovies.data.slice(0, 20)) : [];
-  const recommended = popularTV.data ? transformTMDBData(popularTV.data.slice(0, 20)) : [];
-  const continueWatching: any[] = []; // Will be loaded from user's watch history
+  // Load "Top 4 Enjun"
+  const { data: enjunTopData, isLoading: enjunTopLoading } = useQuery({
+    queryKey: ['enjunTop'],
+    queryFn: getEnjunTop,
+    staleTime: 10 * 60 * 1000,
+  });
 
-  // Check for errors
-  const hasError = trending.error || popularMovies.error || popularTV.error || topRatedMovies.error;
+  // Transform data for mobile
+  const heroItems = trending.data ? transformTMDBData(trending.data.slice(0, 5)) : [];
+  const trendingItems = trending.data ? transformTMDBData(trending.data) : [];
+  const popularItems = popularMovies.data ? transformTMDBData(popularMovies.data) : [];
+  const enjunTopItems = enjunTopData ? transformTMDBData(enjunTopData) : [];
+
+  const hasError = trending.error || popularMovies.error;
 
   const handleItemClick = (item: any) => {
     navigate(`/${item.type}/${item.id}`);
@@ -57,8 +52,8 @@ export const MobileHome: React.FC = () => {
     navigate('/search');
   };
 
-  const handleViewAll = (category: string) => {
-    navigate(`/explore?category=${category}`);
+  const handleViewAllCollection = (collectionId: string) => {
+    navigate(`/detail-list-collection?queryKey=${collectionId}`);
   };
 
   if (hasError) {
@@ -71,32 +66,7 @@ export const MobileHome: React.FC = () => {
 
   return (
     <HomeLayout>
-      <div className="space-y-6 pb-6">
-        {/* Custom Header */}
-        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 pt-safe-top">
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                EnjunPilem
-              </span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSearch}
-                className="h-10 w-10 rounded-full"
-                aria-label="Cari"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </header>
-
+      <div className="space-y-6 pb-6 w-full overflow-hidden">
         {/* Hero Section */}
         <section className="px-4">
           {isLoading ? (
@@ -110,56 +80,53 @@ export const MobileHome: React.FC = () => {
           )}
         </section>
 
-        {/* Continue Watching */}
-        {continueWatching.length > 0 && (
-          <ContinueWatchingCarousel
-            items={continueWatching}
-            isLoading={isLoading}
-            onItemClick={handleItemClick}
-            onWatchlistToggle={handleWatchlistToggle}
-          />
-        )}
-
-        {/* Trending */}
-        <TrendingCarousel
+        {/* Trending Now (ga pake lihat semua) */}
+        <CarouselRow
+          title="Trending Now"
           items={trendingItems}
           isLoading={isLoading}
+          showViewAll={false}
+          itemSize="md"
           onItemClick={handleItemClick}
           onWatchlistToggle={handleWatchlistToggle}
-          onViewAll={() => handleViewAll('trending')}
         />
 
-        {/* New Releases */}
-        <NewReleasesCarousel
-          items={newReleases}
+        {/* Popular Movies (ga pake lihat semua) */}
+        <CarouselRow
+          title="Popular Movies"
+          items={popularItems}
           isLoading={isLoading}
+          showViewAll={false}
+          itemSize="md"
           onItemClick={handleItemClick}
           onWatchlistToggle={handleWatchlistToggle}
-          onViewAll={() => handleViewAll('new')}
         />
 
-        {/* Top Rated */}
-        <TopRatedCarousel
-          items={topRated}
-          isLoading={isLoading}
+        {/* Top 4 Enjun */}
+        <CarouselRow
+          title="Top 4 Enjun"
+          items={enjunTopItems}
+          isLoading={enjunTopLoading}
+          showViewAll={false}
+          itemSize="md"
           onItemClick={handleItemClick}
           onWatchlistToggle={handleWatchlistToggle}
-          onViewAll={() => handleViewAll('top-rated')}
         />
 
-        {/* Recommended */}
-        {recommended.length > 0 && (
-          <RecommendedCarousel
-            items={recommended}
-            isLoading={isLoading}
+        {/* Dynamic Collections dari config/collections.ts (pake lihat semua) */}
+        {COLLECTIONS.map((collection) => (
+          <MobileAutoCarouselRow
+            key={collection.id}
+            collection={collection}
+            showViewAll={true}
+            onViewAll={() => handleViewAllCollection(collection.id)}
             onItemClick={handleItemClick}
             onWatchlistToggle={handleWatchlistToggle}
-            onViewAll={() => handleViewAll('recommended')}
           />
-        )}
+        ))}
 
-        {/* Quick Actions */}
-        <section className="px-4">
+        {/* Quick Actions (Keep these handy Mobile features) */}
+        <section className="px-4 pt-4 border-t border-white/5 mt-8">
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
