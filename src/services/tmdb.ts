@@ -140,7 +140,7 @@ export const getResponsiveImageUrl = (path: string) => {
 
   // Gunakan ukuran yang lebih kecil untuk mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const size = isMobile ? 'w300' : 'w500';
+  const size = isMobile ? 'w300' : 'w342'; // Changed from w500 to w342 to fix enormous network payloads
 
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };

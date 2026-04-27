@@ -7,8 +7,16 @@ import { MovieCard } from '@/components/MovieCard';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronRight } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import { ChevronRight, Film, Star, Flame, Trophy, Zap, TrendingUp, LucideIcon } from 'lucide-react';
+
+const iconMap: Record<string, LucideIcon> = {
+  Star,
+  Flame,
+  Trophy,
+  Film,
+  Zap,
+  TrendingUp,
+};
 
 interface AutoContentRowProps {
   collection: CollectionConfig;
@@ -28,8 +36,8 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // ✅ Otomatis ambil icon dari lucide-react
-  const IconComponent = (Icons as any)[collection.icon] || Icons.Film;
+  // ✅ Otomatis ambil icon
+  const IconComponent = iconMap[collection.icon] || Film;
 
   return (
     <section className="mb-12 animate-fade-in relative z-0">
