@@ -49,7 +49,7 @@ interface SharedCollection {
 }
 
 interface ProfileMap {
-  [userId: string]: { username: string | null };
+  [userId: string]: { username: string | null; avatar_url: string | null };
 }
 
 const SharedFilms = () => {
@@ -101,12 +101,12 @@ const SharedFilms = () => {
       if (ids.length === 0) return {} as ProfileMap;
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, avatar_url')
         .in('id', ids);
       if (error) throw error;
       const map: ProfileMap = {};
       (data || []).forEach((p) => {
-        map[p.id] = { username: p.username };
+        map[p.id] = { username: p.username, avatar_url: p.avatar_url };
       });
       return map;
     },
@@ -131,7 +131,9 @@ const SharedFilms = () => {
   );
 
   if (selected) {
-    const ownerName = profiles?.[selected.user_id || '']?.username || null;
+    const ownerProfile = profiles?.[selected.user_id || ''];
+    const ownerName = ownerProfile?.username || null;
+    const ownerAvatarUrl = ownerProfile?.avatar_url || null;
     return (
       <div className="min-h-screen p-6 bg-background">
         <div className="max-w-7xl mx-auto">
@@ -140,6 +142,7 @@ const SharedFilms = () => {
             collectionName={selected.name}
             description={selected.description}
             ownerName={ownerName}
+            ownerAvatarUrl={ownerAvatarUrl}
             readOnly
             onBack={() => setSelected(null)}
           />
@@ -238,7 +241,11 @@ const SharedFilms = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {paginatedShared.map((collection) => {
-                const ownerName = profiles?.[collection.user_id || '']?.username;
+                const ownerProfile = profiles?.[collection.user_id || ''];
+                const ownerName = ownerProfile?.username;
+                const ownerAvatar =
+                  ownerProfile?.avatar_url ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`;
                 return (
                   <div
                     key={collection.id}
@@ -265,7 +272,7 @@ const SharedFilms = () => {
                       <div className="relative flex justify-between items-start mb-6 z-10">
                         <div className="flex items-center gap-3">
                            <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-[#0AC4E0]/20 group-hover:ring-[#0AC4E0]/50 transition-all">
-                              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`} />
+                              <AvatarImage src={ownerAvatar} />
                               <AvatarFallback>{ownerName?.[0] || 'U'}</AvatarFallback>
                            </Avatar>
                            <div className="flex flex-col">

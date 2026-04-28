@@ -21,7 +21,7 @@ interface SharedCollection {
 }
 
 interface ProfileMap {
-  [userId: string]: { username: string | null };
+  [userId: string]: { username: string | null; avatar_url: string | null };
 }
 
 export const MobileSharedFilms: React.FC = () => {
@@ -64,12 +64,12 @@ export const MobileSharedFilms: React.FC = () => {
       if (ids.length === 0) return {} as ProfileMap;
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, avatar_url')
         .in('id', ids);
       if (error) throw error;
       const map: ProfileMap = {};
       (data || []).forEach((p) => {
-        map[p.id] = { username: p.username };
+        map[p.id] = { username: p.username, avatar_url: p.avatar_url };
       });
       return map;
     },
@@ -88,7 +88,9 @@ export const MobileSharedFilms: React.FC = () => {
   }, [collections, searchQuery, profiles]);
 
   if (selected) {
-    const ownerName = profiles?.[selected.user_id || '']?.username || null;
+    const ownerProfile = profiles?.[selected.user_id || ''];
+    const ownerName = ownerProfile?.username || null;
+    const ownerAvatarUrl = ownerProfile?.avatar_url || null;
     return (
       <PageLayout title={selected.name}>
         <div className="flex-1 overflow-y-auto pb-24">
@@ -97,6 +99,7 @@ export const MobileSharedFilms: React.FC = () => {
             collectionName={selected.name}
             description={selected.description}
             ownerName={ownerName}
+            ownerAvatarUrl={ownerAvatarUrl}
             readOnly
             onBack={() => setSelected(null)}
           />
@@ -167,7 +170,11 @@ export const MobileSharedFilms: React.FC = () => {
         ) : (
           <div className="flex flex-col gap-5">
             {filtered.map((collection) => {
-              const ownerName = profiles?.[collection.user_id || '']?.username;
+              const ownerProfile = profiles?.[collection.user_id || ''];
+              const ownerName = ownerProfile?.username;
+              const ownerAvatar =
+                ownerProfile?.avatar_url ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`;
               return (
                 <div
                   key={collection.id}
@@ -178,7 +185,7 @@ export const MobileSharedFilms: React.FC = () => {
                     {/* Header: User Profile */}
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="h-10 w-10 border border-white/10">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`} />
+                        <AvatarImage src={ownerAvatar} />
                         <AvatarFallback>{ownerName?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
