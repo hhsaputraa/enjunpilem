@@ -150,7 +150,7 @@ const Navbar = () => {
                   className="rounded-full h-10 w-10 ring-2 ring-transparent hover:ring-primary/20 transition-all font-normal p-0 overflow-hidden"
                 >
                   <Avatar className="h-full w-full">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarImage src={avatarUrl} />
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">
                       {getUserInitials()}
                     </AvatarFallback>
@@ -312,7 +312,7 @@ const Navbar = () => {
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3 px-2">
                           <Avatar className="h-10 w-10 border border-border">
-                            <AvatarImage src={user.user_metadata?.avatar_url} />
+                            <AvatarImage src={avatarUrl} />
                             <AvatarFallback>{getUserInitials()}</AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
