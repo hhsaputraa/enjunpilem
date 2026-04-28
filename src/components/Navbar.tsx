@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useUserProfile } from "@/hooks/useUserProfile"
 import { cn } from "@/lib/utils"
 
 const Navbar = () => {
