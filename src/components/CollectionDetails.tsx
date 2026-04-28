@@ -344,8 +344,17 @@ export const CollectionDetails = ({
               )}
             </div>
             {ownerName && (
-              <span className="text-xs text-muted-foreground mt-1">
-                Shared by <span className="text-[#0AC4E0] font-semibold">@{ownerName}</span>
+              <span className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                {ownerAvatarUrl && (
+                  <img
+                    src={ownerAvatarUrl}
+                    alt={ownerName}
+                    className="w-5 h-5 rounded-full object-cover border border-white/10"
+                  />
+                )}
+                <span>
+                  Shared by <span className="text-[#0AC4E0] font-semibold">@{ownerName}</span>
+                </span>
               </span>
             )}
           </div>
