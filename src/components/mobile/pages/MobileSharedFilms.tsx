@@ -167,7 +167,11 @@ export const MobileSharedFilms: React.FC = () => {
         ) : (
           <div className="flex flex-col gap-5">
             {filtered.map((collection) => {
-              const ownerName = profiles?.[collection.user_id || '']?.username;
+              const ownerProfile = profiles?.[collection.user_id || ''];
+              const ownerName = ownerProfile?.username;
+              const ownerAvatar =
+                ownerProfile?.avatar_url ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`;
               return (
                 <div
                   key={collection.id}
@@ -178,7 +182,7 @@ export const MobileSharedFilms: React.FC = () => {
                     {/* Header: User Profile */}
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="h-10 w-10 border border-white/10">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`} />
+                        <AvatarImage src={ownerAvatar} />
                         <AvatarFallback>{ownerName?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
