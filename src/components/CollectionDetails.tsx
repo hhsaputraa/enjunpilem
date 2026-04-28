@@ -234,6 +234,7 @@ export const CollectionDetails = ({
   readOnly = false,
   description,
   ownerName,
+  ownerAvatarUrl,
 }: CollectionDetailsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
