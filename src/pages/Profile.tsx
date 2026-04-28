@@ -114,6 +114,32 @@ const Profile = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Avatar Picker */}
+            <div className="flex flex-col items-center gap-3">
+              <AvatarPicker
+                userId={user.id}
+                currentAvatarUrl={profile?.avatar_url}
+                trigger={
+                  <button
+                    type="button"
+                    className="relative group"
+                    aria-label="Ubah avatar"
+                  >
+                    <Avatar className="h-24 w-24 border-2 border-primary/30 group-hover:border-primary transition-colors">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
+                      <AvatarFallback className="text-2xl">
+                        {(profile?.username || user.email)?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md group-hover:scale-110 transition-transform">
+                      <Camera className="w-3.5 h-3.5" />
+                    </div>
+                  </button>
+                }
+              />
+              <p className="text-xs text-muted-foreground">Klik avatar untuk mengganti</p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
