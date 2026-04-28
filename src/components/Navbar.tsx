@@ -20,26 +20,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUserProfile } from "@/hooks/useUserProfile"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/AuthContext"
 
 const Navbar = () => {
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { toast } = useToast()
   const { data: profile } = useUserProfile(user?.id)
-  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url
+  const avatarUrl = profile?.avatar_url || (user as any)?.user_metadata?.avatar_url
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
     }
@@ -47,7 +39,6 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll)
 
     return () => {
-      subscription.unsubscribe()
       window.removeEventListener("scroll", handleScroll)
     }
   }, [])

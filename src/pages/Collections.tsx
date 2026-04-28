@@ -50,6 +50,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useAuth } from '@/contexts/AuthContext';
 
 type ViewMode = 'grid' | 'compact';
 type SortOption = 'newest' | 'alphabetical' | 'items';
@@ -62,7 +63,7 @@ const Collections = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -82,18 +83,6 @@ const Collections = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortBy]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],

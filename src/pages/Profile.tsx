@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AvatarPicker } from '@/components/AvatarPicker';
 import { Camera } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Profile {
   id: string;
@@ -23,23 +24,11 @@ interface Profile {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [username, setUsername] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],

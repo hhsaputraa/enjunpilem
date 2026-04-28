@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 import { EpisodeSelector } from '@/components/EpisodeSelector';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -29,22 +30,10 @@ const Watch = () => {
   const queryClient = useQueryClient();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   
   const validType = type === 'movie' || type === 'tv' ? type : null;
   const mediaId = id ? parseInt(id) : null;
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleAuthRedirect = () => {
     navigate('/auth', { 

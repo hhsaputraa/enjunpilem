@@ -4,32 +4,23 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ImportCollection = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const streamlitUrl = "https://collection-film-enjun.streamlit.app/?embedded=true";
   const ALLOWED_USER_ID = import.meta.env.VITE_ALLOWED_ADMIN_ID;
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session || session.user.id !== ALLOWED_USER_ID) {
-        setIsAuthorized(false);
-        navigate("/collections");
-      } else {
-        setIsAuthorized(true);
-      }
-    };
+    if (loading) return;
+    if (!user || user.id !== ALLOWED_USER_ID) {
+      navigate("/collections");
+    }
+  }, [user, loading, navigate]);
 
-    checkAuth();
-  }, [navigate]);
-
-  if (isAuthorized === false) return null;
-  if (isAuthorized === null) return (
+  if (loading || !user || user.id !== ALLOWED_USER_ID) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
        <Loader className="w-8 h-8 text-[#0AC4E0] animate-spin" />
     </div>

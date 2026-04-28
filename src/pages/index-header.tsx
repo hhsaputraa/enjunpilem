@@ -4,9 +4,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/SearchBar"
-import { useEffect, useState } from "react"
-import { supabase } from "@/integrations/supabase/client"
-import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"import { useToast } from "@/hooks/use-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,25 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAuth } from "@/contexts/AuthContext"
 
 const IndexHeader = () => {
-  const [user, setUser] = useState<any>(null)
+  const { user } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
 
   const handleLogout = async () => {
     try {

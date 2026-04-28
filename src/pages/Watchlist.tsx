@@ -5,28 +5,16 @@ import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
-import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Watchlist = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const { data: watchlist, isLoading } = useQuery({
     queryKey: ['watchlist', user?.id],
