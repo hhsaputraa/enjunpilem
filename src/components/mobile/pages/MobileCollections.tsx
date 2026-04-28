@@ -124,7 +124,7 @@ export const MobileCollections: React.FC = () => {
   }
 
   return (
-    <PageLayout title="Koleksi" headerActions={
+    <PageLayout title="Koleksi" actions={
       <Drawer open={isCreateDrawerOpen} onOpenChange={setIsCreateDrawerOpen}>
         <DrawerTrigger asChild>
           <Button variant="ghost" size="icon" className="text-teal-400 hover:bg-white/10 hover:text-teal-300">
