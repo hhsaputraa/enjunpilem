@@ -64,12 +64,12 @@ export const MobileSharedFilms: React.FC = () => {
       if (ids.length === 0) return {} as ProfileMap;
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, avatar_url')
         .in('id', ids);
       if (error) throw error;
       const map: ProfileMap = {};
       (data || []).forEach((p) => {
-        map[p.id] = { username: p.username };
+        map[p.id] = { username: p.username, avatar_url: p.avatar_url };
       });
       return map;
     },
