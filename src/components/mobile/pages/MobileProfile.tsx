@@ -222,29 +222,35 @@ export const MobileProfile: React.FC = () => {
         {/* Profile Header */}
         <section className="px-4 pt-4">
           <div className="text-center space-y-4">
-            {/* Avatar */}
-            <div className="relative inline-block">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-muted">
-                {authUser.avatar_url ? (
-                  <img
-                    src={authUser.avatar_url}
-                    alt={getUserDisplayName()}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary text-white text-2xl font-bold">
-                    {getUserInitials()}
+            {/* Avatar — klik untuk ganti via picker */}
+            <AvatarPicker
+              userId={authUser.id}
+              currentAvatarUrl={profile?.avatar_url}
+              trigger={
+                <button
+                  type="button"
+                  className="relative inline-block group"
+                  aria-label="Ubah avatar"
+                >
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-primary/30 group-hover:border-primary transition-colors">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={getUserDisplayName()}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-primary text-white text-2xl font-bold">
+                        {getUserInitials()}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <Button
-                size="icon"
-                className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full shadow-lg"
-                onClick={handleEditProfile}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </div>
+                  <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full shadow-lg bg-primary text-primary-foreground flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                </button>
+              }
+            />
 
             {/* User Info */}
             <div className="space-y-1">
