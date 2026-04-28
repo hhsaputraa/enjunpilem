@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff, Fingerprint, Binary, ChevronDown, ChevronUp } from "lucide-react"
 import { Label } from "@/components/ui/label"
-import { GoogleLogin } from '@react-oauth/google'
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
 
 const Auth = () => {
   const [loading, setLoading] = useState(false)
@@ -94,19 +94,21 @@ const Auth = () => {
         <CardContent className="space-y-6">
           {/* Primary: Google Sign In */}
           <div className="w-full flex justify-center">
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                if (credentialResponse.credential) {
-                  handleGoogleIdTokenSignIn(credentialResponse.credential)
-                }
-              }}
-              onError={() => {
-                toast({ title: "Error", description: "Google Login failed", variant: "destructive" })
-              }}
-              theme="filled_black"
-              shape="pill"
-              text="continue_with"
-            />
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    handleGoogleIdTokenSignIn(credentialResponse.credential)
+                  }
+                }}
+                onError={() => {
+                  toast({ title: "Error", description: "Google Login failed", variant: "destructive" })
+                }}
+                theme="filled_black"
+                shape="pill"
+                text="continue_with"
+              />
+            </GoogleOAuthProvider>
           </div>
 
           <div className="pt-2">

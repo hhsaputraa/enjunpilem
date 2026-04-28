@@ -4,11 +4,18 @@ import { Link } from 'react-router-dom';
 import { CollectionConfig } from '@/config/collections';
 import { getCollectionBySlugPreview } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronRight } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import { ChevronRight, Film, Star, Flame, Trophy, Zap, TrendingUp, LucideIcon } from 'lucide-react';
+
+const iconMap: Record<string, LucideIcon> = {
+  Star,
+  Flame,
+  Trophy,
+  Film,
+  Zap,
+  TrendingUp,
+};
 
 interface AutoContentRowProps {
   collection: CollectionConfig;
@@ -28,8 +35,8 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // ✅ Otomatis ambil icon dari lucide-react
-  const IconComponent = (Icons as any)[collection.icon] || Icons.Film;
+  // ✅ Otomatis ambil icon
+  const IconComponent = iconMap[collection.icon] || Film;
 
   return (
     <section className="mb-12 animate-fade-in relative z-0">
@@ -60,13 +67,16 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
         )}
       </div>
 
-      <ScrollArea className="w-full whitespace-nowrap rounded-2xl pb-4">
-        <div className="flex space-x-4 pb-4">
+      <div className="w-full relative">
+        <div 
+          className="flex space-x-4 pb-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {isLoading ? (
             Array(6)
               .fill(0)
               .map((_, i) => (
-                <div key={i} className="w-[180px] sm:w-[220px] flex-shrink-0">
+                <div key={i} className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start">
                   <div className="h-[270px] sm:h-[330px] rounded-xl bg-muted/50 animate-pulse border border-white/5"></div>
                 </div>
               ))
@@ -75,7 +85,7 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
               {items?.slice(0, 12).map((item: any, index: number) => (
                 <div
                   key={item.id}
-                  className="w-[180px] sm:w-[220px] flex-shrink-0 transition-opacity duration-500"
+                  className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start transition-opacity duration-500"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <MovieCard
@@ -91,7 +101,7 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
               ))}
               
               {showLoadMore && (
-                <div className="w-[180px] sm:w-[220px] flex-shrink-0 flex items-center justify-center h-[270px] sm:h-[330px]">
+                <div className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start flex items-center justify-center h-[270px] sm:h-[330px]">
                   <Link 
                     to={`/detail-list-collection?queryKey=${collection.id}`} 
                     className="group w-full h-full p-2"
@@ -113,8 +123,7 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
             </>
           )}
         </div>
-        <ScrollBar orientation="horizontal" className="h-2.5 bg-muted/10" />
-      </ScrollArea>
+      </div>
     </section>
   );
 };
