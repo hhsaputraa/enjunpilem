@@ -131,7 +131,9 @@ const SharedFilms = () => {
   );
 
   if (selected) {
-    const ownerName = profiles?.[selected.user_id || '']?.username || null;
+    const ownerProfile = profiles?.[selected.user_id || ''];
+    const ownerName = ownerProfile?.username || null;
+    const ownerAvatarUrl = ownerProfile?.avatar_url || null;
     return (
       <div className="min-h-screen p-6 bg-background">
         <div className="max-w-7xl mx-auto">
@@ -140,6 +142,7 @@ const SharedFilms = () => {
             collectionName={selected.name}
             description={selected.description}
             ownerName={ownerName}
+            ownerAvatarUrl={ownerAvatarUrl}
             readOnly
             onBack={() => setSelected(null)}
           />
