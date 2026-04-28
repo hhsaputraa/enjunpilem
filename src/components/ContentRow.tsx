@@ -85,18 +85,17 @@ export const ContentRow = ({
             ))}
             {showLoadMore && loadMorePath && (
               <div className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start flex items-center justify-center h-[270px] sm:h-[330px]">
-                <Link to={loadMorePath} className="group w-full h-full p-2">
-                  <Button
-                    variant="outline"
-                    className="w-full h-full flex flex-col items-center justify-center gap-3 rounded-xl border-dashed border-2 border-muted hover:border-primary/50 bg-transparent hover:bg-accent/5 transition-all duration-300"
-                  >
-                    <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <ChevronRight className="h-6 w-6 text-primary" />
-                    </div>
-                    <span className="font-semibold text-muted-foreground group-hover:text-primary transition-colors">
-                      Show More
-                    </span>
-                  </Button>
+                <Link
+                  to={loadMorePath}
+                  className="group w-full h-full flex flex-col items-center justify-center gap-3 rounded-xl border-dashed border-2 border-muted hover:border-primary/50 bg-transparent hover:bg-accent/5 transition-all duration-300 min-h-[44px] min-w-[44px]"
+                  aria-label="Show more"
+                >
+                  <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <ChevronRight className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="font-semibold text-muted-foreground group-hover:text-primary transition-colors">
+                    Show More
+                  </span>
                 </Link>
               </div>
             )}
