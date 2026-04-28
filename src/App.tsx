@@ -92,6 +92,7 @@ const Layout = () => {
   return (
     <TooltipProvider>
       <ScrollToTop />
+      <ScrollToTop />
       <Navbar />
       <main className={`${location.pathname === "/" ? "" : ""}`}>
         <Toaster />
@@ -126,6 +127,11 @@ const Layout = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
+      <AuthProvider>
+        <AuthGuard>
+          <Layout />
+        </AuthGuard>
+      </AuthProvider>
       <AuthProvider>
         <AuthGuard>
           <Layout />
