@@ -27,7 +27,8 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { toast } = useToast()
-
+  const { data: profile } = useUserProfile(user?.id)
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
