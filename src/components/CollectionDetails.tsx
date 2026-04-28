@@ -45,6 +45,7 @@ interface CollectionDetailsProps {
   readOnly?: boolean;
   description?: string | null;
   ownerName?: string | null;
+  ownerAvatarUrl?: string | null;
 }
 
 interface CollectionItem {
