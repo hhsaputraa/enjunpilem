@@ -63,6 +63,8 @@ interface SettingItem {
 export const MobileProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user: authUser, loading, signOut, getUserDisplayName, getUserInitials } = useMobileAuth();
+  const { data: profile } = useUserProfile(authUser?.id);
+  const avatarUrl = profile?.avatar_url || authUser?.avatar_url;
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [language, setLanguage] = useState('id');
   const [notifications, setNotifications] = useState(true);
