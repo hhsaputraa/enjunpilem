@@ -88,7 +88,9 @@ export const MobileSharedFilms: React.FC = () => {
   }, [collections, searchQuery, profiles]);
 
   if (selected) {
-    const ownerName = profiles?.[selected.user_id || '']?.username || null;
+    const ownerProfile = profiles?.[selected.user_id || ''];
+    const ownerName = ownerProfile?.username || null;
+    const ownerAvatarUrl = ownerProfile?.avatar_url || null;
     return (
       <PageLayout title={selected.name}>
         <div className="flex-1 overflow-y-auto pb-24">
@@ -97,6 +99,7 @@ export const MobileSharedFilms: React.FC = () => {
             collectionName={selected.name}
             description={selected.description}
             ownerName={ownerName}
+            ownerAvatarUrl={ownerAvatarUrl}
             readOnly
             onBack={() => setSelected(null)}
           />
