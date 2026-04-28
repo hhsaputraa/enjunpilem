@@ -49,7 +49,7 @@ interface SharedCollection {
 }
 
 interface ProfileMap {
-  [userId: string]: { username: string | null };
+  [userId: string]: { username: string | null; avatar_url: string | null };
 }
 
 const SharedFilms = () => {
