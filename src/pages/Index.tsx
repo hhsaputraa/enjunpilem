@@ -21,24 +21,29 @@ const Index = () => {
   // Performance monitoring
   const { measureCustom } = usePerformance('Index Page');
 
+  // Priority 1: Load hero content first (critical for LCP)
   const { data: trending, isLoading: trendingLoading } = useQuery({
     queryKey: ["trending"],
     queryFn: () => getTrending(1),
   })
 
+  // Priority 2: Defer below-fold content until hero is loaded
   const { data: popularMovies, isLoading: moviesLoading } = useQuery({
     queryKey: ["popularMovies"],
     queryFn: () => getPopularMovies(1),
+    enabled: !trendingLoading, // Wait for hero to load first
   })
 
   const { data: topRatedMovies, isLoading: topRatedLoading } = useQuery({
     queryKey: ["topRatedMovies"],
     queryFn: () => getTopRatedMovies(1),
+    enabled: !trendingLoading, // Wait for hero to load first
   })
 
   const { data: enjunTop, isLoading: enjunTopLoading } = useQuery({
     queryKey: ["enjunTop"],
     queryFn: getEnjunTop,
+    enabled: !trendingLoading, // Wait for hero to load first
   })
 
   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { CollectionConfig } from '@/config/collections';
@@ -25,20 +25,47 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
   collection, 
   showLoadMore = true 
 }) => {
-  // ✅ Otomatis fetch data berdasarkan slug
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Intersection Observer to defer loading until section is near viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect(); // Stop observing once visible
+          }
+        });
+      },
+      {
+        rootMargin: '400px', // Start loading 400px before section enters viewport
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // ✅ Only fetch when section is near viewport
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['collection-preview', collection.slug],
     queryFn: () => collection.queryFn 
       ? collection.queryFn(1).then(result => 'items' in result ? result.items : result)
       : getCollectionBySlugPreview(collection.slug),
     staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: isVisible, // Only fetch when visible
   });
 
   // ✅ Otomatis ambil icon
   const IconComponent = iconMap[collection.icon] || Film;
 
   return (
-    <section className="mb-12 relative z-0">
+    <section ref={sectionRef} className="mb-12 relative z-0">
       <div className="flex items-center justify-between mb-6 px-1 min-h-[52px]">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
@@ -71,7 +98,7 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
           className="flex space-x-4 pb-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {isLoading ? (
+          {!isVisible || isLoading ? (
             Array(6)
               .fill(0)
               .map((_, i) => (
@@ -82,7 +109,7 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
               ))
           ) : (
             <>
-              {items?.slice(0, 12).map((item: any, index: number) => (
+              {items?.slice(0, 12).map((item: any) => (
                 <div
                   key={item.id}
                   className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start"

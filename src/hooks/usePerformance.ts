@@ -8,21 +8,20 @@ interface PerformanceMetrics {
 
 export const usePerformance = (componentName: string) => {
   useEffect(() => {
+    // Skip all performance tracking in production
+    if (process.env.NODE_ENV !== 'development') return;
+    
     const startTime = performance.now();
     
     // Measure render time
     const measureRenderTime = () => {
       const renderTime = performance.now() - startTime;
+      console.log(`🚀 ${componentName} render time: ${renderTime.toFixed(2)}ms`);
       
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🚀 ${componentName} render time: ${renderTime.toFixed(2)}ms`);
-        
-        // Log memory usage if available
-        if ('memory' in performance) {
-          const memory = (performance as any).memory;
-          console.log(`💾 Memory usage: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB`);
-        }
+      // Log memory usage if available
+      if ('memory' in performance) {
+        const memory = (performance as any).memory;
+        console.log(`💾 Memory usage: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB`);
       }
     };
 
@@ -31,22 +30,22 @@ export const usePerformance = (componentName: string) => {
     
     // Cleanup function
     return () => {
-      // Optional: Log component unmount time
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`🔄 ${componentName} unmounted`);
-      }
+      console.log(`🔄 ${componentName} unmounted`);
     };
   }, [componentName]);
 
   // Function to measure custom performance metrics
   const measureCustom = (metricName: string, fn: () => void) => {
+    // Skip in production
+    if (process.env.NODE_ENV !== 'development') {
+      fn();
+      return;
+    }
+    
     const start = performance.now();
     fn();
     const end = performance.now();
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`⚡ ${componentName} - ${metricName}: ${(end - start).toFixed(2)}ms`);
-    }
+    console.log(`⚡ ${componentName} - ${metricName}: ${(end - start).toFixed(2)}ms`);
   };
 
   return { measureCustom };
