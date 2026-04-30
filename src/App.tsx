@@ -1,15 +1,20 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useIsMobile } from "./hooks/use-mobile";
 import { AuthGuard } from "./components/AuthGuard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PageLoading } from "./components/mobile/Skeletons";
 
-// Shell components — diimport langsung karena dibutuhkan di setiap halaman
-import Navbar from "./components/Navbar";
-import Footer from "@/components/Footer";
+// MobileHome — EAGER import (critical path for LCP on home route "/" )
+// Lazy-loading ini menyebabkan NO_LCP: Lighthouse melihat <PageLoading /> spinner
+// sebelum hero image muncul, sehingga tidak ada LCP element yang terdeteksi.
+import { MobileHome } from "./components/mobile/pages/MobileHome";
+
+// Shell components — lazy karena Navbar/Footer hanya dipakai di desktop
+const Navbar = lazy(() => import("./components/Navbar"));
+const Footer = lazy(() => import("@/components/Footer"));
 
 // UI providers — lazy agar tidak masuk main bundle
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
@@ -39,8 +44,7 @@ const SharedFilms = lazy(() => import("./pages/SharedFilms"));
 const ImportCollection = lazy(() => import("./pages/ImportCollection"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
-// Mobile Pages (Lazy)
-const MobileHome = lazy(() => import("./components/mobile/pages/MobileHome").then(m => ({ default: m.MobileHome })));
+// Mobile Pages (Lazy — not on critical path)
 const MobileExplore = lazy(() => import("./components/mobile/pages/MobileExplore").then(m => ({ default: m.MobileExplore })));
 const MobileSearch = lazy(() => import("./components/mobile/pages/MobileSearch").then(m => ({ default: m.MobileSearch })));
 const MobileWatchlist = lazy(() => import("./components/mobile/pages/MobileWatchlist").then(m => ({ default: m.MobileWatchlist })));
@@ -71,7 +75,6 @@ const SilentSuspense = ({ children }: { children: React.ReactNode }) => (
 );
 
 const Layout = () => {
-  const location = useLocation();
   const isMobile = useIsMobile();
 
   // Mobile Layout
@@ -83,26 +86,29 @@ const Layout = () => {
             <SilentSuspense><Toaster /></SilentSuspense>
             <SilentSuspense><Sonner /></SilentSuspense>
             <ScrollToTop />
-            <Suspense fallback={<PageLoading />}>
-              <Routes>
-                <Route path="/" element={<MobileHome />} />
-                <Route path="/explore" element={<MobileExplore />} />
-                <Route path="/search" element={<MobileSearch />} />
-                <Route path="/watchlist" element={<MobileWatchlist />} />
-                <Route path="/profile" element={<MobileProfile />} />
-                <Route path="/movie/:id" element={<MobileMovieDetail />} />
-                <Route path="/tv/:id" element={<MobileMovieDetail />} />
-                <Route path="/watch/:type/:id" element={<MobileWatch />} />
-                <Route path="/auth" element={<MobileAuth />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/collections" element={<MobileCollections />} />
-                <Route path="/shared-films" element={<MobileSharedFilms />} />
-                <Route path="/favorites" element={<MobileFavorites />} />
-                <Route path="/history" element={<MobileHistory />} />
-                <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            {/*
+              MobileHome di-render TANPA Suspense boundary karena sudah eager-imported.
+              Semua route lain tetap di dalam Suspense dengan fallback PageLoading.
+              Ini memastikan Lighthouse bisa detect LCP element (hero image) di route "/".
+            */}
+            <Routes>
+              <Route path="/" element={<MobileHome />} />
+              <Route path="/explore" element={<Suspense fallback={<PageLoading />}><MobileExplore /></Suspense>} />
+              <Route path="/search" element={<Suspense fallback={<PageLoading />}><MobileSearch /></Suspense>} />
+              <Route path="/watchlist" element={<Suspense fallback={<PageLoading />}><MobileWatchlist /></Suspense>} />
+              <Route path="/profile" element={<Suspense fallback={<PageLoading />}><MobileProfile /></Suspense>} />
+              <Route path="/movie/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
+              <Route path="/tv/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
+              <Route path="/watch/:type/:id" element={<Suspense fallback={<PageLoading />}><MobileWatch /></Suspense>} />
+              <Route path="/auth" element={<Suspense fallback={<PageLoading />}><MobileAuth /></Suspense>} />
+              <Route path="/onboarding" element={<Suspense fallback={<PageLoading />}><Onboarding /></Suspense>} />
+              <Route path="/collections" element={<Suspense fallback={<PageLoading />}><MobileCollections /></Suspense>} />
+              <Route path="/shared-films" element={<Suspense fallback={<PageLoading />}><MobileSharedFilms /></Suspense>} />
+              <Route path="/favorites" element={<Suspense fallback={<PageLoading />}><MobileFavorites /></Suspense>} />
+              <Route path="/history" element={<Suspense fallback={<PageLoading />}><MobileHistory /></Suspense>} />
+              <Route path="/detail-list-collection" element={<Suspense fallback={<PageLoading />}><DetailListCollectionRouter /></Suspense>} />
+              <Route path="*" element={<Suspense fallback={<PageLoading />}><NotFound /></Suspense>} />
+            </Routes>
             <SilentSuspense><BottomNav /></SilentSuspense>
           </TooltipProvider>
         </ToastProvider>
@@ -114,7 +120,7 @@ const Layout = () => {
     <SilentSuspense>
       <TooltipProvider>
         <ScrollToTop />
-        <Navbar />
+        <SilentSuspense><Navbar /></SilentSuspense>
         <main>
           <SilentSuspense><Toaster /></SilentSuspense>
           <SilentSuspense><Sonner /></SilentSuspense>
@@ -140,7 +146,7 @@ const Layout = () => {
             </Routes>
           </Suspense>
         </main>
-        <Footer />
+        <SilentSuspense><Footer /></SilentSuspense>
       </TooltipProvider>
     </SilentSuspense>
   );

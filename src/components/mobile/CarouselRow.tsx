@@ -55,7 +55,11 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
   };
 
   return (
-    <section className={cn("space-y-3", className)}>
+    <section 
+      className={cn("space-y-3", className)}
+      aria-label={title}
+      style={{ contentVisibility: 'auto' }} // Optimize rendering of off-screen content
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4">
         <h2 className="text-lg font-bold">{title}</h2>
@@ -82,6 +86,8 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
             "scroll-smooth snap-x snap-mandatory",
             "px-4 pb-2"
           )}
+          role="list"
+          aria-label={`${title} items`}
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
@@ -97,7 +103,7 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
           ) : (
             // Actual items
             items.map((item) => (
-              <div key={item.id} className="flex-shrink-0 snap-start">
+              <div key={item.id} className="flex-shrink-0 snap-start" role="listitem">
                 <PosterCard
                   id={item.id}
                   title={item.title}
@@ -122,17 +128,19 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => scroll('left')}
+              aria-label={`Scroll ${title} left`}
               className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <ChevronRight className="w-4 h-4 rotate-180" />
+              <ChevronRight className="w-4 h-4 rotate-180" aria-hidden="true" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => scroll('right')}
+              aria-label={`Scroll ${title} right`}
               className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </Button>
           </>
         )}

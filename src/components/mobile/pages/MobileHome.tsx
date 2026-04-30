@@ -127,7 +127,8 @@ export const MobileHome: React.FC = () => {
         ))}
 
         {/* Quick Actions (Keep these handy Mobile features) */}
-        <section className="px-4 pt-4 border-t border-white/5 mt-8">
+        {/* min-h prevents layout shift — section always occupies same space */}
+        <section className="px-4 pt-4 border-t border-white/5 mt-8 min-h-[90px]">
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"

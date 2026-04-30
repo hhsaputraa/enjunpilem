@@ -61,11 +61,13 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://api.themoviedb.org" />
-    <link rel="preconnect" href="https://image.tmdb.org" />
+    <link rel="preconnect" href="https://api.themoviedb.org" crossorigin />
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
     <link rel="dns-prefetch" href="https://api.themoviedb.org" />
     <link rel="dns-prefetch" href="https://image.tmdb.org" />
-    <link rel="preconnect" href="https://accounts.google.com" />
+    <!-- Supabase — dipakai untuk auth, preconnect agar koneksi siap lebih cepat -->
+    <link rel="preconnect" href="https://supabase.co" crossorigin />
+    <!-- Google OAuth hanya dipakai di halaman /auth, tidak perlu preconnect di semua halaman -->
     <link rel="dns-prefetch" href="https://accounts.google.com" />
 
     <!-- CSS Variables for safe areas -->

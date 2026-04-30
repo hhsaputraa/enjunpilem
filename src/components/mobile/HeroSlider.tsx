@@ -220,13 +220,14 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
             transform: `translateX(${dragPct}%)`,
             transition: isDragging.current ? 'none' : 'transform 600ms cubic-bezier(0.22,1,0.36,1)',
             pointerEvents: 'none',
-            willChange: 'transform, opacity',
-            opacity: isImageLoaded ? 1 : 0,
+            willChange: 'transform',
+            // Jangan sembunyikan gambar saat loading — ini menyebabkan LCP lambat
+            // karena Lighthouse tidak bisa detect gambar yang opacity:0
           }}
           draggable={false}
           loading="eager"
           fetchPriority="high"
-          decoding="async"
+          decoding="sync"
           onLoad={() => setIsImageLoaded(true)}
         />
 
@@ -300,22 +301,38 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
 
       {/* Indicators */}
       {items.length > 1 && (
-        <div className="absolute bottom-4 right-4 flex gap-1.5">
-          {items.map((_, index) => (
+        <div className="absolute bottom-4 right-4 flex gap-1.5" role="tablist" aria-label="Slide navigation">
+          {items.map((item, index) => (
             <button
               key={index}
+              role="tab"
               onClick={() => {
                 setIsUserInteracting(true);
                 goToSlide(index);
                 window.setTimeout(() => setIsUserInteracting(false), 250);
               }}
               className={cn(
-                'w-2 h-2 rounded-full transition-[width,background-color] duration-200',
-                index === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
+                // Invisible larger touch target wrapping the visible dot
+                'relative flex items-center justify-center',
+                'w-6 h-6 rounded-full', // 24x24px minimum touch target
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
               )}
-              aria-label={`Go to slide ${index + 1}`}
-              aria-current={index === currentIndex}
-            />
+              aria-label={`Go to slide ${index + 1}: ${item.title}`}
+              aria-selected={index === currentIndex}
+            >
+              {/* Visual dot — gunakan transform:scaleX bukan width agar GPU-composited
+                  (width transition tidak bisa di-composite, menyebabkan layout thrashing) */}
+              <span
+                className={cn(
+                  'block rounded-full h-2 w-6 pointer-events-none origin-left',
+                  index === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/70'
+                )}
+                style={{
+                  transform: index === currentIndex ? 'scaleX(1)' : 'scaleX(0.333)',
+                  transition: 'transform 200ms ease, background-color 200ms ease',
+                }}
+              />
+            </button>
           ))}
         </div>
       )}

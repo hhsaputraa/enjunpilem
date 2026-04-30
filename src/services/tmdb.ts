@@ -1,6 +1,5 @@
 
 import axios from 'axios';
-import { supabase } from '@/integrations/supabase/client';
 import { tmdbConfig } from '@/config/env';
 
 // Use environment configuration
@@ -309,6 +308,7 @@ interface WatchedEpisode {
 }
 
 export const getWatchedEpisodes = async (tvId: string): Promise<WatchedEpisode | null> => {
+  const { supabase } = await import('@/integrations/supabase/client');
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
   
@@ -332,6 +332,7 @@ export const updateWatchedEpisode = async (
   episodeNumber: number, 
   tvName: string
 ): Promise<WatchedEpisode | null> => {
+  const { supabase } = await import('@/integrations/supabase/client');
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
   

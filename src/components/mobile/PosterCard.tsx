@@ -115,6 +115,7 @@ export const PosterCard: React.FC<PosterCardProps> = ({
             <div className="absolute inset-0 flex items-center justify-center">
               <Button
                 size="icon"
+                aria-label={`Play ${title}`}
                 className="h-12 w-12 rounded-full bg-primary/90 backdrop-blur-sm hover:bg-primary"
               >
                 <Play className="h-5 w-5 ml-0.5" fill="currentColor" />

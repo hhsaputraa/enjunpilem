@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,22 +9,22 @@ import { supabase } from "@/integrations/supabase/client";
  *
  * Public/guest pages (/, /auth, /onboarding, /shared-films, /search, /watch/...) are unaffected for guests.
  * Only logged-in users without a username are forced to /onboarding.
+ *
+ * Performance note: children are always rendered immediately — the onboarding
+ * redirect happens in the background after mount, so there is no loading gate
+ * that could block LCP.
  */
 const PUBLIC_PATHS = ["/auth", "/onboarding"];
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     let active = true;
 
     const check = async (userId: string | undefined) => {
-      if (!userId) {
-        if (active) setChecked(true);
-        return;
-      }
+      if (!userId) return;
       const { data } = await supabase
         .from("profiles")
         .select("username")
@@ -36,7 +36,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       if (!data?.username && !PUBLIC_PATHS.includes(location.pathname)) {
         navigate("/onboarding", { replace: true });
       }
-      setChecked(true);
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -44,7 +43,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setChecked(false);
       check(session?.user?.id);
     });
 
@@ -54,5 +52,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     };
   }, [location.pathname, navigate]);
 
+  // Always render children immediately — no loading gate.
   return <>{children}</>;
 };
