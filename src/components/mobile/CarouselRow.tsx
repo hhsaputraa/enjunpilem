@@ -44,9 +44,12 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const scrollAmount = itemSize === 'sm' ? 200 : itemSize === 'md' ? 280 : 360;
-      scrollRef.current.scrollBy({
-        left: direction === 'right' ? scrollAmount : -scrollAmount,
-        behavior: 'smooth',
+      // Use requestAnimationFrame to avoid forced reflow
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollBy({
+          left: direction === 'right' ? scrollAmount : -scrollAmount,
+          behavior: 'smooth',
+        });
       });
     }
   };

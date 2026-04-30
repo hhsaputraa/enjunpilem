@@ -44,12 +44,13 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
+  const widthRef = useRef(0); // Cache width to avoid forced reflow
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const currentItem = items[currentIndex];
 
-  const width = containerRef.current?.clientWidth ?? 0;
-  const dragPct = width > 0 ? (dragPx / width) * 100 : 0;
+  // Use cached width instead of reading clientWidth on every render
+  const dragPct = widthRef.current > 0 ? (dragPx / widthRef.current) * 100 : 0;
 
   const clearTimer = () => {
     if (intervalRef.current) {
@@ -86,7 +87,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
     setIsUserInteracting(true);
     clearTimer();
     dragStartX.current = e.clientX;
-
+    
+    // Cache width once at start of drag to avoid forced reflow
+    if (containerRef.current) {
+      widthRef.current = containerRef.current.clientWidth;
+    }
 
     if (e.pointerType !== 'touch') {
       try {
@@ -135,6 +140,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
     setIsUserInteracting(true);
     clearTimer();
     dragStartX.current = e.touches[0].clientX;
+    
+    // Cache width once at start of drag to avoid forced reflow
+    if (containerRef.current) {
+      widthRef.current = containerRef.current.clientWidth;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -184,6 +194,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
           <img
             src={prevItem.backdrop}
             alt=""
+            width={1280}
+            height={720}
             className="absolute inset-0 w-full h-full object-cover"
             style={{
               transform: `translateX(${-100 + dragPct / 3}%)`,
@@ -201,6 +213,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
         <img
           src={currentItem.backdrop}
           alt={currentItem.title}
+          width={1280}
+          height={720}
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             transform: `translateX(${dragPct}%)`,
@@ -220,6 +234,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
           <img
             src={nextItem.backdrop}
             alt=""
+            width={1280}
+            height={720}
             className="absolute inset-0 w-full h-full object-cover"
             style={{
               transform: `translateX(${100 + dragPct / 3}%)`,

@@ -18,18 +18,19 @@ export const MobileHome: React.FC = () => {
   const navigate = useNavigate();
   const { toggleWatchlist } = useMobileWatchlist();
 
-  // Load basic TMDB data
+  // Priority 1: Load hero content first (critical for LCP)
   const {
     trending,
     popularMovies,
     isLoading
   } = useMixedContent();
 
-  // Load "Top 4 Enjun"
+  // Priority 2: Defer below-fold content until hero loads
   const { data: enjunTopData, isLoading: enjunTopLoading } = useQuery({
     queryKey: ['enjunTop'],
     queryFn: getEnjunTop,
     staleTime: 10 * 60 * 1000,
+    enabled: !isLoading, // Wait for hero to load first
   });
 
   // Transform data for mobile
