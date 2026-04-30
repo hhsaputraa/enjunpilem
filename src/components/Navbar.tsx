@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUserProfile } from "@/hooks/useUserProfile"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
+import { LogoImage } from "@/components/LogoImage"
 
 const Navbar = () => {
   const { user } = useAuth()
@@ -94,7 +95,7 @@ const Navbar = () => {
           className="flex items-center gap-2.5 group"
         >
           <div className="relative flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-110">
-            <img src="/image.png" alt="EnjunPilem Logo" className="w-full h-full object-cover" />
+            <LogoImage size={36} className="w-full h-full object-cover" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">
             Enjun<span className="text-primary">Pilem</span>
@@ -227,7 +228,7 @@ const Navbar = () => {
                   <SheetTitle>
                     <Link to="/" className="flex items-center gap-2">
                        <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
-                         <img src="/image.png" alt="Logo" className="w-full h-full object-cover" />
+                         <LogoImage size={32} className="w-full h-full object-cover" />
                        </div>
                        <span className="text-xl font-bold">
                          Enjun<span className="text-primary">Pilem</span>

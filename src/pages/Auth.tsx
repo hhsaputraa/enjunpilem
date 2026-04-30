@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff, Fingerprint, Binary, ChevronDown, ChevronUp } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
+import { LogoImage } from "@/components/LogoImage"
 
 const Auth = () => {
   const [loading, setLoading] = useState(false)
@@ -78,7 +79,7 @@ const Auth = () => {
         to="/"
         className="mb-8 z-10 flex items-center gap-2 group"
       >
-        <img src="/image.png" alt="EnjunPilem Logo" className="h-28 w-28" />
+        <LogoImage size={112} className="h-28 w-28" />
       </Link>
 
       <Card className="w-full max-w-md border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500">

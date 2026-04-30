@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Fingerprint, Binary, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMobileAuth, useGuestGuard } from '@/hooks/useMobileAuth';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+import { LogoImage } from '@/components/LogoImage';
 
 export const MobileAuth: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export const MobileAuth: React.FC = () => {
         onClick={() => navigate('/')}
         className="mb-8 z-10 flex items-center gap-2 group cursor-pointer"
       >
-        <img src="/image.png" alt="EnjunPilem Logo" className="h-24 w-24" />
+        <LogoImage size={96} className="h-24 w-24" />
       </div>
 
       <Card className="w-full max-w-sm border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500">

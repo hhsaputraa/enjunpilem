@@ -20,11 +20,11 @@ export const ContentRow = ({
   loadMorePath = "",
   icon,
 }: ContentRowProps) => (
-  <section className="mb-12 animate-fade-in relative z-0">
-    <div className="flex items-center justify-between mb-6 px-1">
+  <section className="mb-12 relative z-0">
+    <div className="flex items-center justify-between mb-6 px-1 min-h-[52px]">
       <div className="flex items-center gap-3">
         {icon && (
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
             {icon}
           </div>
         )}
@@ -59,8 +59,9 @@ export const ContentRow = ({
           Array(6)
             .fill(0)
             .map((_, i) => (
+              /* Dimensi identik dengan MovieCard: w-[220px] × aspect-[2/3] = 330px */
               <div key={i} className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start">
-                <div className="h-[270px] sm:h-[330px] rounded-xl bg-muted/50 animate-pulse border border-white/5"></div>
+                <div className="aspect-[2/3] w-full rounded-xl bg-muted/50 animate-pulse border border-white/5" />
               </div>
             ))
         ) : (
@@ -68,8 +69,7 @@ export const ContentRow = ({
             {items?.slice(0, 12).map((item: any, index: number) => (
               <div
                 key={item.id}
-                className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start transition-opacity duration-500"
-                style={{ animationDelay: `${index * 0.05}s` }}
+                className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start"
               >
                 <MovieCard
                   id={item.id}
@@ -84,10 +84,11 @@ export const ContentRow = ({
               </div>
             ))}
             {showLoadMore && loadMorePath && (
-              <div className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start flex items-center justify-center h-[270px] sm:h-[330px]">
+              /* Tinggi identik dengan MovieCard via aspect-ratio */
+              <div className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start">
                 <Link
                   to={loadMorePath}
-                  className="group w-full h-full flex flex-col items-center justify-center gap-3 rounded-xl border-dashed border-2 border-muted hover:border-primary/50 bg-transparent hover:bg-accent/5 transition-all duration-300 min-h-[44px] min-w-[44px]"
+                  className="group aspect-[2/3] w-full flex flex-col items-center justify-center gap-3 rounded-xl border-dashed border-2 border-muted hover:border-primary/50 bg-transparent hover:bg-accent/5 transition-all duration-300"
                   aria-label="Show more"
                 >
                   <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
