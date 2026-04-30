@@ -130,7 +130,7 @@ const Auth = () => {
             <div className="animate-in fade-in slide-in-from-top-2 duration-300">
               <form onSubmit={handleSignIn} className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="signinEmail" className="text-slate-300">Scan</Label>
+                  <Label htmlFor="signinEmail" className="text-slate-300">Passkey</Label>
                   <div className="relative">
                     <Fingerprint className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <Input

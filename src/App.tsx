@@ -1,16 +1,24 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "./hooks/use-mobile";
-import Navbar from "./components/Navbar";
-import Footer from "@/components/Footer";
 import { AuthGuard } from "./components/AuthGuard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PageLoading } from "./components/mobile/Skeletons";
+
+// Shell components — diimport langsung karena dibutuhkan di setiap halaman
+import Navbar from "./components/Navbar";
+import Footer from "@/components/Footer";
+
+// UI providers — lazy agar tidak masuk main bundle
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+const TooltipProvider = lazy(() => import("@/components/ui/tooltip").then(m => ({ default: m.TooltipProvider })));
+
+// Mobile shell — lazy karena hanya dipakai di mobile
+const BottomNav = lazy(() => import("./components/mobile/BottomNav").then(m => ({ default: m.BottomNav })));
+const ToastProvider = lazy(() => import("./components/mobile/Toast").then(m => ({ default: m.ToastProvider })));
 
 // Desktop Pages (Lazy)
 const Index = lazy(() => import("./pages/Index"));
@@ -31,10 +39,6 @@ const SharedFilms = lazy(() => import("./pages/SharedFilms"));
 const ImportCollection = lazy(() => import("./pages/ImportCollection"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
-// Mobile Layout Components (Non-lazy for shell stability)
-import { BottomNav } from "./components/mobile/BottomNav";
-import { ToastProvider } from "./components/mobile/Toast";
-
 // Mobile Pages (Lazy)
 const MobileHome = lazy(() => import("./components/mobile/pages/MobileHome").then(m => ({ default: m.MobileHome })));
 const MobileExplore = lazy(() => import("./components/mobile/pages/MobileExplore").then(m => ({ default: m.MobileExplore })));
@@ -49,7 +53,22 @@ const MobileHistory = lazy(() => import("./components/mobile/pages/MobileHistory
 const MobileWatch = lazy(() => import("./components/mobile/pages/MobileWatch").then(m => ({ default: m.MobileWatch })));
 const MobileAuth = lazy(() => import("./components/mobile/pages/MobileAuth").then(m => ({ default: m.MobileAuth })));
 
-const queryClient = new QueryClient();
+// QueryClient dengan config optimal — staleTime default tinggi untuk kurangi refetch
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,   // 5 menit — kurangi refetch yang tidak perlu
+      gcTime: 10 * 60 * 1000,     // 10 menit cache
+      retry: 1,                    // hanya retry 1x, bukan 3x default
+      refetchOnWindowFocus: false, // tidak refetch saat tab di-focus
+    },
+  },
+});
+
+// Wrapper tipis agar Suspense tidak perlu fallback untuk providers
+const SilentSuspense = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={null}>{children}</Suspense>
+);
 
 const Layout = () => {
   const location = useLocation();
@@ -58,68 +77,72 @@ const Layout = () => {
   // Mobile Layout
   if (isMobile) {
     return (
-      <ToastProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <ScrollToTop />
-          <Suspense fallback={<PageLoading />}>
-            <Routes>
-              <Route path="/" element={<MobileHome />} />
-              <Route path="/explore" element={<MobileExplore />} />
-              <Route path="/search" element={<MobileSearch />} />
-              <Route path="/watchlist" element={<MobileWatchlist />} />
-              <Route path="/profile" element={<MobileProfile />} />
-              <Route path="/movie/:id" element={<MobileMovieDetail />} />
-              <Route path="/tv/:id" element={<MobileMovieDetail />} />
-              <Route path="/watch/:type/:id" element={<MobileWatch />} />
-              <Route path="/auth" element={<MobileAuth />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/collections" element={<MobileCollections />} />
-              <Route path="/shared-films" element={<MobileSharedFilms />} />
-              <Route path="/favorites" element={<MobileFavorites />} />
-              <Route path="/history" element={<MobileHistory />} />
-              <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <BottomNav />
-        </TooltipProvider>
-      </ToastProvider>
+      <SilentSuspense>
+        <ToastProvider>
+          <TooltipProvider>
+            <SilentSuspense><Toaster /></SilentSuspense>
+            <SilentSuspense><Sonner /></SilentSuspense>
+            <ScrollToTop />
+            <Suspense fallback={<PageLoading />}>
+              <Routes>
+                <Route path="/" element={<MobileHome />} />
+                <Route path="/explore" element={<MobileExplore />} />
+                <Route path="/search" element={<MobileSearch />} />
+                <Route path="/watchlist" element={<MobileWatchlist />} />
+                <Route path="/profile" element={<MobileProfile />} />
+                <Route path="/movie/:id" element={<MobileMovieDetail />} />
+                <Route path="/tv/:id" element={<MobileMovieDetail />} />
+                <Route path="/watch/:type/:id" element={<MobileWatch />} />
+                <Route path="/auth" element={<MobileAuth />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/collections" element={<MobileCollections />} />
+                <Route path="/shared-films" element={<MobileSharedFilms />} />
+                <Route path="/favorites" element={<MobileFavorites />} />
+                <Route path="/history" element={<MobileHistory />} />
+                <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            <SilentSuspense><BottomNav /></SilentSuspense>
+          </TooltipProvider>
+        </ToastProvider>
+      </SilentSuspense>
     );
   }
 
   return (
-    <TooltipProvider>
-      <ScrollToTop />
-      <Navbar />
-      <main className={`${location.pathname === "/" ? "" : ""}`}>
-        <Toaster />
-        <Sonner />
-        <Suspense fallback={<PageLoading />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/:type/:id" element={<Watch />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/watchlist" element={<Watchlist />} />
-            <Route path="/collections" element={<Collections />} />
-            <Route path="/shared-films" element={<SharedFilms />} />
-            <Route path="/navmovies" element={<NavMovies />} />
-            <Route path="/navtvshows" element={<NavTVShows />} />
-            <Route path="/more-collection" element={<MoreCollection />} />
-            <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/import-collection" element={<ImportCollection />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="*" element={<NotFound />} />
-            <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
-          </Routes>
-        </Suspense>
-      </main>
-      <Footer />
-    </TooltipProvider>
+    <SilentSuspense>
+      <TooltipProvider>
+        <ScrollToTop />
+        <Navbar />
+        <main>
+          <SilentSuspense><Toaster /></SilentSuspense>
+          <SilentSuspense><Sonner /></SilentSuspense>
+          <Suspense fallback={<PageLoading />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/:type/:id" element={<Watch />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/collections" element={<Collections />} />
+              <Route path="/shared-films" element={<SharedFilms />} />
+              <Route path="/navmovies" element={<NavMovies />} />
+              <Route path="/navtvshows" element={<NavTVShows />} />
+              <Route path="/more-collection" element={<MoreCollection />} />
+              <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/import-collection" element={<ImportCollection />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="*" element={<NotFound />} />
+              <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
+            </Routes>
+          </Suspense>
+        </main>
+        <Footer />
+      </TooltipProvider>
+    </SilentSuspense>
   );
 };
 

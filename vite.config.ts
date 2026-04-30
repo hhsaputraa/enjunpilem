@@ -11,8 +11,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -20,18 +19,70 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Inline small CSS chunks to avoid render-blocking stylesheet requests
     cssCodeSplit: true,
-    // Raise chunk warning limit (default 500kb is too low for this app)
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        // Split vendor chunks to improve caching and parallel loading
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query-vendor': ['@tanstack/react-query'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tooltip'],
-          'supabase-vendor': ['@supabase/supabase-js'],
+        manualChunks(id) {
+          // React core — satu chunk, harus satu instance
+          if (id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/react-router-dom/') ||
+              id.includes('node_modules/scheduler/')) {
+            return 'react-vendor';
+          }
+
+          // Supabase — besar, hanya dibutuhkan setelah auth
+          if (id.includes('node_modules/@supabase/')) {
+            return 'supabase-vendor';
+          }
+
+          // TanStack Query
+          if (id.includes('node_modules/@tanstack/')) {
+            return 'query-vendor';
+          }
+
+          // Radix UI — pisah per komponen agar tree-shaking lebih efektif
+          if (id.includes('node_modules/@radix-ui/react-dialog') ||
+              id.includes('node_modules/@radix-ui/react-alert-dialog') ||
+              id.includes('node_modules/@radix-ui/react-sheet')) {
+            return 'radix-dialog';
+          }
+          if (id.includes('node_modules/@radix-ui/react-dropdown-menu') ||
+              id.includes('node_modules/@radix-ui/react-context-menu') ||
+              id.includes('node_modules/@radix-ui/react-menubar')) {
+            return 'radix-menu';
+          }
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'radix-misc';
+          }
+
+          // DnD Kit — hanya dipakai di CollectionDetails
+          if (id.includes('node_modules/@dnd-kit/')) {
+            return 'dnd-vendor';
+          }
+
+          // Recharts — hanya dipakai jika ada chart
+          if (id.includes('node_modules/recharts') ||
+              id.includes('node_modules/d3-')) {
+            return 'chart-vendor';
+          }
+
+          // Google OAuth — hanya dipakai di halaman auth
+          if (id.includes('node_modules/@react-oauth/')) {
+            return 'oauth-vendor';
+          }
+
+          // Embla carousel
+          if (id.includes('node_modules/embla-carousel')) {
+            return 'carousel-vendor';
+          }
+
+          // Vaul (drawer) + cmdk
+          if (id.includes('node_modules/vaul') ||
+              id.includes('node_modules/cmdk')) {
+            return 'overlay-vendor';
+          }
         },
       },
     },
