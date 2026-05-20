@@ -324,8 +324,8 @@ const Watch = () => {
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black shadow-lg">
             <iframe
               src={type === 'movie' 
-                ? `https://vidsrc.xyz/embed/movie/${id}`
-                : `https://vidsrc.xyz/embed/tv/${id}/${selectedSeason}-${selectedEpisode}`
+                ? `https://vidsrc-embed.ru/embed/movie?tmdb=${id}`
+                : `https://vidsrc-embed.ru/embed/tv?tmdb=${id}&season=${selectedSeason}&episode=${selectedEpisode}`
               }
               className="w-full h-full"
               allowFullScreen
