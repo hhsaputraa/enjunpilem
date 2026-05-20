@@ -64,7 +64,7 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
 
   // Generate VidSrc URL
   const getVideoUrl = () => {
-    const baseUrl = 'https://vidsrc.xyz/embed';
+    const baseUrl = 'https://vidsrc-embed.ru/embed';
     
     if (type === 'movie') {
       return `${baseUrl}/movie?tmdb=${movieId}`;
