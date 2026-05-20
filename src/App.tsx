@@ -7,25 +7,27 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PageLoading } from "./components/mobile/Skeletons";
 
-// MobileHome — EAGER import (critical path for LCP on home route "/" )
-// Lazy-loading ini menyebabkan NO_LCP: Lighthouse melihat <PageLoading /> spinner
-// sebelum hero image muncul, sehingga tidak ada LCP element yang terdeteksi.
+// ─── EAGER IMPORTS — critical path, harus ada sebelum apapun render ───────────
+// MobileHome: eager karena LCP ada di sini (hero image)
 import { MobileHome } from "./components/mobile/pages/MobileHome";
+// TooltipProvider: eager karena dia wrap seluruh tree — lazy = null screen
+import { TooltipProvider } from "@/components/ui/tooltip";
+// ToastProvider mobile: eager karena dia wrap seluruh mobile tree
+import { ToastProvider } from "./components/mobile/Toast";
 
-// Shell components — lazy karena Navbar/Footer hanya dipakai di desktop
+// ─── LAZY — tidak di critical path ────────────────────────────────────────────
+// Shell desktop
 const Navbar = lazy(() => import("./components/Navbar"));
 const Footer = lazy(() => import("@/components/Footer"));
 
-// UI providers — lazy agar tidak masuk main bundle
+// UI providers — render di luar tree utama, tidak block LCP
 const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-const TooltipProvider = lazy(() => import("@/components/ui/tooltip").then(m => ({ default: m.TooltipProvider })));
 
-// Mobile shell — lazy karena hanya dipakai di mobile
+// Mobile shell
 const BottomNav = lazy(() => import("./components/mobile/BottomNav").then(m => ({ default: m.BottomNav })));
-const ToastProvider = lazy(() => import("./components/mobile/Toast").then(m => ({ default: m.ToastProvider })));
 
-// Desktop Pages (Lazy)
+// Desktop Pages
 const Index = lazy(() => import("./pages/Index"));
 const Watch = lazy(() => import("./pages/Watch"));
 const Search = lazy(() => import("./pages/Search"));
@@ -57,19 +59,19 @@ const MobileHistory = lazy(() => import("./components/mobile/pages/MobileHistory
 const MobileWatch = lazy(() => import("./components/mobile/pages/MobileWatch").then(m => ({ default: m.MobileWatch })));
 const MobileAuth = lazy(() => import("./components/mobile/pages/MobileAuth").then(m => ({ default: m.MobileAuth })));
 
-// QueryClient dengan config optimal — staleTime default tinggi untuk kurangi refetch
+// QueryClient dengan config optimal
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,   // 5 menit — kurangi refetch yang tidak perlu
-      gcTime: 10 * 60 * 1000,     // 10 menit cache
-      retry: 1,                    // hanya retry 1x, bukan 3x default
-      refetchOnWindowFocus: false, // tidak refetch saat tab di-focus
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
-// Wrapper tipis agar Suspense tidak perlu fallback untuk providers
+// SilentSuspense hanya untuk komponen yang TIDAK block render utama
 const SilentSuspense = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={null}>{children}</Suspense>
 );
@@ -77,78 +79,76 @@ const SilentSuspense = ({ children }: { children: React.ReactNode }) => (
 const Layout = () => {
   const isMobile = useIsMobile();
 
-  // Mobile Layout
+  // ─── MOBILE LAYOUT ──────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <SilentSuspense>
-        <ToastProvider>
-          <TooltipProvider>
-            <SilentSuspense><Toaster /></SilentSuspense>
-            <SilentSuspense><Sonner /></SilentSuspense>
-            <ScrollToTop />
-            {/*
-              MobileHome di-render TANPA Suspense boundary karena sudah eager-imported.
-              Semua route lain tetap di dalam Suspense dengan fallback PageLoading.
-              Ini memastikan Lighthouse bisa detect LCP element (hero image) di route "/".
-            */}
-            <Routes>
-              <Route path="/" element={<MobileHome />} />
-              <Route path="/explore" element={<Suspense fallback={<PageLoading />}><MobileExplore /></Suspense>} />
-              <Route path="/search" element={<Suspense fallback={<PageLoading />}><MobileSearch /></Suspense>} />
-              <Route path="/watchlist" element={<Suspense fallback={<PageLoading />}><MobileWatchlist /></Suspense>} />
-              <Route path="/profile" element={<Suspense fallback={<PageLoading />}><MobileProfile /></Suspense>} />
-              <Route path="/movie/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
-              <Route path="/tv/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
-              <Route path="/watch/:type/:id" element={<Suspense fallback={<PageLoading />}><MobileWatch /></Suspense>} />
-              <Route path="/auth" element={<Suspense fallback={<PageLoading />}><MobileAuth /></Suspense>} />
-              <Route path="/onboarding" element={<Suspense fallback={<PageLoading />}><Onboarding /></Suspense>} />
-              <Route path="/collections" element={<Suspense fallback={<PageLoading />}><MobileCollections /></Suspense>} />
-              <Route path="/shared-films" element={<Suspense fallback={<PageLoading />}><MobileSharedFilms /></Suspense>} />
-              <Route path="/favorites" element={<Suspense fallback={<PageLoading />}><MobileFavorites /></Suspense>} />
-              <Route path="/history" element={<Suspense fallback={<PageLoading />}><MobileHistory /></Suspense>} />
-              <Route path="/detail-list-collection" element={<Suspense fallback={<PageLoading />}><DetailListCollectionRouter /></Suspense>} />
-              <Route path="*" element={<Suspense fallback={<PageLoading />}><NotFound /></Suspense>} />
-            </Routes>
-            <SilentSuspense><BottomNav /></SilentSuspense>
-          </TooltipProvider>
-        </ToastProvider>
-      </SilentSuspense>
+      // ToastProvider & TooltipProvider sekarang EAGER — tidak ada null screen
+      <ToastProvider>
+        <TooltipProvider>
+          {/* Toaster/Sonner lazy OK — tidak block render konten */}
+          <SilentSuspense><Toaster /></SilentSuspense>
+          <SilentSuspense><Sonner /></SilentSuspense>
+          <ScrollToTop />
+          {/*
+            Route "/" render MobileHome langsung — eager import, tidak ada Suspense.
+            Semua route lain lazy dengan per-route Suspense.
+          */}
+          <Routes>
+            <Route path="/" element={<MobileHome />} />
+            <Route path="/explore" element={<Suspense fallback={<PageLoading />}><MobileExplore /></Suspense>} />
+            <Route path="/search" element={<Suspense fallback={<PageLoading />}><MobileSearch /></Suspense>} />
+            <Route path="/watchlist" element={<Suspense fallback={<PageLoading />}><MobileWatchlist /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={<PageLoading />}><MobileProfile /></Suspense>} />
+            <Route path="/movie/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
+            <Route path="/tv/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
+            <Route path="/watch/:type/:id" element={<Suspense fallback={<PageLoading />}><MobileWatch /></Suspense>} />
+            <Route path="/auth" element={<Suspense fallback={<PageLoading />}><MobileAuth /></Suspense>} />
+            <Route path="/onboarding" element={<Suspense fallback={<PageLoading />}><Onboarding /></Suspense>} />
+            <Route path="/collections" element={<Suspense fallback={<PageLoading />}><MobileCollections /></Suspense>} />
+            <Route path="/shared-films" element={<Suspense fallback={<PageLoading />}><MobileSharedFilms /></Suspense>} />
+            <Route path="/favorites" element={<Suspense fallback={<PageLoading />}><MobileFavorites /></Suspense>} />
+            <Route path="/history" element={<Suspense fallback={<PageLoading />}><MobileHistory /></Suspense>} />
+            <Route path="/detail-list-collection" element={<Suspense fallback={<PageLoading />}><DetailListCollectionRouter /></Suspense>} />
+            <Route path="*" element={<Suspense fallback={<PageLoading />}><NotFound /></Suspense>} />
+          </Routes>
+          <SilentSuspense><BottomNav /></SilentSuspense>
+        </TooltipProvider>
+      </ToastProvider>
     );
   }
 
+  // ─── DESKTOP LAYOUT ─────────────────────────────────────────────────────────
   return (
-    <SilentSuspense>
-      <TooltipProvider>
-        <ScrollToTop />
-        <SilentSuspense><Navbar /></SilentSuspense>
-        <main>
-          <SilentSuspense><Toaster /></SilentSuspense>
-          <SilentSuspense><Sonner /></SilentSuspense>
-          <Suspense fallback={<PageLoading />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/:type/:id" element={<Watch />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/collections" element={<Collections />} />
-              <Route path="/shared-films" element={<SharedFilms />} />
-              <Route path="/navmovies" element={<NavMovies />} />
-              <Route path="/navtvshows" element={<NavTVShows />} />
-              <Route path="/more-collection" element={<MoreCollection />} />
-              <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/import-collection" element={<ImportCollection />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="*" element={<NotFound />} />
-              <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
-            </Routes>
-          </Suspense>
-        </main>
-        <SilentSuspense><Footer /></SilentSuspense>
-      </TooltipProvider>
-    </SilentSuspense>
+    <TooltipProvider>
+      <ScrollToTop />
+      <SilentSuspense><Navbar /></SilentSuspense>
+      <main>
+        <SilentSuspense><Toaster /></SilentSuspense>
+        <SilentSuspense><Sonner /></SilentSuspense>
+        <Suspense fallback={<PageLoading />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/:type/:id" element={<Watch />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/collections" element={<Collections />} />
+            <Route path="/shared-films" element={<SharedFilms />} />
+            <Route path="/navmovies" element={<NavMovies />} />
+            <Route path="/navtvshows" element={<NavTVShows />} />
+            <Route path="/more-collection" element={<MoreCollection />} />
+            <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/import-collection" element={<ImportCollection />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="*" element={<NotFound />} />
+            <Route path="/item-more-collection" element={<ItemMoreCollectionRouter />} />
+          </Routes>
+        </Suspense>
+      </main>
+      <SilentSuspense><Footer /></SilentSuspense>
+    </TooltipProvider>
   );
 };
 

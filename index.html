@@ -94,6 +94,19 @@
       .scrollbar-hide::-webkit-scrollbar {
         display: none;
       }
+
+      /* CRITICAL CSS: Ensure hero section is visible immediately for LCP */
+      /* This prevents the "blank screen" issue that causes NO_LCP error */
+      #root {
+        min-height: 100vh;
+        background-color: #09090b; /* bg-background */
+      }
+      
+      /* Reserve space for hero section to prevent layout shift */
+      .hero-container {
+        min-height: 400px;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      }
     </style>
   </head>
 

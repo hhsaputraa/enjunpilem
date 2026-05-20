@@ -18,11 +18,12 @@ export const MobileHome: React.FC = () => {
   const navigate = useNavigate();
   const { toggleWatchlist } = useMobileWatchlist();
 
-  // Priority 1: Load hero content first (critical for LCP)
+  // Pisah: hero hanya butuh trending — jangan blok render karena popular/TV belum selesai
   const {
     trending,
     popularMovies,
-    isLoading
+    isLoading,
+    isHeroLoading,
   } = useMixedContent();
 
   // Priority 2: Defer below-fold content until hero loads
@@ -30,7 +31,7 @@ export const MobileHome: React.FC = () => {
     queryKey: ['enjunTop'],
     queryFn: getEnjunTop,
     staleTime: 10 * 60 * 1000,
-    enabled: !isLoading, // Wait for hero to load first
+    enabled: !isHeroLoading, // Cukup tunggu hero, bukan semua content
   });
 
   // Transform data for mobile
@@ -67,18 +68,22 @@ export const MobileHome: React.FC = () => {
 
   return (
     <HomeLayout>
-      <div className="space-y-6 pb-6 w-full overflow-hidden">
-        {/* Hero Section */}
+      <div className="space-y-6 pb-6 w-full">
+        {/* Hero Section — ALWAYS render with fixed height to prevent layout shift and ensure LCP detection */}
         <section className="px-4">
-          {isLoading ? (
-            <HeroSkeleton />
-          ) : (
-            <HeroSlider
-              items={heroItems}
-              onItemClick={handleItemClick}
-              onWatchlistToggle={handleWatchlistToggle}
-            />
-          )}
+          <div className="relative w-full h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+            {isHeroLoading ? (
+              <HeroSkeleton />
+            ) : heroItems.length > 0 ? (
+              <HeroSlider
+                items={heroItems}
+                onItemClick={handleItemClick}
+                onWatchlistToggle={handleWatchlistToggle}
+              />
+            ) : (
+              <HeroSkeleton />
+            )}
+          </div>
         </section>
 
         {/* Trending Now (ga pake lihat semua) */}

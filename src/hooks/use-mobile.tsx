@@ -3,7 +3,12 @@ import * as React from "react"
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  // Inisialisasi langsung dari window.innerWidth agar tidak ada layout switch setelah mount.
+  // Sebelumnya: useState(undefined) → render desktop dulu → useEffect → switch ke mobile
+  // = blank screen 2-4 detik + NO_LCP di Lighthouse.
+  const [isMobile, setIsMobile] = React.useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+  )
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
@@ -11,9 +16,10 @@ export function useIsMobile() {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     }
     mql.addEventListener("change", onChange)
+    // Sync sekali lagi saat mount untuk handle edge case SSR/hydration
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return !!isMobile
+  return isMobile
 }

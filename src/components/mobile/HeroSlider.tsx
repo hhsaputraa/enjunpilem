@@ -168,7 +168,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
   return (
     <div
       ref={containerRef}
-      className={cn('relative w-full h-[400px] rounded-2xl overflow-hidden select-none', className)}
+      className={cn('relative w-full h-[400px] rounded-2xl overflow-hidden select-none bg-gradient-to-br from-gray-900 to-gray-800', className)}
       // Gunakan pan-y: biar scroll vertikal tetap jalan, tapi kita handle swipe horizontal
       style={{ touchAction: 'pan-y' }}
       role="region"
@@ -221,13 +221,14 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
             transition: isDragging.current ? 'none' : 'transform 600ms cubic-bezier(0.22,1,0.36,1)',
             pointerEvents: 'none',
             willChange: 'transform',
-            // Jangan sembunyikan gambar saat loading — ini menyebabkan LCP lambat
-            // karena Lighthouse tidak bisa detect gambar yang opacity:0
+            // CRITICAL: Image must be visible immediately for LCP detection
+            // Lighthouse fails if image has opacity:0 or display:none during load
+            opacity: 1,
           }}
           draggable={false}
           loading="eager"
           fetchPriority="high"
-          decoding="sync"
+          decoding="async"
           onLoad={() => setIsImageLoaded(true)}
         />
 
