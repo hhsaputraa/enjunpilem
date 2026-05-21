@@ -14,6 +14,8 @@ import { Filter, Grid, List, Trash2 } from 'lucide-react';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
+import { useQueries } from '@tanstack/react-query';
+import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 
 interface WatchlistItem {
   id: string;
@@ -37,18 +39,6 @@ const sortOptions = [
   { value: 'release_date', label: 'Tahun Rilis' },
 ];
 
-// Mock data
-const mockWatchlistItems: WatchlistItem[] = Array.from({ length: 12 }, (_, i) => ({
-  id: `${i + 1}`,
-  title: `Watchlist Item ${i + 1}`,
-  poster: `https://image.tmdb.org/t/p/w500/placeholder${i + 1}.jpg`,
-  rating: 7.0 + Math.random() * 2,
-  year: `${2020 + Math.floor(Math.random() * 4)}`,
-  type: Math.random() > 0.5 ? 'movie' : 'tv',
-  addedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-  isInWatchlist: true,
-}));
-
 export const MobileWatchlist: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useMobileAuth();
@@ -60,6 +50,33 @@ export const MobileWatchlist: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  // Fetch details for all watchlist entries in parallel from TMDB
+  const tmdbQueries = useQueries({
+    queries: watchlist.map((item) => ({
+      queryKey: ['tmdb-detail', item.media_type, item.tmdb_id],
+      queryFn: () => item.media_type === 'movie' 
+        ? getMovieDetails(item.tmdb_id!)
+        : getTVDetails(item.tmdb_id!),
+      staleTime: 1000 * 60 * 60, // 1 hour
+      enabled: !!item.tmdb_id,
+    }))
+  });
+
+  const isLoadingDetails = tmdbQueries.some(q => q.isLoading);
+  const isPreparing = isLoading || isLoadingDetails;
+
+  // Combine watchlist entries with their TMDB details
+  const enrichedWatchlist = watchlist.map((item, index) => {
+    const tmdbData = tmdbQueries[index]?.data;
+    return {
+      ...item,
+      title: tmdbData?.title || tmdbData?.name || 'Unknown',
+      poster_path: tmdbData?.poster_path,
+      vote_average: tmdbData?.vote_average || 0,
+      release_date: tmdbData?.release_date || tmdbData?.first_air_date || '',
+    };
+  });
 
   // Transform Supabase data to mobile format
   const transformWatchlistItem = (item: any) => ({
@@ -73,7 +90,7 @@ export const MobileWatchlist: React.FC = () => {
     isInWatchlist: true,
   });
 
-  const items = watchlist.map(transformWatchlistItem);
+  const items = enrichedWatchlist.map(transformWatchlistItem);
 
   const filteredItems = items.filter(item => {
     if (activeTab === 'all') return true;
@@ -136,7 +153,7 @@ export const MobileWatchlist: React.FC = () => {
     );
   }
 
-  if (!isLoading && items.length === 0) {
+  if (!isPreparing && items.length === 0) {
     return (
       <PageLayout title="Watchlist">
         <EmptyWatchlist onExplore={handleExplore} />
@@ -269,7 +286,7 @@ export const MobileWatchlist: React.FC = () => {
           <TabsContent value="all" className="mt-4">
             <WatchlistContent
               items={sortedItems}
-              isLoading={isLoading}
+              isLoading={isPreparing}
               viewMode={viewMode}
               isSelectionMode={isSelectionMode}
               selectedItems={selectedItems}
@@ -281,7 +298,7 @@ export const MobileWatchlist: React.FC = () => {
           <TabsContent value="movies" className="mt-4">
             <WatchlistContent
               items={sortedItems}
-              isLoading={isLoading}
+              isLoading={isPreparing}
               viewMode={viewMode}
               isSelectionMode={isSelectionMode}
               selectedItems={selectedItems}
@@ -293,7 +310,7 @@ export const MobileWatchlist: React.FC = () => {
           <TabsContent value="tv" className="mt-4">
             <WatchlistContent
               items={sortedItems}
-              isLoading={isLoading}
+              isLoading={isPreparing}
               viewMode={viewMode}
               isSelectionMode={isSelectionMode}
               selectedItems={selectedItems}
