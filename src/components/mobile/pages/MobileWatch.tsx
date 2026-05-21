@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileVideoPlayer } from '../MobileVideoPlayer';
 import { DetailSkeleton } from '../Skeletons';
 import { NotFoundError, LoadError } from '../ErrorState';
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft,
-  Download,
   Share,
   Plus,
   Check,
@@ -19,12 +19,16 @@ import {
 } from 'lucide-react';
 import { useContentDetails, formatContentForMobile, useTVSeasonDetails } from '@/hooks/useMobileApi';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
+import { getWatchedEpisodes, updateWatchedEpisode } from '@/services/tmdb';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 export const MobileWatch: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams();
-  const [showPlayer, setShowPlayer] = useState(true);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
 
@@ -41,17 +45,27 @@ export const MobileWatch: React.FC = () => {
   const { toggleWatchlist, isInWatchlist } = useMobileWatchlist();
   const inWatchlist = isInWatchlist(movieId);
 
+  // Fetch watched episode history for TV series
+  const { data: watchedEpisode, isLoading: watchedEpisodeLoading } = useQuery({
+    queryKey: ['watchedEpisode', movieId],
+    queryFn: () => getWatchedEpisodes(movieId),
+    enabled: !!user && movieType === 'tv' && !!movieId,
+  });
+
+  // Restore progress on load
+  useEffect(() => {
+    if (watchedEpisode && movieType === 'tv') {
+      setSelectedSeason(watchedEpisode.season_number);
+      setSelectedEpisode(watchedEpisode.episode_number);
+    }
+  }, [watchedEpisode, movieType]);
+
   // Fetch season episodes dynamically for TV shows
   const { data: seasonDetails, isLoading: isLoadingSeason } = useTVSeasonDetails(
     movieType === 'tv' ? movieId : '',
     selectedSeason
   );
   const episodes = seasonDetails?.episodes || [];
-
-  // Reset episode number when season changes
-  useEffect(() => {
-    setSelectedEpisode(1);
-  }, [selectedSeason]);
 
   const handleBack = () => {
     navigate(-1);
@@ -106,19 +120,16 @@ export const MobileWatch: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Video Player */}
-      {showPlayer && (
-        <div className="relative">
-          <MobileVideoPlayer
-            movieId={movieId}
-            movieTitle={movie.title}
-            type={movieType}
-            season={selectedSeason}
-            episode={selectedEpisode}
-            onClose={() => setShowPlayer(false)}
-          />
-        </div>
-      )}
+      {/* Always Visible Video Player */}
+      <div className="relative">
+        <MobileVideoPlayer
+          movieId={movieId}
+          movieTitle={movie.title}
+          type={movieType}
+          season={selectedSeason}
+          episode={selectedEpisode}
+        />
+      </div>
 
       {/* Movie Info Section */}
       <div className="bg-background text-foreground">
@@ -224,7 +235,10 @@ export const MobileWatch: React.FC = () => {
                     key={i + 1}
                     variant={selectedSeason === i + 1 ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedSeason(i + 1)}
+                    onClick={() => {
+                      setSelectedSeason(i + 1);
+                      setSelectedEpisode(1);
+                    }}
                     className="flex-shrink-0 rounded-full px-4"
                   >
                     Season {i + 1}
@@ -244,9 +258,23 @@ export const MobileWatch: React.FC = () => {
                   {episodes.map((episode: any) => (
                     <button
                       key={episode.episode_number}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedEpisode(episode.episode_number);
-                        setShowPlayer(true);
+                        
+                        // Automatically save watched progress to Supabase
+                        if (user && movie) {
+                          try {
+                            await updateWatchedEpisode(
+                              movieId,
+                              selectedSeason,
+                              episode.episode_number,
+                              movie.title
+                            );
+                            queryClient.invalidateQueries({ queryKey: ['watchedEpisode', movieId] });
+                          } catch (e) {
+                            console.error('Error saving watched progress:', e);
+                          }
+                        }
                       }}
                       className={cn(
                         "w-full p-3.5 rounded-xl border text-left transition-all duration-200",
@@ -280,35 +308,6 @@ export const MobileWatch: React.FC = () => {
               )}
             </div>
           )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-border/40">
-            <Button
-              onClick={() => setShowPlayer(true)}
-              className="flex-1 h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-            >
-              {showPlayer ? 'Lanjut Tonton' : 'Mulai Tonton'}
-            </Button>
-            <Button
-              variant={inWatchlist ? "secondary" : "outline"}
-              size="icon"
-              onClick={handleWatchlistToggle}
-              className={cn("h-12 w-12 rounded-xl transition-all duration-300", inWatchlist && "border-primary/30 text-primary")}
-            >
-              {inWatchlist ? (
-                <Check className="h-5 w-5 animate-scale-in" />
-              ) : (
-                <Plus className="h-5 w-5" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-12 w-12 rounded-xl border-border/50 hover:bg-accent/50"
-            >
-              <Download className="h-5 w-5" />
-            </Button>
-          </div>
         </div>
       </div>
     </div>

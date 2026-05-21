@@ -10,12 +10,14 @@ import { LoadError } from '../ErrorState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Filter, Grid, List, Trash2, Star } from 'lucide-react';
+import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
 import { useQueries } from '@tanstack/react-query';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
+import { MobileCollections } from './MobileCollections';
+import { MobileCollectionDetails } from './MobileCollectionDetails';
 
 interface WatchlistItem {
   id: string;
@@ -31,6 +33,7 @@ interface WatchlistItem {
 type SortOption = 'added_date' | 'title' | 'rating' | 'release_date';
 type ViewMode = 'grid' | 'list';
 type FilterTab = 'all' | 'movies' | 'tv';
+type LibraryTab = 'watchlist' | 'collections';
 
 const sortOptions = [
   { value: 'added_date', label: 'Terbaru Ditambah' },
@@ -39,17 +42,38 @@ const sortOptions = [
   { value: 'release_date', label: 'Tahun Rilis' },
 ];
 
+const ITEMS_PER_PAGE = 6;
+
 export const MobileWatchlist: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useMobileAuth();
   const { watchlist, isLoading, error, bulkRemoveFromWatchlist, getWatchlistStats } = useMobileWatchlist();
 
+  // Unified Pustaka states
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>('watchlist');
+  const [selectedCollection, setSelectedCollection] = useState<{ id: string; name: string; description: string | null } | null>(null);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+
+  // Watchlist specific states
   const [sortBy, setSortBy] = useState<SortOption>('added_date');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Scroll to top on page change
+  React.useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage]);
 
   // Fetch details for all watchlist entries in parallel from TMDB
   const tmdbQueries = useQueries({
@@ -59,7 +83,7 @@ export const MobileWatchlist: React.FC = () => {
         ? getMovieDetails(item.tmdb_id!)
         : getTVDetails(item.tmdb_id!),
       staleTime: 1000 * 60 * 60, // 1 hour
-      enabled: !!item.tmdb_id,
+      enabled: !!item.tmdb_id && libraryTab === 'watchlist',
     }))
   });
 
@@ -114,6 +138,14 @@ export const MobileWatchlist: React.FC = () => {
     }
   });
 
+  // Pagination calculation
+  const totalPages = Math.ceil(sortedItems.length / ITEMS_PER_PAGE) || 1;
+  const activePage = Math.min(currentPage, totalPages);
+  
+  const startIndex = (activePage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedItems = sortedItems.slice(startIndex, endIndex);
+
   const handleItemClick = (item: WatchlistItem) => {
     if (isSelectionMode) {
       toggleItemSelection(item.id);
@@ -123,8 +155,11 @@ export const MobileWatchlist: React.FC = () => {
   };
 
   const handleWatchlistToggle = (id: string) => {
-    // Remove from watchlist
     bulkRemoveFromWatchlist([id]);
+    // Adjust page if removing final item on a page
+    if (paginatedItems.length === 1 && currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
   };
 
   const toggleItemSelection = (id: string) => {
@@ -139,33 +174,64 @@ export const MobileWatchlist: React.FC = () => {
     bulkRemoveFromWatchlist(selectedItems);
     setSelectedItems([]);
     setIsSelectionMode(false);
+    
+    // Auto-adjust page index
+    const remainingCount = sortedItems.length - selectedItems.length;
+    const newTotalPages = Math.ceil(remainingCount / ITEMS_PER_PAGE) || 1;
+    if (currentPage > newTotalPages) {
+      setCurrentPage(newTotalPages);
+    }
   };
 
   const handleExplore = () => {
     navigate('/explore');
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as FilterTab);
+    setCurrentPage(1); // Reset page on tab change
+  };
+
+  const handleSortChange = (option: SortOption) => {
+    setSortBy(option);
+    setCurrentPage(1); // Reset page on sort change
+  };
+
   if (error) {
     return (
-      <PageLayout title="Watchlist">
+      <PageLayout title="Pustaka">
         <LoadError onRetry={() => window.location.reload()} resource="watchlist" />
       </PageLayout>
     );
   }
 
-  if (!isPreparing && items.length === 0) {
+  // If a collection details view is active, render it inline
+  if (selectedCollection) {
     return (
-      <PageLayout title="Watchlist">
-        <EmptyWatchlist onExplore={handleExplore} />
+      <PageLayout 
+        title={selectedCollection.name}
+        showBackButton={true}
+        actions={
+          <div className="w-9 h-9" /> // spacer to balance layout
+        }
+      >
+        <div className="flex-1 overflow-y-auto pb-24 px-4 pt-4">
+          <MobileCollectionDetails
+            collectionId={selectedCollection.id}
+            collectionName={selectedCollection.name}
+            description={selectedCollection.description}
+            onBack={() => setSelectedCollection(null)}
+          />
+        </div>
       </PageLayout>
     );
   }
 
-  return (
-    <PageLayout
-      title="Watchlist"
-      showBackButton={false}
-      actions={
+  // Define actions based on the active tab
+  const getHeaderActions = () => {
+    if (libraryTab === 'watchlist') {
+      if (items.length === 0) return null;
+      return (
         <div className="flex items-center gap-1.5">
           {isSelectionMode ? (
             <>
@@ -226,100 +292,234 @@ export const MobileWatchlist: React.FC = () => {
             </>
           )}
         </div>
-      }
+      );
+    } else {
+      // Collections Tab Header Actions
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCreateDrawerOpen(true)}
+          className="text-teal-400 hover:bg-white/10 hover:text-teal-300 rounded-full h-9 w-9"
+        >
+          <Plus className="h-5.5 w-5.5" />
+        </Button>
+      );
+    }
+  };
+
+  return (
+    <PageLayout
+      title="Pustaka"
+      showBackButton={false}
+      actions={getHeaderActions()}
     >
       <div className="space-y-4">
-        {/* Stats */}
-        <div className="px-4">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-              <div className="text-xl font-black text-primary tracking-tight">{getWatchlistStats().total}</div>
-              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Total</div>
-            </div>
-            <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-              <div className="text-xl font-black text-blue-400 tracking-tight">{getWatchlistStats().movies}</div>
-              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Film</div>
-            </div>
-            <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-              <div className="text-xl font-black text-purple-400 tracking-tight">{getWatchlistStats().tvShows}</div>
-              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Serial</div>
-            </div>
+        {/* Dynamic Segmented Tab Switcher (Glassmorphic) */}
+        <div className="px-4 pt-4">
+          <div className="flex p-1 rounded-xl bg-card/40 border border-border/30 backdrop-blur-md relative overflow-hidden">
+            <button
+              onClick={() => setLibraryTab('watchlist')}
+              className={cn(
+                "flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 relative z-10 uppercase tracking-wider",
+                libraryTab === 'watchlist' ? "text-primary-foreground" : "text-muted-foreground"
+              )}
+            >
+              Watchlist
+            </button>
+            <button
+              onClick={() => setLibraryTab('collections')}
+              className={cn(
+                "flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 relative z-10 uppercase tracking-wider",
+                libraryTab === 'collections' ? "text-primary-foreground" : "text-muted-foreground"
+              )}
+            >
+              Koleksi
+            </button>
+            
+            {/* Sliding Indicator */}
+            <div 
+              className={cn(
+                "absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-primary rounded-lg transition-all duration-300 ease-out shadow-sm shadow-primary/20",
+                libraryTab === 'collections' ? "translate-x-full" : "translate-x-0"
+              )}
+            />
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as FilterTab)}>
-          <div className="px-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">Semua</TabsTrigger>
-              <TabsTrigger value="movies">Film</TabsTrigger>
-              <TabsTrigger value="tv">Serial</TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Filters */}
-          {showFilters && (
-            <div className="px-4 py-2 space-y-3 bg-muted/20 border-y border-border/30">
-              <div className="space-y-1.5">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Urutkan:</span>
-                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-                  {sortOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      variant={sortBy === option.value ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSortBy(option.value as SortOption)}
-                      className={cn(
-                        "h-8 text-xs rounded-full px-4 flex-shrink-0 transition-all",
-                        sortBy === option.value 
-                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
-                          : "text-muted-foreground bg-card/50 hover:bg-card border-border/40"
-                      )}
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
+        {/* Tab Contents */}
+        {libraryTab === 'watchlist' ? (
+          <div className="space-y-4">
+            {/* Watchlist Stats */}
+            <div className="px-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+                  <div className="text-xl font-black text-primary tracking-tight">{getWatchlistStats().total}</div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Total</div>
+                </div>
+                <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+                  <div className="text-xl font-black text-blue-400 tracking-tight">{getWatchlistStats().movies}</div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Film</div>
+                </div>
+                <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+                  <div className="text-xl font-black text-purple-400 tracking-tight">{getWatchlistStats().tvShows}</div>
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Serial</div>
                 </div>
               </div>
             </div>
-          )}
 
-          <TabsContent value="all" className="mt-4">
-            <WatchlistContent
-              items={sortedItems}
-              isLoading={isPreparing}
-              viewMode={viewMode}
-              isSelectionMode={isSelectionMode}
-              selectedItems={selectedItems}
-              onItemClick={handleItemClick}
-              onWatchlistToggle={handleWatchlistToggle}
-            />
-          </TabsContent>
+            {/* Watchlist Filter & Sort Controls */}
+            {!isPreparing && items.length === 0 ? (
+              <EmptyWatchlist onExplore={handleExplore} />
+            ) : (
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <div className="px-4">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all">Semua</TabsTrigger>
+                    <TabsTrigger value="movies">Film</TabsTrigger>
+                    <TabsTrigger value="tv">Serial</TabsTrigger>
+                  </TabsList>
+                </div>
 
-          <TabsContent value="movies" className="mt-4">
-            <WatchlistContent
-              items={sortedItems}
-              isLoading={isPreparing}
-              viewMode={viewMode}
-              isSelectionMode={isSelectionMode}
-              selectedItems={selectedItems}
-              onItemClick={handleItemClick}
-              onWatchlistToggle={handleWatchlistToggle}
-            />
-          </TabsContent>
+                {showFilters && (
+                  <div className="px-4 py-2 mt-3 space-y-3 bg-muted/20 border-y border-border/30">
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Urutkan:</span>
+                      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                        {sortOptions.map((option) => (
+                          <Button
+                            key={option.value}
+                            variant={sortBy === option.value ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleSortChange(option.value as SortOption)}
+                            className={cn(
+                              "h-8 text-xs rounded-full px-4 flex-shrink-0 transition-all",
+                              sortBy === option.value 
+                                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
+                                : "text-muted-foreground bg-card/50 hover:bg-card border-border/40"
+                            )}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-          <TabsContent value="tv" className="mt-4">
-            <WatchlistContent
-              items={sortedItems}
-              isLoading={isPreparing}
-              viewMode={viewMode}
-              isSelectionMode={isSelectionMode}
-              selectedItems={selectedItems}
-              onItemClick={handleItemClick}
-              onWatchlistToggle={handleWatchlistToggle}
-            />
-          </TabsContent>
-        </Tabs>
+                <TabsContent value="all" className="mt-4">
+                  <WatchlistContent
+                    items={paginatedItems}
+                    isLoading={isPreparing}
+                    viewMode={viewMode}
+                    isSelectionMode={isSelectionMode}
+                    selectedItems={selectedItems}
+                    onItemClick={handleItemClick}
+                    onWatchlistToggle={handleWatchlistToggle}
+                  />
+                </TabsContent>
+
+                <TabsContent value="movies" className="mt-4">
+                  <WatchlistContent
+                    items={paginatedItems}
+                    isLoading={isPreparing}
+                    viewMode={viewMode}
+                    isSelectionMode={isSelectionMode}
+                    selectedItems={selectedItems}
+                    onItemClick={handleItemClick}
+                    onWatchlistToggle={handleWatchlistToggle}
+                  />
+                </TabsContent>
+
+                <TabsContent value="tv" className="mt-4">
+                  <WatchlistContent
+                    items={paginatedItems}
+                    isLoading={isPreparing}
+                    viewMode={viewMode}
+                    isSelectionMode={isSelectionMode}
+                    selectedItems={selectedItems}
+                    onItemClick={handleItemClick}
+                    onWatchlistToggle={handleWatchlistToggle}
+                  />
+                </TabsContent>
+              </Tabs>
+            )}
+
+            {/* Pagination Controls */}
+            {!isPreparing && sortedItems.length > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-center gap-2 mt-2 pb-28">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={activePage === 1}
+                  className="h-9 w-9 rounded-xl border-border/40 bg-card/40 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
+                >
+                  <ChevronLeft className="h-4.5 w-4.5" />
+                </Button>
+                
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  // Only show current page, first, last, and immediate neighbors to avoid overflow
+                  if (
+                    pageNum === 1 || 
+                    pageNum === totalPages || 
+                    Math.abs(pageNum - activePage) <= 1
+                  ) {
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={activePage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={cn(
+                          "h-9 min-w-9 rounded-xl font-black transition-all duration-300",
+                          activePage === pageNum
+                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
+                            : "border-border/40 bg-card/40 text-muted-foreground hover:bg-white/10"
+                        )}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                  
+                  // Render ellipses
+                  if (
+                    pageNum === 2 || 
+                    pageNum === totalPages - 1
+                  ) {
+                    return (
+                      <span key={pageNum} className="text-zinc-600 px-1 font-bold text-xs select-none">
+                        •••
+                      </span>
+                    );
+                  }
+                  
+                  return null;
+                })}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={activePage === totalPages}
+                  className="h-9 w-9 rounded-xl border-border/40 bg-card/40 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
+                >
+                  <ChevronRight className="h-4.5 w-4.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Nested Collections Content */
+          <MobileCollections 
+            isNested={true} 
+            isCreateDrawerOpen={isCreateDrawerOpen}
+            setIsCreateDrawerOpen={setIsCreateDrawerOpen}
+            onCollectionSelect={setSelectedCollection}
+          />
+        )}
       </div>
     </PageLayout>
   );

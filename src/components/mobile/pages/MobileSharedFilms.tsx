@@ -6,7 +6,7 @@ import { getImageUrl } from '@/services/tmdb';
 import { Search, Users, TrendingUp, Clock, Eye, Heart, MessageCircle, Share2, Film as FilmIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CollectionDetails } from '@/components/CollectionDetails';
+import { MobileCollectionDetails } from './MobileCollectionDetails';
 
 interface SharedCollection {
   id: string;
@@ -94,7 +94,7 @@ export const MobileSharedFilms: React.FC = () => {
     return (
       <PageLayout title={selected.name}>
         <div className="flex-1 overflow-y-auto pb-24">
-          <CollectionDetails
+          <MobileCollectionDetails
             collectionId={selected.id}
             collectionName={selected.name}
             description={selected.description}

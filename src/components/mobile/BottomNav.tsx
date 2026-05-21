@@ -36,7 +36,7 @@ const baseNavItems: NavItem[] = [
   },
   {
     id: 'watchlist',
-    label: 'Watchlist',
+    label: 'Pustaka',
     icon: Bookmark,
     href: '/watchlist',
     protected: true,
