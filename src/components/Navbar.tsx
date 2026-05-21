@@ -1,7 +1,7 @@
 "use client"
 
 import { Link, useLocation } from "react-router-dom"
-import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Menu, Compass,SquareLibrary, RefreshCw, Home } from "lucide-react"
+import { Film, Tv, Heart, Clock, List, LogOut, LogIn, User, Compass, SquareLibrary, RefreshCw, Home } from "lucide-react"
 import { Button } from "./ui/button"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
@@ -16,7 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUserProfile } from "@/hooks/useUserProfile"
 import { cn } from "@/lib/utils"
@@ -223,126 +222,7 @@ const Navbar = () => {
             </Button>
           )}
 
-          {/* Mobile Menu Trigger */}
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] border-l-border/50 bg-background/95 backdrop-blur-xl p-0">
-                <SheetHeader className="text-left px-6 py-6 border-b border-border/50">
-                  <SheetTitle>
-                    <Link to="/" className="flex items-center gap-2">
-                       <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
-                         <LogoImage size={32} className="w-full h-full object-cover" />
-                       </div>
-                       <span className="text-xl font-bold">
-                         Enjun<span className="text-primary">Pilem</span>
-                       </span>
-                    </Link>
-                  </SheetTitle>
-                </SheetHeader>
-                
-                <div className="flex flex-col h-full overflow-y-auto pb-20">
-                  <div className="px-6 py-4">
-                    <div className="sm:hidden mb-6">
-                        <SearchBar />
-                    </div>
 
-                    <nav className="flex flex-col gap-1">
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Menu</h4>
-                        {navLinks.map((link) => (
-                        <Link
-                            key={link.path}
-                            to={link.path}
-                            className={cn(
-                            "flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors",
-                            isActive(link.path)
-                                ? "bg-primary/10 text-primary"
-                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                            )}
-                        >
-                            {link.icon ? <link.icon className="w-4 h-4" /> : <div className="w-4" />}
-                            {link.name}
-                        </Link>
-                        ))}
-                    </nav>
-
-                    {user && (
-                        <div className="flex flex-col gap-1 mt-6">
-                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Library</h4>
-                        <Link
-                            to="/favorites"
-                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                            <Heart className="w-4 h-4" />
-                            Favorites
-                        </Link>
-                        <Link
-                            to="/watchlist"
-                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                            <Clock className="w-4 h-4" />
-                            Watchlist
-                        </Link>
-                        {user?.id === import.meta.env.VITE_ALLOWED_ADMIN_ID && (
-                          <Link
-                              to="/import-collection"
-                              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-[#0AC4E0] hover:bg-[#0AC4E0]/10 transition-colors"
-                          >
-                              <RefreshCw className="w-4 h-4" />
-                              Import Items
-                          </Link>
-                        )}
-                        <Link
-                            to="/collections"
-                            className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                            <List className="w-4 h-4" />
-                            My Collections
-                        </Link>
-                        </div>
-                    )}
-                  </div>
-
-                  <div className="mt-auto border-t border-border/50 p-6 bg-muted/20">
-                    {user ? (
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-3 px-2">
-                          <Avatar className="h-10 w-10 border border-border">
-                            <AvatarImage src={avatarUrl} />
-                            <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">{user.email?.split("@")[0]}</span>
-                            <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user.email}</span>
-                          </div>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 rounded-xl"
-                          onClick={handleLogout}
-                        >
-                          <LogOut className="mr-2 h-4 w-4" />
-                          Log Out
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button 
-                        className="w-full shadow-lg shadow-primary/20 rounded-xl" 
-                        onClick={() => navigate("/auth")}
-                      >
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Sign In
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
         </div>
       </div>
     </header>

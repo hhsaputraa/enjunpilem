@@ -9,6 +9,7 @@ import {
 
   getMovieDetails,
   getTVDetails,
+  getTVSeasonDetails,
   getMovieCredits,
   getTVCredits,
   getMovieRecommendations,
@@ -80,6 +81,16 @@ export const useContentDetails = (type: 'movie' | 'tv', id: string) => {
     queryKey: ['content-details', type, id],
     queryFn: () => type === 'movie' ? getMovieDetails(id) : getTVDetails(id),
     enabled: !!id,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+};
+
+// Hook for TV season details
+export const useTVSeasonDetails = (tvId: string, seasonNumber: number) => {
+  return useQuery({
+    queryKey: ['tv-season-details', tvId, seasonNumber],
+    queryFn: () => getTVSeasonDetails(tvId, seasonNumber),
+    enabled: !!tvId && seasonNumber > 0,
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MobileVideoPlayer } from '../MobileVideoPlayer';
 import { DetailSkeleton } from '../Skeletons';
@@ -17,7 +17,8 @@ import {
   Calendar,
   Clock
 } from 'lucide-react';
-import { useContentDetails, formatContentForMobile } from '@/hooks/useMobileApi';
+import { useContentDetails, formatContentForMobile, useTVSeasonDetails } from '@/hooks/useMobileApi';
+import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { cn } from '@/lib/utils';
 
 export const MobileWatch: React.FC = () => {
@@ -36,13 +37,38 @@ export const MobileWatch: React.FC = () => {
   // Transform data for mobile
   const movie = movieDetails ? formatContentForMobile(movieDetails) : null;
 
+  // Watchlist helpers
+  const { toggleWatchlist, isInWatchlist } = useMobileWatchlist();
+  const inWatchlist = isInWatchlist(movieId);
+
+  // Fetch season episodes dynamically for TV shows
+  const { data: seasonDetails, isLoading: isLoadingSeason } = useTVSeasonDetails(
+    movieType === 'tv' ? movieId : '',
+    selectedSeason
+  );
+  const episodes = seasonDetails?.episodes || [];
+
+  // Reset episode number when season changes
+  useEffect(() => {
+    setSelectedEpisode(1);
+  }, [selectedSeason]);
+
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleWatchlistToggle = () => {
-    // TODO: Implement watchlist toggle with Supabase
-    console.log('Toggle watchlist for:', movieId);
+  const handleWatchlistToggle = async () => {
+    if (!movie) return;
+    await toggleWatchlist({
+      id: movieId,
+      title: movie.title,
+      poster: movie.poster,
+      backdrop: movie.backdrop,
+      overview: movie.overview,
+      year: movie.year,
+      rating: movie.rating,
+      type: movieType,
+    });
   };
 
   const handleShare = () => {
@@ -121,9 +147,13 @@ export const MobileWatch: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleWatchlistToggle}
-                className="rounded-full"
+                className="rounded-full hover:bg-primary/10 transition-colors"
               >
-                <Plus className="h-4 w-4" />
+                {inWatchlist ? (
+                  <Check className="h-4 w-4 text-primary animate-scale-in" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -176,7 +206,7 @@ export const MobileWatch: React.FC = () => {
           {movie.overview && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold">Sinopsis</h2>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 {movie.overview}
               </p>
             </div>
@@ -188,14 +218,14 @@ export const MobileWatch: React.FC = () => {
               <h2 className="text-lg font-semibold">Episode</h2>
               
               {/* Season Selector */}
-              <div className="flex gap-2 overflow-x-auto pb-2">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                 {Array.from({ length: movieDetails.number_of_seasons || 1 }, (_, i) => (
                   <Button
                     key={i + 1}
                     variant={selectedSeason === i + 1 ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedSeason(i + 1)}
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 rounded-full px-4"
                   >
                     Season {i + 1}
                   </Button>
@@ -203,58 +233,78 @@ export const MobileWatch: React.FC = () => {
               </div>
 
               {/* Episode List */}
-              <div className="space-y-2">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => {
-                      setSelectedEpisode(i + 1);
-                      setShowPlayer(true);
-                    }}
-                    className={cn(
-                      "w-full p-3 rounded-lg border text-left transition-colors",
-                      selectedEpisode === i + 1
-                        ? "bg-primary/10 border-primary"
-                        : "bg-card hover:bg-card/80 border-border"
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">Episode {i + 1}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Episode Title {i + 1}
-                        </p>
+              {isLoadingSeason ? (
+                <div className="space-y-2 py-2">
+                  <div className="h-14 bg-card animate-pulse rounded-xl border border-border/30"></div>
+                  <div className="h-14 bg-card animate-pulse rounded-xl border border-border/30"></div>
+                  <div className="h-14 bg-card animate-pulse rounded-xl border border-border/30"></div>
+                </div>
+              ) : episodes.length > 0 ? (
+                <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                  {episodes.map((episode: any) => (
+                    <button
+                      key={episode.episode_number}
+                      onClick={() => {
+                        setSelectedEpisode(episode.episode_number);
+                        setShowPlayer(true);
+                      }}
+                      className={cn(
+                        "w-full p-3.5 rounded-xl border text-left transition-all duration-200",
+                        selectedEpisode === episode.episode_number
+                          ? "bg-primary/10 border-primary shadow-sm"
+                          : "bg-card hover:bg-card/80 border-border/50"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate">
+                            Eps {episode.episode_number}: {episode.name || `Episode ${episode.episode_number}`}
+                          </h3>
+                          {episode.overview && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                              {episode.overview}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground flex-shrink-0 bg-background/50 px-2 py-0.5 rounded-md border border-border/20">
+                          {episode.runtime ? `${episode.runtime}m` : '45m'}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        45m
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  Tidak ada episode untuk season ini.
+                </p>
+              )}
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 border-t border-border/40">
             <Button
               onClick={() => setShowPlayer(true)}
-              className="flex-1 h-12"
+              className="flex-1 h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
             >
               {showPlayer ? 'Lanjut Tonton' : 'Mulai Tonton'}
             </Button>
             <Button
-              variant="outline"
+              variant={inWatchlist ? "secondary" : "outline"}
               size="icon"
               onClick={handleWatchlistToggle}
-              className="h-12 w-12"
+              className={cn("h-12 w-12 rounded-xl transition-all duration-300", inWatchlist && "border-primary/30 text-primary")}
             >
-              <Plus className="h-5 w-5" />
+              {inWatchlist ? (
+                <Check className="h-5 w-5 animate-scale-in" />
+              ) : (
+                <Plus className="h-5 w-5" />
+              )}
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="h-12 w-12"
+              className="h-12 w-12 rounded-xl border-border/50 hover:bg-accent/50"
             >
               <Download className="h-5 w-5" />
             </Button>

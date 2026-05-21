@@ -10,7 +10,7 @@ import { LoadError } from '../ErrorState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Filter, Grid, List, Trash2 } from 'lucide-react';
+import { Filter, Grid, List, Trash2, Star } from 'lucide-react';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
@@ -166,24 +166,25 @@ export const MobileWatchlist: React.FC = () => {
       title="Watchlist"
       showBackButton={false}
       actions={
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {isSelectionMode ? (
             <>
-              <span className="text-sm text-muted-foreground mr-2">
-                {selectedItems.length} dipilih
+              <span className="text-xs font-semibold text-primary mr-1 bg-primary/10 px-2.5 py-1 rounded-full animate-pulse">
+                {selectedItems.length} Terpilih
               </span>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={handleBulkRemove}
                 disabled={selectedItems.length === 0}
-                className="text-destructive"
+                className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4.5 w-4.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
+                className="h-9 rounded-full px-3 text-sm font-medium"
                 onClick={() => {
                   setIsSelectionMode(false);
                   setSelectedItems([]);
@@ -197,18 +198,30 @@ export const MobileWatchlist: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                className="h-9 w-9 rounded-full"
+                onClick={() => setIsSelectionMode(true)}
+                className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+                title="Pilih Banyak"
               >
-                {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
+                <Trash2 className="h-4.5 w-4.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+              >
+                {viewMode === 'grid' ? <List className="h-4.5 w-4.5" /> : <Grid className="h-4.5 w-4.5" />}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowFilters(!showFilters)}
-                className="h-9 w-9 rounded-full"
+                className={cn(
+                  "h-9 w-9 rounded-full transition-colors",
+                  showFilters ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+                )}
               >
-                <Filter className="h-4 w-4" />
+                <Filter className="h-4.5 w-4.5" />
               </Button>
             </>
           )}
@@ -218,22 +231,18 @@ export const MobileWatchlist: React.FC = () => {
       <div className="space-y-4">
         {/* Stats */}
         <div className="px-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 rounded-xl bg-card/50">
-              <div className="text-2xl font-bold text-primary">{getWatchlistStats().total}</div>
-              <div className="text-xs text-muted-foreground">Total</div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+              <div className="text-xl font-black text-primary tracking-tight">{getWatchlistStats().total}</div>
+              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Total</div>
             </div>
-            <div className="text-center p-3 rounded-xl bg-card/50">
-              <div className="text-2xl font-bold text-blue-500">
-                {getWatchlistStats().movies}
-              </div>
-              <div className="text-xs text-muted-foreground">Film</div>
+            <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+              <div className="text-xl font-black text-blue-400 tracking-tight">{getWatchlistStats().movies}</div>
+              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Film</div>
             </div>
-            <div className="text-center p-3 rounded-xl bg-card/50">
-              <div className="text-2xl font-bold text-purple-500">
-                {getWatchlistStats().tvShows}
-              </div>
-              <div className="text-xs text-muted-foreground">Serial</div>
+            <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+              <div className="text-xl font-black text-purple-400 tracking-tight">{getWatchlistStats().tvShows}</div>
+              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Serial</div>
             </div>
           </div>
         </div>
@@ -250,35 +259,27 @@ export const MobileWatchlist: React.FC = () => {
 
           {/* Filters */}
           {showFilters && (
-            <div className="px-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Urutkan:</span>
-                  <div className="flex gap-1">
-                    {sortOptions.map((option) => (
-                      <Button
-                        key={option.value}
-                        variant={sortBy === option.value ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSortBy(option.value as SortOption)}
-                        className="h-8 text-xs"
-                      >
-                        {option.label}
-                      </Button>
-                    ))}
-                  </div>
+            <div className="px-4 py-2 space-y-3 bg-muted/20 border-y border-border/30">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Urutkan:</span>
+                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                  {sortOptions.map((option) => (
+                    <Button
+                      key={option.value}
+                      variant={sortBy === option.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSortBy(option.value as SortOption)}
+                      className={cn(
+                        "h-8 text-xs rounded-full px-4 flex-shrink-0 transition-all",
+                        sortBy === option.value 
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
+                          : "text-muted-foreground bg-card/50 hover:bg-card border-border/40"
+                      )}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
                 </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsSelectionMode(!isSelectionMode)}
-                  className="text-xs"
-                >
-                  {isSelectionMode ? 'Batal Pilih' : 'Pilih Item'}
-                </Button>
               </div>
             </div>
           )}
@@ -357,23 +358,95 @@ const WatchlistContent: React.FC<{
         <div
           key={item.id}
           className={cn(
-            "relative",
+            "relative transition-all duration-200 active:scale-[0.99]",
             isSelectionMode && selectedItems.includes(item.id) && "ring-2 ring-primary rounded-xl"
           )}
         >
-          <PosterCard
-            id={item.id}
-            title={item.title}
-            poster={item.poster}
-            rating={item.rating}
-            year={item.year}
-            type={item.type}
-            isInWatchlist={item.isInWatchlist}
-            size={viewMode === 'grid' ? 'md' : 'sm'}
-            showOverlay={!isSelectionMode}
-            onClick={() => onItemClick(item)}
-            onWatchlistToggle={onWatchlistToggle}
-          />
+          {viewMode === 'grid' ? (
+            <PosterCard
+              id={item.id}
+              title={item.title}
+              poster={item.poster}
+              rating={item.rating}
+              year={item.year}
+              type={item.type}
+              isInWatchlist={item.isInWatchlist}
+              size="responsive"
+              showOverlay={false}
+              onClick={() => onItemClick(item)}
+              onWatchlistToggle={onWatchlistToggle}
+            />
+          ) : (
+            /* Premium List Card Row Layout */
+            <div 
+              onClick={() => onItemClick(item)}
+              className="flex gap-4 p-3 rounded-2xl bg-card/40 border border-border/40 hover:bg-card/60 transition-colors cursor-pointer"
+            >
+              {/* Poster Image */}
+              <div className="w-20 aspect-[2/3] rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border/20">
+                {item.poster ? (
+                  <img
+                    src={item.poster}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500">
+                    🎬
+                  </div>
+                )}
+              </div>
+
+              {/* Text Info Column */}
+              <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                      item.type === 'movie' 
+                        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                        : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                    )}>
+                      {item.type === 'movie' ? 'Film' : 'TV'}
+                    </span>
+                    {item.year && (
+                      <span className="text-xs text-muted-foreground">{item.year}</span>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground line-clamp-2 leading-snug">
+                    {item.title}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-3 mt-2">
+                  {item.rating && item.rating > 0 ? (
+                    <div className="flex items-center gap-1 text-xs font-semibold text-yellow-500">
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span>{item.rating.toFixed(1)}</span>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Action Buttons on the Right */}
+              {!isSelectionMode && (
+                <div className="flex items-center justify-center pl-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onWatchlistToggle(item.id);
+                    }}
+                    className="h-10 w-10 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           
           {isSelectionMode && (
             <div className="absolute top-2 left-2 z-10">
