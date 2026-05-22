@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { MobileCollectionDetails } from './MobileCollectionDetails';
 import { getImageUrl } from '@/services/tmdb';
-import { Plus, Globe, Lock, FolderHeart, Edit3, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Globe, Lock, FolderHeart, Edit3, Trash2, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -255,12 +255,12 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
     const currentTouch = e.targetTouches[0].clientX;
     const diff = currentTouch - touchStart;
     
-    // Swipe right by more than 50px reveals options
-    if (diff > 50) {
+    // Swipe left (dragging right to left, diff is negative) by more than 50px reveals options
+    if (diff < -50) {
       setSwipedId(id);
     } 
-    // Swipe left by more than 50px hides options
-    else if (diff < -50) {
+    // Swipe right (dragging left to right, diff is positive) by more than 50px hides options
+    else if (diff > 50) {
       setSwipedId(null);
     }
   };
@@ -316,11 +316,11 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
                 key={collection.id} 
                 className="relative overflow-hidden rounded-2xl select-none animate-fade-in"
               >
-                {/* Swipe Action Buttons (Behind on the Left, Revealed on Swipe Right) */}
+                {/* Swipe Action Buttons (Behind on the Right, Revealed on Swipe Left) */}
                 <div 
                   className={cn(
-                    "absolute top-0 bottom-0 left-0 flex items-center gap-2 px-3 z-0 transition-all duration-300 ease-out",
-                    isSwiped ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-90 -translate-x-4 pointer-events-none"
+                    "absolute top-0 bottom-0 right-0 flex items-center gap-2 px-3 z-0 transition-all duration-300 ease-out",
+                    isSwiped ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-90 translate-x-4 pointer-events-none"
                   )}
                 >
                   <Button
@@ -379,7 +379,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
                   </Button>
                 </div>
 
-                {/* Main Card (z-10, Slides Right on Swipe) */}
+                {/* Main Card (z-10, Slides Left on Swipe) */}
                 <div
                   onTouchStart={(e) => handleTouchStart(e, collection.id)}
                   onTouchMove={(e) => handleTouchMove(e, collection.id)}
@@ -398,7 +398,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
                   }}
                   className={cn(
                     "flex items-center gap-4 bg-card/40 border border-border/40 hover:bg-card/60 rounded-2xl p-3 cursor-pointer active:scale-[0.98] transition-all duration-300 ease-out z-10 relative",
-                    isSwiped ? "translate-x-[154px] shadow-lg shadow-black/10" : "translate-x-0"
+                    isSwiped ? "-translate-x-[154px] shadow-lg shadow-black/10" : "translate-x-0"
                   )}
                 >
                   {/* Stacked Poster Collage Cover */}
@@ -456,7 +456,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
                       {!isSwiped && (
                         <span className="text-[10px] text-muted-foreground/30 flex items-center gap-0.5 animate-pulse">
                           <span>Geser</span>
-                          <ChevronRight className="w-3 h-3 text-muted-foreground/40" />
+                          <ChevronLeft className="w-3 h-3 text-muted-foreground/40" />
                         </span>
                       )}
                     </div>
