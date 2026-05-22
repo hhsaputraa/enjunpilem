@@ -63,7 +63,7 @@ const Collections = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -289,6 +289,17 @@ const Collections = () => {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="h-12 w-48 bg-zinc-800/50 rounded-lg"></div>
+          <div className="h-4 w-64 bg-zinc-800/50 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

@@ -10,7 +10,7 @@ import { LoadError } from '../ErrorState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,7 @@ const ITEMS_PER_PAGE = 6;
 
 export const MobileWatchlist: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useMobileAuth();
+  const { user, loading } = useMobileAuth();
   const { watchlist, isLoading, error, bulkRemoveFromWatchlist, getWatchlistStats } = useMobileWatchlist();
 
   // Unified Pustaka states
@@ -74,6 +74,40 @@ export const MobileWatchlist: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentPage]);
+
+  if (loading) {
+    return (
+      <PageLayout title="Pustaka" showBackButton={false}>
+        <div className="px-4 py-8">
+          <GridSkeleton />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <PageLayout title="Pustaka" showBackButton={false}>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center space-y-6 animate-in fade-in zoom-in duration-300">
+          <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-tr from-teal-500/20 to-teal-500/5 flex items-center justify-center border border-teal-500/20 shadow-lg shadow-teal-500/5">
+            <Lock className="w-8 h-8 text-teal-400 animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold tracking-tight text-white">Akses Pustaka Terkunci</h3>
+            <p className="text-muted-foreground text-sm max-w-xs leading-relaxed mx-auto">
+              Silakan masuk ke akun Anda untuk menyinkronkan watchlist dan mengelola koleksi film pribadi Anda.
+            </p>
+          </div>
+          <Button 
+            onClick={() => navigate('/auth')} 
+            className="w-full max-w-[200px] h-12 bg-primary hover:bg-primary/80 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+          >
+            Login Sekarang
+          </Button>
+        </div>
+      </PageLayout>
+    );
+  }
 
   // Fetch details for all watchlist entries in parallel from TMDB
   const tmdbQueries = useQueries({

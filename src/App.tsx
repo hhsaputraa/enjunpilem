@@ -6,6 +6,7 @@ import { AuthGuard } from "./components/AuthGuard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PageLoading } from "./components/mobile/Skeletons";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // ─── EAGER IMPORTS — critical path, harus ada sebelum apapun render ───────────
 // MobileHome: eager karena LCP ada di sini (hero image)
@@ -156,9 +157,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
-        <AuthGuard>
-          <Layout />
-        </AuthGuard>
+        <ErrorBoundary>
+          <AuthGuard>
+            <Layout />
+          </AuthGuard>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>

@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Watchlist = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,6 +58,17 @@ const Watchlist = () => {
       });
     },
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="h-12 w-48 bg-zinc-800/50 rounded-lg"></div>
+          <div className="h-4 w-64 bg-zinc-800/50 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

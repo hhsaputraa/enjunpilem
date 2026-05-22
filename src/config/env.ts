@@ -32,12 +32,12 @@ interface EnvConfig {
 }
 
 // Get environment variable with validation
-const getEnvVar = (key: string, fallback?: string): string => {
+const getEnvVar = (key: string, fallback: string = ''): string => {
   const value = import.meta.env[key] || fallback;
   
   if (!value) {
-    console.error(`❌ Environment variable ${key} is not defined`);
-    throw new Error(`Missing required environment variable: ${key}`);
+    console.warn(`⚠️ Environment variable ${key} is not defined. Using empty/fallback string.`);
+    return fallback;
   }
   
   return value;
