@@ -344,7 +344,7 @@ export const MobileWatchlist: React.FC = () => {
 
   return (
     <PageLayout
-      title="Pustaka"
+      title=""
       showBackButton={false}
       actions={getHeaderActions()}
     >
