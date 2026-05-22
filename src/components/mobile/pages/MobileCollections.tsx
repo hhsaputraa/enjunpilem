@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { MobileCollectionDetails } from './MobileCollectionDetails';
 import { getImageUrl } from '@/services/tmdb';
-import { Plus, Globe, Lock, FolderHeart } from 'lucide-react';
+import { Plus, Globe, Lock, FolderHeart, Edit3, Trash2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,13 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface MobileCollectionsProps {
   isNested?: boolean;
@@ -48,6 +55,21 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
 
   const openDrawer = isNested ? isCreateDrawerOpen : localIsCreateDrawerOpen;
   const setOpenDrawer = isNested ? setIsCreateDrawerOpen : setLocalIsCreateDrawerOpen;
+
+  // Swipe gesture states
+  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  // Edit Collection state
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [selectedEditCollection, setSelectedEditCollection] = useState<{ id: string; name: string; description: string; is_shared: boolean } | null>(null);
+  const [editCollectionName, setEditCollectionName] = useState('');
+  const [editCollectionDescription, setEditCollectionDescription] = useState('');
+  const [editCollectionShared, setEditCollectionShared] = useState(false);
+
+  // Delete Collection state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections', user?.id],
@@ -110,6 +132,80 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
     },
   });
 
+  // Toggle Visibility mutation
+  const toggleShared = useMutation({
+    mutationFn: async ({ id, is_shared }: { id: string; is_shared: boolean }) => {
+      const { data, error } = await supabase
+        .from('collections')
+        .update({ is_shared })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
+      showSuccess(`Koleksi diubah menjadi ${data.is_shared ? 'Publik' : 'Pribadi'}!`);
+      setSwipedId(null);
+    },
+    onError: (error: any) => {
+      showError("Gagal mengubah visibilitas", error.message);
+    }
+  });
+
+  // Delete Collection mutation
+  const deleteCollection = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('collections')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
+      showSuccess("Koleksi berhasil dihapus!");
+      setSwipedId(null);
+      setIsDeleteDialogOpen(false);
+      setCollectionToDelete(null);
+    },
+    onError: (error: any) => {
+      showError("Gagal menghapus koleksi", error.message);
+    }
+  });
+
+  // Edit Collection mutation
+  const updateCollection = useMutation({
+    mutationFn: async ({ id, name, description, is_shared }: { id: string; name: string; description: string; is_shared: boolean }) => {
+      const { data, error } = await supabase
+        .from('collections')
+        .update({
+          name,
+          description: description || null,
+          is_shared
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
+      showSuccess("Koleksi berhasil diperbarui!");
+      setSwipedId(null);
+      setIsEditDrawerOpen(false);
+      setSelectedEditCollection(null);
+    },
+    onError: (error: any) => {
+      showError("Gagal memperbarui koleksi", error.message);
+    }
+  });
+
   const handleCreateCollection = (e: React.FormEvent) => {
     e.preventDefault();
     if (newCollectionName.trim()) {
@@ -117,6 +213,18 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
         name: newCollectionName.trim(),
         description: newCollectionDescription.trim(),
         is_shared: newCollectionShared,
+      });
+    }
+  };
+
+  const handleUpdateCollection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedEditCollection && editCollectionName.trim()) {
+      updateCollection.mutate({
+        id: selectedEditCollection.id,
+        name: editCollectionName.trim(),
+        description: editCollectionDescription.trim(),
+        is_shared: editCollectionShared
       });
     }
   };
@@ -135,6 +243,30 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
     } else {
       setLocalSelectedCollection(null);
     }
+  };
+
+  // Swipe touch handlers
+  const handleTouchStart = (e: React.TouchEvent, id: string) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, id: string) => {
+    if (touchStart === null) return;
+    const currentTouch = e.targetTouches[0].clientX;
+    const diff = currentTouch - touchStart;
+    
+    // Swipe right by more than 50px reveals options
+    if (diff > 50) {
+      setSwipedId(id);
+    } 
+    // Swipe left by more than 50px hides options
+    else if (diff < -50) {
+      setSwipedId(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
   };
 
   const activeSelected = isNested ? null : localSelectedCollection;
@@ -177,61 +309,157 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
         <div className="flex flex-col gap-3">
           {collections?.map((collection) => {
             const items = collection.collection_items || [];
+            const isSwiped = swipedId === collection.id;
             
             return (
-              <div
-                key={collection.id}
-                onClick={() => handleSelectCollection({ id: collection.id, name: collection.name, description: collection.description })}
-                className="flex items-center gap-4 bg-card/40 border border-border/40 hover:bg-card/60 rounded-2xl p-3 cursor-pointer active:scale-[0.98] transition-all duration-300"
+              <div 
+                key={collection.id} 
+                className="relative overflow-hidden rounded-2xl select-none animate-fade-in"
               >
-                {/* Stacked Poster Collage Cover */}
-                <div className="w-16 h-20 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0 relative border border-border/30 shadow-inner">
-                  {items.length > 0 ? (
-                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-                      {items.slice(0, 3).map((item, index) => {
-                        const posterUrl = getImageUrl(item.poster_path || '', 'w185');
-                        return (
-                          <img 
-                            key={item.id}
-                            src={posterUrl}
-                            className={cn(
-                              "absolute w-[80%] h-[90%] object-cover rounded-lg shadow-md border border-black/10 transition-all duration-300",
-                              index === 0 && "z-10 translate-y-0 scale-100",
-                              index === 1 && "z-0 -translate-x-2.5 -translate-y-1 rotate-[-6deg] opacity-70 scale-95",
-                              index === 2 && "z-0 translate-x-2.5 -translate-y-1 rotate-[6deg] opacity-40 scale-90"
-                            )}
-                            alt=""
-                          />
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <Plus className="w-5 h-5 text-muted-foreground/40" />
+                {/* Swipe Action Buttons (Behind on the Left, Revealed on Swipe Right) */}
+                <div 
+                  className={cn(
+                    "absolute top-0 bottom-0 left-0 flex items-center gap-2 px-3 z-0 transition-all duration-300 ease-out",
+                    isSwiped ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-90 -translate-x-4 pointer-events-none"
                   )}
-                  {/* Item count badge overlap */}
-                  <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-md border border-black/35 shadow-sm scale-90">
-                    {items.length}
-                  </div>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-base text-foreground truncate">{collection.name}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
-                    {collection.description || 'Koleksi Film tanpa deskripsi.'}
-                  </p>
+                >
+                  <Button
+                    size="icon"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditCollectionName(collection.name);
+                      setEditCollectionDescription(collection.description || '');
+                      setEditCollectionShared(collection.is_shared);
+                      setSelectedEditCollection({
+                        id: collection.id,
+                        name: collection.name,
+                        description: collection.description || '',
+                        is_shared: collection.is_shared
+                      });
+                      setIsEditDrawerOpen(true);
+                    }}
+                    className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-md active:scale-95 transition-all flex items-center justify-center border border-amber-400/20"
+                    title="Edit Koleksi"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
                   
-                  <div className="mt-2 flex items-center gap-2">
-                    <span
-                       className={cn(
-                         "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                         collection.is_shared
-                           ? "bg-primary/10 text-primary border-primary/20"
-                           : "bg-muted text-muted-foreground border-border/50"
-                       )}
-                     >
-                       {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                       {collection.is_shared ? 'Publik' : 'Pribadi'}
-                     </span>
+                  <Button
+                    size="icon"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleShared.mutate({ id: collection.id, is_shared: !collection.is_shared });
+                    }}
+                    disabled={toggleShared.isPending}
+                    className={cn(
+                      "w-10 h-10 rounded-full text-white shadow-md active:scale-95 transition-all flex items-center justify-center border",
+                      collection.is_shared 
+                        ? "bg-teal-500 hover:bg-teal-600 border-teal-400/20" 
+                        : "bg-slate-600 hover:bg-slate-700 border-slate-500/20"
+                    )}
+                    title={collection.is_shared ? "Ubah ke Pribadi" : "Ubah ke Publik"}
+                  >
+                    {collection.is_shared ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                  </Button>
+
+                  <Button
+                    size="icon"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCollectionToDelete({ id: collection.id, name: collection.name });
+                      setIsDeleteDialogOpen(true);
+                    }}
+                    className="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-md active:scale-95 transition-all flex items-center justify-center border border-rose-400/20"
+                    title="Hapus Koleksi"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Main Card (z-10, Slides Right on Swipe) */}
+                <div
+                  onTouchStart={(e) => handleTouchStart(e, collection.id)}
+                  onTouchMove={(e) => handleTouchMove(e, collection.id)}
+                  onTouchEnd={handleTouchEnd}
+                  onClick={(e) => {
+                    if (isSwiped) {
+                      e.stopPropagation();
+                      setSwipedId(null);
+                    } else {
+                      handleSelectCollection({ 
+                        id: collection.id, 
+                        name: collection.name, 
+                        description: collection.description 
+                      });
+                    }
+                  }}
+                  className={cn(
+                    "flex items-center gap-4 bg-card/40 border border-border/40 hover:bg-card/60 rounded-2xl p-3 cursor-pointer active:scale-[0.98] transition-all duration-300 ease-out z-10 relative",
+                    isSwiped ? "translate-x-[154px] shadow-lg shadow-black/10" : "translate-x-0"
+                  )}
+                >
+                  {/* Stacked Poster Collage Cover */}
+                  <div className="w-16 h-20 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0 relative border border-border/30 shadow-inner">
+                    {items.length > 0 ? (
+                      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                        {items.slice(0, 3).map((item, index) => {
+                          const posterUrl = getImageUrl(item.poster_path || '', 'w185');
+                          return (
+                            <img 
+                              key={item.id}
+                              src={posterUrl}
+                              className={cn(
+                                "absolute w-[80%] h-[90%] object-cover rounded-lg shadow-md border border-black/10 transition-all duration-300",
+                                index === 0 && "z-10 translate-y-0 scale-100",
+                                index === 1 && "z-0 -translate-x-2.5 -translate-y-1 rotate-[-6deg] opacity-70 scale-95",
+                                index === 2 && "z-0 translate-x-2.5 -translate-y-1 rotate-[6deg] opacity-40 scale-90"
+                              )}
+                              alt=""
+                            />
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <Plus className="w-5 h-5 text-muted-foreground/40" />
+                    )}
+                    {/* Item count badge overlap */}
+                    <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-md border border-black/35 shadow-sm scale-90">
+                      {items.length}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-base text-foreground truncate">{collection.name}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
+                      {collection.description || 'Koleksi Film tanpa deskripsi.'}
+                    </p>
+                    
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                            collection.is_shared
+                              ? "bg-primary/10 text-primary border-primary/20"
+                              : "bg-muted text-muted-foreground border-border/50"
+                          )}
+                        >
+                          {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                          {collection.is_shared ? 'Publik' : 'Pribadi'}
+                        </span>
+                      </div>
+                      
+                      {/* Swiped Indicator Hint */}
+                      {!isSwiped && (
+                        <span className="text-[10px] text-muted-foreground/30 flex items-center gap-0.5 animate-pulse">
+                          <span>Geser</span>
+                          <ChevronRight className="w-3 h-3 text-muted-foreground/40" />
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -305,6 +533,103 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
           </form>
         </DrawerContent>
       </Drawer>
+
+      {/* Reusable Drawer for editing */}
+      <Drawer open={isEditDrawerOpen} onOpenChange={setIsEditDrawerOpen}>
+        <DrawerContent className="bg-background/95 backdrop-blur-xl border-border/50 text-foreground">
+          <DrawerHeader className="border-b border-border/30">
+            <DrawerTitle className="text-lg font-bold text-center">Edit Koleksi</DrawerTitle>
+          </DrawerHeader>
+          <form onSubmit={handleUpdateCollection} className="space-y-4 px-4 py-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Nama Koleksi</label>
+              <Input
+                placeholder="Contoh: Film Sci-Fi Terbaik"
+                value={editCollectionName}
+                onChange={(e) => setEditCollectionName(e.target.value)}
+                className="bg-card/50 border-border/50 h-12 rounded-xl focus:ring-primary text-sm font-medium"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Deskripsi</label>
+              <Textarea
+                placeholder="Isi koleksi ini tentang apa?"
+                value={editCollectionDescription}
+                onChange={(e) => setEditCollectionDescription(e.target.value)}
+                className="bg-card/50 border-border/50 rounded-xl focus-visible:ring-primary min-h-[90px] resize-none text-sm leading-relaxed"
+                maxLength={500}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-card/30 border border-border/40">
+              <div className="flex items-start gap-3">
+                {editCollectionShared ? (
+                  <Globe className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                ) : (
+                  <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                )}
+                <div>
+                  <p className="text-sm font-bold text-foreground">
+                    {editCollectionShared ? 'Publik' : 'Pribadi'}
+                  </p>
+                  <p className="text-2xs text-muted-foreground mt-0.5 leading-relaxed">
+                    {editCollectionShared
+                      ? 'Fitur Shared Films bisa melihat koleksimu.'
+                      : 'Hanya kamu yang bisa melihat koleksinya.'}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={editCollectionShared}
+                onCheckedChange={setEditCollectionShared}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+            <DrawerFooter className="px-0 pb-2 pt-4">
+              <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20" disabled={!editCollectionName.trim() || updateCollection.isPending}>
+                {updateCollection.isPending ? "Menyimpan..." : "Simpan Perubahan"}
+              </Button>
+            </DrawerFooter>
+          </form>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Reusable Dialog for delete confirmation */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-background/95 backdrop-blur-xl border border-border/50 rounded-2xl w-[90%] max-w-sm mx-auto text-foreground p-6">
+          <DialogHeader className="space-y-3 text-center sm:text-center animate-scale-up">
+            <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+              <Trash2 className="w-6 h-6 text-rose-500 animate-pulse" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-center">Hapus Koleksi?</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground text-center leading-relaxed">
+              Apakah Anda yakin ingin menghapus koleksi <span className="text-foreground font-semibold">"{collectionToDelete?.name}"</span>? Film-film di dalamnya tidak akan dihapus dari database.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setCollectionToDelete(null);
+              }}
+              className="flex-1 h-11 border-border/60 hover:bg-white/5 rounded-xl font-semibold text-sm transition-all"
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                if (collectionToDelete) {
+                  deleteCollection.mutate(collectionToDelete.id);
+                }
+              }}
+              disabled={deleteCollection.isPending}
+              className="flex-1 h-11 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-rose-500/15 transition-all"
+            >
+              {deleteCollection.isPending ? "Menghapus..." : "Hapus"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
