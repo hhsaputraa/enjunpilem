@@ -1,7 +1,10 @@
 import * as React from "react"
-import { Drawer as DrawerPrimitive } from "vaul"
+import { Drawer as VaulDrawer } from "vaul"
 
 import { cn } from "@/lib/utils"
+
+// Handle potential ESM/CJS default export wrapping in production/staging
+const DrawerPrimitive = (VaulDrawer as any).default || VaulDrawer
 
 const Drawer = ({
   shouldScaleBackground = true,
