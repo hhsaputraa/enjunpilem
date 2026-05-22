@@ -117,7 +117,7 @@ export const MobileWatchlist: React.FC = () => {
         ? getMovieDetails(item.tmdb_id!)
         : getTVDetails(item.tmdb_id!),
       staleTime: 1000 * 60 * 60, // 1 hour
-      enabled: !!item.tmdb_id && libraryTab === 'watchlist',
+      enabled: !!item.tmdb_id,
     }))
   });
 
@@ -382,178 +382,178 @@ export const MobileWatchlist: React.FC = () => {
         </div>
 
         {/* Tab Contents */}
-        {libraryTab === 'watchlist' ? (
-          <div className="space-y-4">
-            {/* Watchlist Stats */}
-            <div className="px-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-                  <div className="text-xl font-black text-primary tracking-tight">{getWatchlistStats().total}</div>
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Total</div>
-                </div>
-                <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-                  <div className="text-xl font-black text-blue-400 tracking-tight">{getWatchlistStats().movies}</div>
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Film</div>
-                </div>
-                <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-                  <div className="text-xl font-black text-purple-400 tracking-tight">{getWatchlistStats().tvShows}</div>
-                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Serial</div>
-                </div>
+        <div className={cn("space-y-4", libraryTab !== 'watchlist' && "hidden")}>
+          {/* Watchlist Stats */}
+          <div className="px-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+                <div className="text-xl font-black text-primary tracking-tight">{getWatchlistStats().total}</div>
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Total</div>
+              </div>
+              <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+                <div className="text-xl font-black text-blue-400 tracking-tight">{getWatchlistStats().movies}</div>
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Film</div>
+              </div>
+              <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
+                <div className="text-xl font-black text-purple-400 tracking-tight">{getWatchlistStats().tvShows}</div>
+                <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Serial</div>
               </div>
             </div>
+          </div>
 
-            {/* Watchlist Filter & Sort Controls */}
-            {!isPreparing && items.length === 0 ? (
-              <EmptyWatchlist onExplore={handleExplore} />
-            ) : (
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <div className="px-4">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="all">Semua</TabsTrigger>
-                    <TabsTrigger value="movies">Film</TabsTrigger>
-                    <TabsTrigger value="tv">Serial</TabsTrigger>
-                  </TabsList>
-                </div>
+          {/* Watchlist Filter & Sort Controls */}
+          {!isPreparing && items.length === 0 ? (
+            <EmptyWatchlist onExplore={handleExplore} />
+          ) : (
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <div className="px-4">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">Semua</TabsTrigger>
+                  <TabsTrigger value="movies">Film</TabsTrigger>
+                  <TabsTrigger value="tv">Serial</TabsTrigger>
+                </TabsList>
+              </div>
 
-                {showFilters && (
-                  <div className="px-4 py-2 mt-3 space-y-3 bg-muted/20 border-y border-border/30">
-                    <div className="space-y-1.5">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Urutkan:</span>
-                      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-                        {sortOptions.map((option) => (
-                          <Button
-                            key={option.value}
-                            variant={sortBy === option.value ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleSortChange(option.value as SortOption)}
-                            className={cn(
-                              "h-8 text-xs rounded-full px-4 flex-shrink-0 transition-all",
-                              sortBy === option.value 
-                                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
-                                : "text-muted-foreground bg-card/50 hover:bg-card border-border/40"
-                            )}
-                          >
-                            {option.label}
-                          </Button>
-                        ))}
-                      </div>
+              {showFilters && (
+                <div className="px-4 py-2 mt-3 space-y-3 bg-muted/20 border-y border-border/30">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Urutkan:</span>
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                      {sortOptions.map((option) => (
+                        <Button
+                          key={option.value}
+                          variant={sortBy === option.value ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleSortChange(option.value as SortOption)}
+                          className={cn(
+                            "h-8 text-xs rounded-full px-4 flex-shrink-0 transition-all",
+                            sortBy === option.value 
+                              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105" 
+                              : "text-muted-foreground bg-card/50 hover:bg-card border-border/40"
+                          )}
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                <TabsContent value="all" className="mt-4">
-                  <WatchlistContent
-                    items={paginatedItems}
-                    isLoading={isPreparing}
-                    viewMode={viewMode}
-                    isSelectionMode={isSelectionMode}
-                    selectedItems={selectedItems}
-                    onItemClick={handleItemClick}
-                    onWatchlistToggle={handleWatchlistToggle}
-                  />
-                </TabsContent>
+              <TabsContent value="all" className="mt-4">
+                <WatchlistContent
+                  items={paginatedItems}
+                  isLoading={isPreparing}
+                  viewMode={viewMode}
+                  isSelectionMode={isSelectionMode}
+                  selectedItems={selectedItems}
+                  onItemClick={handleItemClick}
+                  onWatchlistToggle={handleWatchlistToggle}
+                />
+              </TabsContent>
 
-                <TabsContent value="movies" className="mt-4">
-                  <WatchlistContent
-                    items={paginatedItems}
-                    isLoading={isPreparing}
-                    viewMode={viewMode}
-                    isSelectionMode={isSelectionMode}
-                    selectedItems={selectedItems}
-                    onItemClick={handleItemClick}
-                    onWatchlistToggle={handleWatchlistToggle}
-                  />
-                </TabsContent>
+              <TabsContent value="movies" className="mt-4">
+                <WatchlistContent
+                  items={paginatedItems}
+                  isLoading={isPreparing}
+                  viewMode={viewMode}
+                  isSelectionMode={isSelectionMode}
+                  selectedItems={selectedItems}
+                  onItemClick={handleItemClick}
+                  onWatchlistToggle={handleWatchlistToggle}
+                />
+              </TabsContent>
 
-                <TabsContent value="tv" className="mt-4">
-                  <WatchlistContent
-                    items={paginatedItems}
-                    isLoading={isPreparing}
-                    viewMode={viewMode}
-                    isSelectionMode={isSelectionMode}
-                    selectedItems={selectedItems}
-                    onItemClick={handleItemClick}
-                    onWatchlistToggle={handleWatchlistToggle}
-                  />
-                </TabsContent>
-              </Tabs>
-            )}
+              <TabsContent value="tv" className="mt-4">
+                <WatchlistContent
+                  items={paginatedItems}
+                  isLoading={isPreparing}
+                  viewMode={viewMode}
+                  isSelectionMode={isSelectionMode}
+                  selectedItems={selectedItems}
+                  onItemClick={handleItemClick}
+                  onWatchlistToggle={handleWatchlistToggle}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
 
-            {/* Pagination Controls */}
-            {!isPreparing && sortedItems.length > ITEMS_PER_PAGE && (
-              <div className="flex items-center justify-center gap-2 mt-2 pb-28">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={activePage === 1}
-                  className="h-9 w-9 rounded-xl border-border/40 bg-card/40 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
-                >
-                  <ChevronLeft className="h-4.5 w-4.5" />
-                </Button>
+          {/* Pagination Controls */}
+          {!isPreparing && sortedItems.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-center gap-2 mt-2 pb-28">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={activePage === 1}
+                className="h-9 w-9 rounded-xl border-border/40 bg-card/40 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
+              >
+                <ChevronLeft className="h-4.5 w-4.5" />
+              </Button>
+              
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                // Only show current page, first, last, and immediate neighbors to avoid overflow
+                if (
+                  pageNum === 1 || 
+                  pageNum === totalPages || 
+                  Math.abs(pageNum - activePage) <= 1
+                ) {
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={activePage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "h-9 min-w-9 rounded-xl font-black transition-all duration-300",
+                        activePage === pageNum
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
+                          : "border-border/40 bg-card/40 text-muted-foreground hover:bg-white/10"
+                      )}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
                 
-                {[...Array(totalPages)].map((_, i) => {
-                  const pageNum = i + 1;
-                  // Only show current page, first, last, and immediate neighbors to avoid overflow
-                  if (
-                    pageNum === 1 || 
-                    pageNum === totalPages || 
-                    Math.abs(pageNum - activePage) <= 1
-                  ) {
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={activePage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={cn(
-                          "h-9 min-w-9 rounded-xl font-black transition-all duration-300",
-                          activePage === pageNum
-                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
-                            : "border-border/40 bg-card/40 text-muted-foreground hover:bg-white/10"
-                        )}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  }
-                  
-                  // Render ellipses
-                  if (
-                    pageNum === 2 || 
-                    pageNum === totalPages - 1
-                  ) {
-                    return (
-                      <span key={pageNum} className="text-zinc-600 px-1 font-bold text-xs select-none">
-                        •••
-                      </span>
-                    );
-                  }
-                  
-                  return null;
-                })}
+                // Render ellipses
+                if (
+                  pageNum === 2 || 
+                  pageNum === totalPages - 1
+                ) {
+                  return (
+                    <span key={pageNum} className="text-zinc-600 px-1 font-bold text-xs select-none">
+                      •••
+                    </span>
+                  );
+                }
+                
+                return null;
+              })}
 
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={activePage === totalPages}
-                  className="h-9 w-9 rounded-xl border-border/40 bg-card/40 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
-                >
-                  <ChevronRight className="h-4.5 w-4.5" />
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Nested Collections Content */
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={activePage === totalPages}
+                className="h-9 w-9 rounded-xl border-border/40 bg-card/40 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
+              >
+                <ChevronRight className="h-4.5 w-4.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className={cn(libraryTab !== 'collections' && "hidden")}>
+          {/* Nested Collections Content */}
           <MobileCollections 
             isNested={true} 
             isCreateDrawerOpen={isCreateDrawerOpen}
             setIsCreateDrawerOpen={setIsCreateDrawerOpen}
             onCollectionSelect={setSelectedCollection}
           />
-        )}
+        </div>
       </div>
     </PageLayout>
   );

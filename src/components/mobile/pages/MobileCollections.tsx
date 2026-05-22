@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { MobileCollectionDetails } from './MobileCollectionDetails';
 import { getImageUrl } from '@/services/tmdb';
-import { Plus, Globe, Lock, FolderHeart, Edit3, Trash2, ChevronLeft } from 'lucide-react';
+import { Plus, Globe, Lock, FolderHeart, Edit3, Trash2, ChevronLeft, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +70,9 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
   // Delete Collection state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  // Search feature state
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections', user?.id],
@@ -271,6 +274,15 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
 
   const activeSelected = isNested ? null : localSelectedCollection;
 
+  // Filter collections by search query
+  const filteredCollections = collections?.filter((collection) => {
+    const nameMatch = collection.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const descMatch = collection.description
+      ? collection.description.toLowerCase().includes(searchQuery.toLowerCase())
+      : false;
+    return nameMatch || descMatch;
+  });
+
   // If in non-nested mode and collection is selected, render details inline
   if (!isNested && activeSelected) {
     return (
@@ -289,6 +301,22 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
 
   const listContent = (
     <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-4 pt-4">
+      {/* Premium Search Input (rendered if user has collections) */}
+      {collections && collections.length > 0 && (
+        <div className="relative w-full mb-2 group">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+            <Search className="h-4 w-4 text-muted-foreground/60 transition-colors group-focus-within:text-primary" />
+          </span>
+          <Input
+            type="text"
+            placeholder="Cari nama atau deskripsi koleksi..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 h-11 bg-card/30 border-border/40 focus-visible:ring-primary rounded-xl text-sm font-medium transition-all"
+          />
+        </div>
+      )}
+
       {isLoading ? (
          <div className="space-y-4">
            {[...Array(4)].map((_, i) => (
@@ -305,9 +333,20 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
             Buat koleksi pertamamu dengan menekan tombol tambah (+) di pojok atas.
           </p>
         </div>
+      ) : filteredCollections?.length === 0 ? (
+        /* Sleek Empty State for Search Results */
+        <div className="flex flex-col items-center justify-center p-12 text-center h-[40vh] animate-fade-in">
+          <div className="w-12 h-12 rounded-full bg-card/30 flex items-center justify-center mb-4 border border-border/40">
+            <Search className="w-5 h-5 text-muted-foreground/50 animate-pulse" />
+          </div>
+          <h4 className="font-bold text-sm mb-1 text-foreground">Tidak ada hasil ditemukan</h4>
+          <p className="text-xs text-muted-foreground max-w-[220px] leading-relaxed">
+            Tidak ada koleksi yang cocok dengan "{searchQuery}".
+          </p>
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {collections?.map((collection) => {
+          {filteredCollections?.map((collection) => {
             const items = collection.collection_items || [];
             const isSwiped = swipedId === collection.id;
             
@@ -402,31 +441,49 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
                   )}
                 >
                   {/* Stacked Poster Collage Cover */}
-                  <div className="w-16 h-20 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0 relative border border-border/30 shadow-inner">
+                  <div className="w-16 h-20 shrink-0 relative mr-2 select-none">
                     {items.length > 0 ? (
-                      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-                        {items.slice(0, 3).map((item, index) => {
-                          const posterUrl = getImageUrl(item.poster_path || '', 'w185');
-                          return (
+                      <>
+                        {/* 3rd Layer (Far back) - Renders items[2] poster if available */}
+                        {items.length >= 3 && items[2] && (
+                          <div className="absolute inset-0 translate-x-2 -translate-y-2 rounded-xl overflow-hidden border border-border/40 bg-muted -z-20 shadow-2xs">
                             <img 
-                              key={item.id}
-                              src={posterUrl}
-                              className={cn(
-                                "absolute w-[80%] h-[90%] object-cover rounded-lg shadow-md border border-black/10 transition-all duration-300",
-                                index === 0 && "z-10 translate-y-0 scale-100",
-                                index === 1 && "z-0 -translate-x-2.5 -translate-y-1 rotate-[-6deg] opacity-70 scale-95",
-                                index === 2 && "z-0 translate-x-2.5 -translate-y-1 rotate-[6deg] opacity-40 scale-90"
-                              )}
+                              src={getImageUrl(items[2].poster_path || '', 'w185')}
+                              className="w-full h-full object-cover opacity-40 brightness-75"
                               alt=""
                             />
-                          );
-                        })}
-                      </div>
+                          </div>
+                        )}
+                        
+                        {/* 2nd Layer (Middle back) - Renders items[1] poster if available */}
+                        {items.length >= 2 && items[1] && (
+                          <div className="absolute inset-0 translate-x-1 -translate-y-1 rounded-xl overflow-hidden border border-border/40 bg-muted -z-10 shadow-xs">
+                            <img 
+                              src={getImageUrl(items[1].poster_path || '', 'w185')}
+                              className="w-full h-full object-cover opacity-75 brightness-90"
+                              alt=""
+                            />
+                          </div>
+                        )}
+                        
+                        {/* 1st Layer (Main Front Card) - Renders items[0] poster */}
+                        <div className="w-full h-full rounded-xl overflow-hidden border border-border/40 bg-muted relative z-10 shadow-md">
+                          <img 
+                            src={getImageUrl(items[0].poster_path || '', 'w185')}
+                            className="w-full h-full object-cover"
+                            alt=""
+                          />
+                        </div>
+                      </>
                     ) : (
-                      <Plus className="w-5 h-5 text-muted-foreground/40" />
+                      /* Empty Collection Placeholder with custom modern gradient */
+                      <div className="w-full h-full rounded-xl border border-dashed border-border/60 bg-gradient-to-br from-card/30 to-card/10 flex items-center justify-center z-10 relative shadow-inner">
+                        <Plus className="w-5 h-5 text-muted-foreground/40" />
+                      </div>
                     )}
-                    {/* Item count badge overlap */}
-                    <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-md border border-black/35 shadow-sm scale-90">
+                    
+                    {/* Item count badge float overlay */}
+                    <div className="absolute -bottom-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-lg border border-black/40 shadow-lg z-20">
                       {items.length}
                     </div>
                   </div>
