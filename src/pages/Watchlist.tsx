@@ -1,5 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
@@ -86,13 +87,13 @@ const Watchlist = () => {
   const movies = watchlist?.filter(item => item.media_type === 'movie') || [];
   const tvShows = watchlist?.filter(item => item.media_type === 'tv') || [];
 
-  const MovieList = ({ items }: { items: any[] }) => (
+  const MovieList = ({ items }: { items: (TMDBMediaItem & { watchlist_id: string })[] }) => (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-      {items.map((item: any) => (
+      {items.map((item: TMDBMediaItem & { watchlist_id: string }) => (
         <div key={`${item.media_type}-${item.id}`} className="relative group">
           <div className="relative">
             <MovieCard
-              id={item.id}
+              id={Number(item.id)}
               title={item.title || item.name}
               posterPath={item.poster_path}
               overview={item.overview}

@@ -1,5 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
@@ -87,11 +88,11 @@ const Favorites = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {favorites?.map((item: any) => (
+            {favorites?.map((item: TMDBMediaItem & { favorite_id: string }) => (
               <div key={`${item.media_type}-${item.id}`} className="relative group">
                 <div className="relative">
                   <MovieCard
-                    id={item.id}
+                    id={Number(item.id)}
                     title={item.title || item.name}
                     posterPath={item.poster_path}
                     overview={item.overview}

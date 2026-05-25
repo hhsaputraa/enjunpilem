@@ -12,7 +12,7 @@ const DetailListCollectionRouter = () => {
      return <DetailListCollection title="Film Sedang Tren" queryKey="trending" queryFn={getTrending} collectionId="trending" />;
   }
   if (queryKey === 'new') {
-     return <DetailListCollection title="Rilis Terbaru" queryKey="new" queryFn={getNowPlayingMovies as any} collectionId="new" />;
+     return <DetailListCollection title="Rilis Terbaru" queryKey="new" queryFn={getNowPlayingMovies} collectionId="new" />;
   }
   if (queryKey === 'top-rated') {
      return <DetailListCollection title="Top Rated" queryKey="top-rated" queryFn={getTopRatedMovies} collectionId="top-rated" />;

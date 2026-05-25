@@ -73,7 +73,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
       showSuccess('Berhasil!', `"${title}" ditambahkan ke koleksi`);
       handleClose();
     },
-    onError: (err: any) => showError('Gagal', err.message),
+    onError: (err: Error) => showError('Gagal', err.message),
   });
 
   const createCollectionMutation = useMutation({
@@ -101,7 +101,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
       showSuccess('Koleksi dibuat!', `"${title}" ditambahkan ke koleksi baru`);
       handleClose();
     },
-    onError: (err: any) => showError('Gagal', err.message),
+    onError: (err: Error) => showError('Gagal', err.message),
   });
 
   const handleClose = () => {
@@ -285,7 +285,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
             ) : (
               filteredCollections.map(col => {
                 const alreadyAdded = col.collection_items?.some(
-                  (i: any) => i.media_id === mediaId && i.media_type === mediaType
+                  (i: { media_id: number; media_type: string }) => i.media_id === mediaId && i.media_type === mediaType
                 );
                 return (
                   <button

@@ -69,7 +69,7 @@ const Profile = () => {
       });
       setIsEditing(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating profile",
         description: error.message,

@@ -11,15 +11,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
-import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
+import { useMobileWatchlist, WatchlistItem as DBWatchlistItem } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
 import { useQueries } from '@tanstack/react-query';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
+import { TMDBMediaItem } from '@/types/tmdb';
 import { MobileCollections } from './MobileCollections';
 import { MobileCollectionDetails } from './MobileCollectionDetails';
 
-interface WatchlistItem {
+interface MobileWatchlistItem {
   id: string;
   title: string;
   poster: string;
@@ -29,6 +30,13 @@ interface WatchlistItem {
   addedAt: string;
   isInWatchlist: boolean;
 }
+
+type EnrichedWatchlistItem = DBWatchlistItem & {
+  title: string;
+  poster_path?: string | null;
+  vote_average: number;
+  release_date: string;
+};
 
 type SortOption = 'added_date' | 'title' | 'rating' | 'release_date';
 type ViewMode = 'grid' | 'list';
@@ -65,6 +73,18 @@ export const MobileWatchlist: React.FC = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Fetch details for all watchlist entries in parallel from TMDB
+  const tmdbQueries = useQueries({
+    queries: (watchlist || []).map((item) => ({
+      queryKey: ['tmdb-detail', item.media_type, item.tmdb_id],
+      queryFn: () => item.media_type === 'movie' 
+        ? getMovieDetails(item.tmdb_id!)
+        : getTVDetails(item.tmdb_id!),
+      staleTime: 1000 * 60 * 60, // 1 hour
+      enabled: !!item.tmdb_id && !!user,
+    }))
+  });
+
   // Scroll to top on page change
   React.useEffect(() => {
     const scrollContainer = document.querySelector('.overflow-y-auto');
@@ -77,49 +97,26 @@ export const MobileWatchlist: React.FC = () => {
 
   if (loading) {
     return (
-      <PageLayout title="Pustaka" showBackButton={false}>
-        <div className="px-4 py-8">
-          <GridSkeleton />
-        </div>
+      <PageLayout title="Pustaka">
+        <GridSkeleton itemCount={6} columns={viewMode === 'grid' ? 2 : 3} />
       </PageLayout>
     );
   }
 
   if (!user) {
     return (
-      <PageLayout title="Pustaka" showBackButton={false}>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center space-y-6 animate-in fade-in zoom-in duration-300">
-          <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-tr from-teal-500/20 to-teal-500/5 flex items-center justify-center border border-teal-500/20 shadow-lg shadow-teal-500/5">
-            <Lock className="w-8 h-8 text-teal-400 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold tracking-tight text-white">Akses Pustaka Terkunci</h3>
-            <p className="text-muted-foreground text-sm max-w-xs leading-relaxed mx-auto">
-              Silakan masuk ke akun Anda untuk menyinkronkan watchlist dan mengelola koleksi film pribadi Anda.
-            </p>
-          </div>
-          <Button 
-            onClick={() => navigate('/auth')} 
-            className="w-full max-w-[200px] h-12 bg-primary hover:bg-primary/80 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
-          >
-            Login Sekarang
-          </Button>
+      <PageLayout title="Pustaka">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 text-center">
+          <Lock className="w-12 h-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-bold mb-2">Masuk ke Akun Anda</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Silakan masuk untuk melihat dan mengelola daftar tontonan Anda.
+          </p>
+          <Button onClick={() => navigate('/auth')}>Masuk</Button>
         </div>
       </PageLayout>
     );
   }
-
-  // Fetch details for all watchlist entries in parallel from TMDB
-  const tmdbQueries = useQueries({
-    queries: watchlist.map((item) => ({
-      queryKey: ['tmdb-detail', item.media_type, item.tmdb_id],
-      queryFn: () => item.media_type === 'movie' 
-        ? getMovieDetails(item.tmdb_id!)
-        : getTVDetails(item.tmdb_id!),
-      staleTime: 1000 * 60 * 60, // 1 hour
-      enabled: !!item.tmdb_id,
-    }))
-  });
 
   const isLoadingDetails = tmdbQueries.some(q => q.isLoading);
   const isPreparing = isLoading || isLoadingDetails;
@@ -137,14 +134,14 @@ export const MobileWatchlist: React.FC = () => {
   });
 
   // Transform Supabase data to mobile format
-  const transformWatchlistItem = (item: any) => ({
-    id: item.tmdb_id,
+  const transformWatchlistItem = (item: EnrichedWatchlistItem): MobileWatchlistItem => ({
+    id: item.tmdb_id || '',
     title: item.title,
     poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
     rating: item.vote_average,
     year: item.release_date ? new Date(item.release_date).getFullYear().toString() : '',
-    type: item.media_type,
-    addedAt: item.created_at,
+    type: item.media_type as 'movie' | 'tv',
+    addedAt: item.created_at || new Date().toISOString(),
     isInWatchlist: true,
   });
 
@@ -180,7 +177,7 @@ export const MobileWatchlist: React.FC = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedItems = sortedItems.slice(startIndex, endIndex);
 
-  const handleItemClick = (item: WatchlistItem) => {
+  const handleItemClick = (item: MobileWatchlistItem) => {
     if (isSelectionMode) {
       toggleItemSelection(item.id);
     } else {
@@ -561,12 +558,12 @@ export const MobileWatchlist: React.FC = () => {
 
 // Separate component for watchlist content
 const WatchlistContent: React.FC<{
-  items: WatchlistItem[];
+  items: MobileWatchlistItem[];
   isLoading: boolean;
   viewMode: ViewMode;
   isSelectionMode: boolean;
   selectedItems: string[];
-  onItemClick: (item: WatchlistItem) => void;
+  onItemClick: (item: MobileWatchlistItem) => void;
   onWatchlistToggle: (id: string) => void;
 }> = ({
   items,

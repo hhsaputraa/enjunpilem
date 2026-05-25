@@ -4,6 +4,7 @@ import { getEnjunChoice } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { TMDBMediaItem } from '@/types/tmdb';
 
 const MoreCollection = () => {
   const [page, setPage] = useState(1);
@@ -30,10 +31,10 @@ const MoreCollection = () => {
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {items.map((item: any) => (
+            {items.map((item: TMDBMediaItem) => (
                 <div key={item.id} className="w-full">
                   <MovieCard
-                    id={item.id}
+                    id={Number(item.id)}
                     title={item.title || item.name}
                     posterPath={item.poster_path}
                     overview={item.overview}
@@ -56,7 +57,7 @@ const MoreCollection = () => {
   <span className="text-lg font-semibold">{page}</span>
   <Button
     onClick={() => setPage((prev) => prev + 1)}
-    disabled={page === data?.totalPages || isFetching} // Disable jika di halaman terakhir
+    disabled={page === totalPages || isFetching} // Disable jika di halaman terakhir
   >
     Next
   </Button>

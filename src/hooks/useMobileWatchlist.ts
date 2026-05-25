@@ -73,11 +73,11 @@ export const useMobileWatchlist = () => {
       if (error) throw error;
       return { ...data, title: item.title };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { title: string }) => {
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
       showSuccess('Ditambahkan ke Watchlist', `"${data.title}" berhasil ditambahkan`);
     },
-    onError: (err: any) => showError('Gagal menambahkan', err.message),
+    onError: (err: Error) => showError('Gagal menambahkan', err.message),
   });
 
   const removeFromWatchlistMutation = useMutation({
@@ -96,7 +96,7 @@ export const useMobileWatchlist = () => {
       const item = watchlist.find((w) => w.tmdb_id === tmdbId);
       showSuccess('Dihapus dari Watchlist', `"${item?.title || 'Item'}" telah dihapus`);
     },
-    onError: (err: any) => showError('Gagal menghapus', err.message),
+    onError: (err: Error) => showError('Gagal menghapus', err.message),
   });
 
   const isInWatchlist = (tmdbId: string) => watchlist.some((i) => i.tmdb_id === tmdbId);
@@ -121,8 +121,9 @@ export const useMobileWatchlist = () => {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
       showSuccess('Berhasil dihapus', `${tmdbIds.length} item telah dihapus dari watchlist`);
-    } catch (err: any) {
-      showError('Gagal menghapus', err.message);
+    } catch (err) {
+      const error = err as Error;
+      showError('Gagal menghapus', error.message);
     }
   };
 
@@ -185,11 +186,11 @@ export const useMobileFavorites = () => {
       if (error) throw error;
       return { ...data, title: item.title };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { title: string }) => {
       queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] });
       showSuccess('Ditambahkan ke Favorit', `"${data.title}" berhasil ditambahkan`);
     },
-    onError: (err: any) => showError('Gagal menambahkan', err.message),
+    onError: (err: Error) => showError('Gagal menambahkan', err.message),
   });
 
   const removeFromFavoritesMutation = useMutation({
@@ -208,7 +209,7 @@ export const useMobileFavorites = () => {
       const item = favorites.find((f) => f.tmdb_id === tmdbId);
       showSuccess('Dihapus dari Favorit', `"${item?.title || 'Item'}" telah dihapus`);
     },
-    onError: (err: any) => showError('Gagal menghapus', err.message),
+    onError: (err: Error) => showError('Gagal menghapus', err.message),
   });
 
   const isInFavorites = (tmdbId: string) => favorites.some((i) => i.tmdb_id === tmdbId);

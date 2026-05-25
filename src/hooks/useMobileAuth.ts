@@ -29,9 +29,10 @@ export const useMobileAuth = () => {
       if (error) throw error;
       showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
-    } catch (error: any) {
-      showError('Gagal menyelesaikan otentikasi Google', error.message);
-      return { success: false, error: error.message };
+    } catch (error) {
+      const err = error as Error;
+      showError('Gagal menyelesaikan otentikasi Google', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -47,9 +48,10 @@ export const useMobileAuth = () => {
       if (error) throw error;
       showSuccess('Berhasil masuk!', 'Selamat datang kembali');
       return { success: true };
-    } catch (error: any) {
-      showError('Gagal masuk', error.message);
-      return { success: false, error: error.message };
+    } catch (error) {
+      const err = error as Error;
+      showError('Gagal masuk', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -66,9 +68,10 @@ export const useMobileAuth = () => {
       if (error) throw error;
       showSuccess('Akun berhasil dibuat!', 'Silakan cek email untuk verifikasi akun');
       return { success: true };
-    } catch (error: any) {
-      showError('Gagal membuat akun', error.message);
-      return { success: false, error: error.message };
+    } catch (error) {
+      const err = error as Error;
+      showError('Gagal membuat akun', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -78,9 +81,10 @@ export const useMobileAuth = () => {
       showSuccess('Berhasil keluar', 'Sampai jumpa lagi!');
       navigate('/');
       return { success: true };
-    } catch (error: any) {
-      showError('Gagal keluar', error.message);
-      return { success: false, error: error.message };
+    } catch (error) {
+      const err = error as Error;
+      showError('Gagal keluar', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -92,9 +96,10 @@ export const useMobileAuth = () => {
       if (error) throw error;
       showSuccess('Email reset password terkirim', 'Silakan cek email untuk reset password');
       return { success: true };
-    } catch (error: any) {
-      showError('Gagal reset password', error.message);
-      return { success: false, error: error.message };
+    } catch (error) {
+      const err = error as Error;
+      showError('Gagal reset password', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -104,9 +109,10 @@ export const useMobileAuth = () => {
       if (error) throw error;
       showSuccess('Profil berhasil diperbarui');
       return { success: true };
-    } catch (error: any) {
-      showError('Gagal memperbarui profil', error.message);
-      return { success: false, error: error.message };
+    } catch (error) {
+      const err = error as Error;
+      showError('Gagal memperbarui profil', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -117,7 +123,7 @@ export const useMobileAuth = () => {
 
   const getUserDisplayName = () => {
     if (!user) return 'Guest';
-    const meta = (user as any).user_metadata;
+    const meta = (user as unknown as { user_metadata?: { username?: string; full_name?: string } })?.user_metadata;
     return meta?.username || meta?.full_name || user.email.split('@')[0];
   };
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { HomeLayout } from '../MobileLayout';
 import { HeroSlider } from '../HeroSlider';
-import { CarouselRow } from '../CarouselRow';
+import { CarouselRow, CarouselItem } from '../CarouselRow';
 import { MobileAutoCarouselRow } from '../MobileAutoCarouselRow';
 import { HeroSkeleton, CarouselRowSkeleton } from '../Skeletons';
 import { NetworkError } from '../ErrorState';
@@ -42,12 +42,20 @@ export const MobileHome: React.FC = () => {
 
   const hasError = trending.error || popularMovies.error;
 
-  const handleItemClick = (item: any) => {
-    navigate(`/${item.type}/${item.id}`);
+  const handleItemClick = (item: CarouselItem) => {
+    navigate(`/${item.type || 'movie'}/${item.id}`);
   };
 
-  const handleWatchlistToggle = (item: any) => {
-    toggleWatchlist(item);
+  const handleWatchlistToggle = (id: string) => {
+    const item = [...trendingItems, ...popularItems, ...enjunTopItems].find(x => x.id === id);
+    if (item) {
+      toggleWatchlist({
+        id: item.id,
+        title: item.title,
+        poster: item.poster,
+        type: item.type || 'movie',
+      });
+    }
   };
 
   const handleSearch = () => {

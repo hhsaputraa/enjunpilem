@@ -159,7 +159,7 @@ const SharedFilms = () => {
           {/* Animated Background Posters */}
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-background to-background z-10" />
-            <div className="flex gap-4 opacity-10 blur-sm scale-110 animate-pulse transition-all duration-[3000ms]">
+            <div className="flex gap-4 opacity-10 blur-sm scale-110 animate-pulse transition-all [transition-duration:3000ms]">
                 {collections?.slice(0, 8).map((c, i) => (
                   <img 
                     key={i}

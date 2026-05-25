@@ -2,8 +2,10 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Star } from "lucide-react"
 
+import { TMDBMediaItem } from "@/types/tmdb"
+
 interface HeroSectionProps {
-  trending: any[]
+  trending: TMDBMediaItem[]
 }
 
 export const HeroSection = ({ trending }: HeroSectionProps) => {

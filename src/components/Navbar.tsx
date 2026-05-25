@@ -29,7 +29,7 @@ const Navbar = () => {
   const location = useLocation()
   const { toast } = useToast()
   const { data: profile } = useUserProfile(user?.id)
-  const avatarUrl = profile?.avatar_url || (user as any)?.user_metadata?.avatar_url
+  const avatarUrl = profile?.avatar_url || (user as { user_metadata?: { avatar_url?: string } } | null)?.user_metadata?.avatar_url
 
   useEffect(() => {
     let ticking = false
@@ -59,7 +59,8 @@ const Navbar = () => {
         title: "Logged out",
         description: "See you next time!",
       })
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as Error;
       toast({
         title: "Error logging out",
         description: error.message,

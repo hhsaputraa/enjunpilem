@@ -6,6 +6,7 @@ import { getCollectionBySlugPreview } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Film, Star, Flame, Trophy, Zap, TrendingUp, LucideIcon } from 'lucide-react';
+import { TMDBMediaItem } from '@/types/tmdb';
 
 const iconMap: Record<string, LucideIcon> = {
   Star,
@@ -109,13 +110,13 @@ export const AutoContentRow: React.FC<AutoContentRowProps> = ({
               ))
           ) : (
             <>
-              {items?.slice(0, 12).map((item: any) => (
+              {items?.slice(0, 12).map((item: TMDBMediaItem) => (
                 <div
                   key={item.id}
                   className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start"
                 >
                   <MovieCard
-                    id={item.id}
+                    id={Number(item.id)}
                     title={item.title || item.name}
                     posterPath={item.poster_path}
                     overview={item.overview}

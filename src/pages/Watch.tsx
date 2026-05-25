@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import { useState, useEffect } from 'react';
 import { 
   getMovieDetails, 
@@ -130,7 +131,7 @@ const Watch = () => {
         description: `Marked S${selectedSeason}:E${selectedEpisode} as watched`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating progress",
         description: error.message,
@@ -170,7 +171,7 @@ const Watch = () => {
         title: isFavorite ? "Removed from favorites" : "Added to favorites",
       });
     },
-    onError: (error: any) => {
+    onError: (error: { message: string; code?: string }) => {
       if (error.code === '23505') {
         queryClient.invalidateQueries({ queryKey: ['favorite', validType, mediaId] });
         toast({
@@ -217,7 +218,7 @@ const Watch = () => {
         title: isInWatchlist ? "Removed from watchlist" : "Added to watchlist",
       });
     },
-    onError: (error: any) => {
+    onError: (error: { message: string; code?: string }) => {
       if (error.code === '23505') {
         queryClient.invalidateQueries({ queryKey: ['watchlist', validType, mediaId] });
         toast({
@@ -393,10 +394,10 @@ const Watch = () => {
               <h2 className="text-2xl font-semibold mb-4">More Like This</h2>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex space-x-4">
-                  {recommendations.map((item: any, index: number) => (
+                  {recommendations.map((item: TMDBMediaItem, index: number) => (
                     <div key={item.id} className="w-[200px] flex-shrink-0">
                       <MovieCard
-                        id={item.id}
+                        id={Number(item.id)}
                         title={item.title || item.name}
                         posterPath={item.poster_path}
                         overview={item.overview}

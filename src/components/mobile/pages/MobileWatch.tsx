@@ -22,6 +22,7 @@ import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { getWatchedEpisodes, updateWatchedEpisode } from '@/services/tmdb';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { TMDBGenre, TMDBEpisode } from '@/types/tmdb';
 
 export const MobileWatch: React.FC = () => {
   const navigate = useNavigate();
@@ -200,7 +201,7 @@ export const MobileWatch: React.FC = () => {
             {/* Genres */}
             {movieDetails.genres && movieDetails.genres.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                {movieDetails.genres.map((genre: any, index: number) => (
+                {movieDetails.genres.map((genre: TMDBGenre, index: number) => (
                   <Badge
                     key={index}
                     variant="outline"
@@ -255,7 +256,7 @@ export const MobileWatch: React.FC = () => {
                 </div>
               ) : episodes.length > 0 ? (
                 <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                  {episodes.map((episode: any) => (
+                  {episodes.map((episode: TMDBEpisode) => (
                     <button
                       key={episode.episode_number}
                       onClick={async () => {

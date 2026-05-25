@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, Clock, X, RefreshCw } from 'lucide-react';
 import { useSearch as useSearchAPI, useTrending, transformTMDBData } from '@/hooks/useMobileApi';
 import { cn } from '@/lib/utils';
+import { TMDBMediaItem } from '@/types/tmdb';
+import { CarouselItem } from '../CarouselRow';
 
 interface SearchResult {
   id: string;
@@ -67,16 +69,16 @@ export const MobileSearch: React.FC = () => {
   // Extract trending titles for search suggestions
   const trendingSearches = React.useMemo(() => {
     // useTrending() returns { items: [...], totalPages } so we grab .items
-    const items = (trendingData as any)?.items;
+    const items = Array.isArray(trendingData) ? trendingData : (trendingData as { items?: TMDBMediaItem[] } | null)?.items;
     if (items && items.length > 0) {
       return items
         .slice(0, 8)
-        .map((item: any) => ({
-          title: item.title || item.name,
+        .map((item: TMDBMediaItem) => ({
+          title: item.title || item.name || '',
           type: item.media_type || (item.title ? 'movie' : 'tv'),
           emoji: item.media_type === 'movie' || item.title ? '🎬' : '📺'
         }))
-        .filter((item: any) => item.title);
+        .filter((item: { title: string }) => item.title);
     }
     return fallbackTrendingSearches.map(title => ({
       title,
@@ -86,7 +88,7 @@ export const MobileSearch: React.FC = () => {
   }, [trendingData]);
 
   // Also show "updated from TMDB" info correctly
-  const trendingItems = (trendingData as any)?.items;
+  const trendingItems = Array.isArray(trendingData) ? trendingData : (trendingData as { items?: TMDBMediaItem[] } | null)?.items;
 
   useEffect(() => {
     if (query.trim() && query.length > 2) {
@@ -100,8 +102,8 @@ export const MobileSearch: React.FC = () => {
     }
   }, [query, recentSearches]);
 
-  const handleItemClick = (item: any) => {
-    navigate(`/${item.type}/${item.id}`);
+  const handleItemClick = (item: CarouselItem) => {
+    navigate(`/${item.type || 'movie'}/${item.id}`);
   };
 
   const handleWatchlistToggle = (id: string) => {
@@ -175,7 +177,7 @@ export const MobileSearch: React.FC = () => {
                       />
                     ))
                   ) : (
-                    trendingSearches.map((item: any, index: number) => (
+                    trendingSearches.map((item: { title: string; type: string; emoji: string }, index: number) => (
                       <Button
                         key={index}
                         variant="outline"

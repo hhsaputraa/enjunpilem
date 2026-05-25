@@ -70,7 +70,7 @@ export const MobileMovieDetail: React.FC = () => {
 
   // Auto-open sheet if redirected back from auth with showAddSheet flag
   React.useEffect(() => {
-    if ((location.state as any)?.showAddSheet && user) {
+    if ((location.state as { showAddSheet?: boolean })?.showAddSheet && user) {
       setIsSheetOpen(true);
       // Clear state so it doesn't re-trigger on navigation
       window.history.replaceState({}, document.title);

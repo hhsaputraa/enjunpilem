@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { searchContent } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { SearchBar } from '@/components/SearchBar';
+import { TMDBMediaItem } from '@/types/tmdb';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -25,10 +26,10 @@ const Search = () => {
             <div className="text-center">Loading...</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {results?.map((item: any) => (
+              {results?.map((item: TMDBMediaItem) => (
                 <MovieCard
                   key={item.id}
-                  id={item.id}
+                  id={Number(item.id)}
                   title={item.title || item.name}
                   posterPath={item.poster_path}
                   overview={item.overview}

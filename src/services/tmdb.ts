@@ -1,6 +1,7 @@
 
 import axios from 'axios';
 import { tmdbConfig } from '@/config/env';
+import { TMDBList, TMDBMediaItem } from '@/types/tmdb';
 
 // Use environment configuration
 const API_KEY = tmdbConfig.apiKey;
@@ -12,12 +13,12 @@ const ACCESS_TOKEN = tmdbConfig.accessToken;
 const V4_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Cache for account lists to avoid repeated TMDB calls
-let accountListsCache: any[] | null = null;
+let accountListsCache: TMDBList[] | null = null;
 
 const slugify = (str: string) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-export const getAccountLists = async (): Promise<any[]> => {
+export const getAccountLists = async (): Promise<TMDBList[]> => {
   if (accountListsCache) return accountListsCache;
 
   try {
@@ -54,12 +55,12 @@ export const getAccountLists = async (): Promise<any[]> => {
   return accountListsCache;
 };
 
-const findListBySlug = async (slug: string) => {
+const findListBySlug = async (slug: string): Promise<TMDBList | undefined> => {
   const lists = await getAccountLists();
-  return lists.find((list: any) => list.slug === slug || slugify(list.name) === slug);
+  return lists.find((list: TMDBList) => list.slug === slug || slugify(list.name) === slug);
 };
 
-const fetchListItems = async (listId: string, page = 1) => {
+const fetchListItems = async (listId: string | number, page = 1) => {
   try {
     if (ACCESS_TOKEN) {
       const response = await axios.get(`${V4_BASE_URL}/list/${listId}`, {
@@ -84,22 +85,22 @@ const fetchListItems = async (listId: string, page = 1) => {
   }
 };
 
-export const getTrending = async (page: number = 1) => {
+export const getTrending = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getPopularMovies = async (page: number = 1) => {
+export const getPopularMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getPopularTVShows = async (page: number = 1) => {
+export const getPopularTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getTopRatedMovies = async (page: number = 1) => {
+export const getTopRatedMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
@@ -146,11 +147,11 @@ export const getResponsiveImageUrl = (path: string) => {
 
 // Merge /similar + /recommendations, dedupe, prioritize /similar (genre/keyword based),
 // and filter out low-quality entries (no poster, very low vote_count).
-const mergeAndFilterRelated = (similar: any[] = [], recommended: any[] = []) => {
-  const seen = new Set<number>();
-  const merged: any[] = [];
+const mergeAndFilterRelated = (similar: TMDBMediaItem[] = [], recommended: TMDBMediaItem[] = []) => {
+  const seen = new Set<number | string>();
+  const merged: TMDBMediaItem[] = [];
 
-  const pushIfGood = (item: any) => {
+  const pushIfGood = (item: TMDBMediaItem) => {
     if (!item || !item.id || seen.has(item.id)) return;
     if (!item.poster_path) return; // buang yang tanpa poster
     if ((item.vote_count ?? 0) < 50) return; // buang yang vote_count terlalu rendah
@@ -201,17 +202,17 @@ export const getTVCredits = async (id: string) => {
   return response.data;
 };
 
-export const getNowPlayingMovies = async (page: number = 1) => {
+export const getNowPlayingMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getTopRatedTVShows = async (page: number = 1) => {
+export const getTopRatedTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getAiringTodayTVShows = async (page: number = 1) => {
+export const getAiringTodayTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/tv/airing_today?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
@@ -223,7 +224,7 @@ export const getEnjunTop = async () => {
   return items;
 };
 
-export const getEnjunChoice = async (page: number = 1) => {
+export const getEnjunChoice = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const list = await findListBySlug('enjun-choice');
   if (!list) return { items: [], totalPages: 0 };
   return fetchListItems(list.id, page);

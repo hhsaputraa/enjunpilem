@@ -43,9 +43,10 @@ const Auth = () => {
       })
       if (error) throw error
       navigate(redirectTo)
-    } catch (error: any) {
-      toast({ title: "Failed to sign in with Google", description: error.message, variant: "destructive" })
-      setGoogleLoading(false)
+    } catch (error) {
+      const err = error as Error;
+      toast({ title: "Failed to sign in with Google", description: err.message, variant: "destructive" })
+      setGoogleLoading(false);
     }
   }
 
@@ -61,8 +62,9 @@ const Auth = () => {
       })
       if (error) throw error
       navigate(redirectTo)
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" })
+    } catch (error) {
+      const err = error as Error;
+      toast({ title: "Error", description: err.message, variant: "destructive" })
     } finally {
       setLoading(false)
     }

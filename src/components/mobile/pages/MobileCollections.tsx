@@ -130,7 +130,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       setNewCollectionShared(false);
       if (setOpenDrawer) setOpenDrawer(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showError("Gagal membuat", error.message);
     },
   });
@@ -153,7 +153,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       showSuccess(`Koleksi diubah menjadi ${data.is_shared ? 'Publik' : 'Pribadi'}!`);
       setSwipedId(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showError("Gagal mengubah visibilitas", error.message);
     }
   });
@@ -175,7 +175,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       setIsDeleteDialogOpen(false);
       setCollectionToDelete(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showError("Gagal menghapus koleksi", error.message);
     }
   });
@@ -204,7 +204,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       setIsEditDrawerOpen(false);
       setSelectedEditCollection(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showError("Gagal memperbarui koleksi", error.message);
     }
   });

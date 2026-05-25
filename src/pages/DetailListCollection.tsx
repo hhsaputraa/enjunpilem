@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { TMDBMediaItem } from "@/types/tmdb";
 import { MovieCard } from "@/components/MovieCard";
 import { PosterCard } from "@/components/mobile/PosterCard";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { GridSkeleton } from "@/components/mobile/Skeletons";
 
 interface DetailListCollectionProps {
   title: string;
-  queryFn: (page: number) => Promise<any>;
+  queryFn: (page: number) => Promise<{ items: TMDBMediaItem[]; totalPages: number }>;
   queryKey: string;
   collectionId: string;
 }
@@ -71,7 +72,7 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              {items.map((item: any) => (
+              {items.map((item: TMDBMediaItem) => (
                 <PosterCard
                   key={item.id}
                   id={item.id.toString()}
@@ -195,10 +196,10 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
               ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 gap-y-10"
               : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           }>
-            {items.map((item: any) => (
+            {items.map((item: TMDBMediaItem) => (
               <div key={item.id} className="w-full transition-transform duration-300 hover:scale-105">
                 <MovieCard
-                  id={item.id}
+                  id={Number(item.id)}
                   title={item.title || item.name}
                   posterPath={item.poster_path}
                   overview={item.overview}

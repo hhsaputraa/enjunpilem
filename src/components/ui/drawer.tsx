@@ -24,13 +24,13 @@ const DrawerClose = Close
 const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof Overlay>,
   React.ComponentPropsWithoutRef<typeof Overlay>
->((({ className, ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <Overlay
     ref={ref}
     className={cn("fixed inset-0 z-50 bg-black/80", className)}
     {...props}
   />
-)) as any)
+))
 DrawerOverlay.displayName = "DrawerOverlay"
 
 const DrawerContent = React.forwardRef<

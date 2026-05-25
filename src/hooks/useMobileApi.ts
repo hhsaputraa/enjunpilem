@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import {
   getTrending,
   getPopularMovies,
@@ -135,27 +136,27 @@ export const useMixedContent = () => {
 
   return {
     trending: {
-      data: trendingQuery.data?.items || trendingQuery.data || [],
+      data: Array.isArray(trendingQuery.data) ? trendingQuery.data : (trendingQuery.data?.items || []),
       isLoading: trendingQuery.isLoading,
       error: trendingQuery.error,
     },
     popularMovies: {
-      data: popularMoviesQuery.data?.items || popularMoviesQuery.data || [],
+      data: Array.isArray(popularMoviesQuery.data) ? popularMoviesQuery.data : (popularMoviesQuery.data?.items || []),
       isLoading: popularMoviesQuery.isLoading,
       error: popularMoviesQuery.error,
     },
     popularTV: {
-      data: popularTVQuery.data?.items || popularTVQuery.data || [],
+      data: Array.isArray(popularTVQuery.data) ? popularTVQuery.data : (popularTVQuery.data?.items || []),
       isLoading: popularTVQuery.isLoading,
       error: popularTVQuery.error,
     },
     topRatedMovies: {
-      data: topRatedMoviesQuery.data?.items || topRatedMoviesQuery.data || [],
+      data: Array.isArray(topRatedMoviesQuery.data) ? topRatedMoviesQuery.data : (topRatedMoviesQuery.data?.items || []),
       isLoading: topRatedMoviesQuery.isLoading,
       error: topRatedMoviesQuery.error,
     },
     nowPlaying: {
-      data: nowPlayingQuery.data?.items || nowPlayingQuery.data || [],
+      data: Array.isArray(nowPlayingQuery.data) ? nowPlayingQuery.data : (nowPlayingQuery.data?.items || []),
       isLoading: nowPlayingQuery.isLoading,
       error: nowPlayingQuery.error,
     },
@@ -166,14 +167,14 @@ export const useMixedContent = () => {
 };
 
 // Utility functions
-export const formatContentForMobile = (item: any) => {
+export const formatContentForMobile = (item: TMDBMediaItem) => {
   return {
     id: item.id.toString(),
     title: item.title || item.name || 'Unknown Title',
-    poster: getResponsiveImageUrl(item.poster_path),
+    poster: getResponsiveImageUrl(item.poster_path || ''),
     // CRITICAL: Use w500 instead of w780 for faster LCP on mobile
     // w500 is sufficient for 400px hero height and loads ~40% faster
-    backdrop: getImageUrl(item.backdrop_path, 'w500'),
+    backdrop: getImageUrl(item.backdrop_path || '', 'w500'),
     rating: item.vote_average,
     year: item.release_date ? new Date(item.release_date).getFullYear().toString() : 
           item.first_air_date ? new Date(item.first_air_date).getFullYear().toString() : '',
@@ -184,7 +185,7 @@ export const formatContentForMobile = (item: any) => {
 };
 
 // Transform TMDB data for mobile components
-export const transformTMDBData = (data: any[]) => {
+export const transformTMDBData = (data: TMDBMediaItem[]) => {
   return data.map(formatContentForMobile);
 };
 
@@ -200,7 +201,7 @@ export const useExploreContent = (
   return useQuery({
     queryKey,
     queryFn: async () => {
-      let data: any[] = [];
+      let data: TMDBMediaItem[] = [];
       
       // Jika sebuah genre disematkan (tidak kosong / undefined), kita pakai Discover API.
       // Jika kosong (semua), kita pakai Popular Endpoint standar.

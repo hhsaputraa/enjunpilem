@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PosterCard, PosterCardSkeleton } from './PosterCard';
 import { cn } from '@/lib/utils';
 
-interface CarouselItem {
+export interface CarouselItem {
   id: string;
   title: string;
   poster: string;

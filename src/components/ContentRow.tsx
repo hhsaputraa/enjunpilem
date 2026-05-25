@@ -2,10 +2,11 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ChevronRight } from "lucide-react"
 import { MovieCard } from "@/components/MovieCard"
+import { TMDBMediaItem } from "@/types/tmdb"
 
 interface ContentRowProps {
   title: string
-  items: any[]
+  items: TMDBMediaItem[]
   isLoading: boolean
   showLoadMore?: boolean
   loadMorePath?: string
@@ -66,13 +67,13 @@ export const ContentRow = ({
             ))
         ) : (
           <>
-            {items?.slice(0, 12).map((item: any, index: number) => (
+            {items?.slice(0, 12).map((item: TMDBMediaItem, index: number) => (
               <div
                 key={item.id}
                 className="w-[180px] sm:w-[220px] flex-shrink-0 snap-start"
               >
                 <MovieCard
-                  id={item.id}
+                  id={Number(item.id)}
                   title={item.title || item.name}
                   posterPath={item.poster_path}
                   overview={item.overview}

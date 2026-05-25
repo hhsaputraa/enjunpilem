@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -118,7 +118,7 @@ export const AddToCollectionDialog = ({
       setSearchQuery('');
       setIsOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error creating collection",
         description: error.message,
@@ -151,7 +151,7 @@ export const AddToCollectionDialog = ({
       toast({ title: "Added to collection" });
       setIsOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error adding to collection",
         description: error.message,
@@ -218,7 +218,7 @@ export const AddToCollectionDialog = ({
                       <div className="space-y-1">
                         {collections.map((collection) => {
                           const isAlreadyAdded = collection.collection_items?.some(
-                            (item: any) => item.media_id === mediaId && item.media_type === mediaType
+                            (item: { media_id: number; media_type: string }) => item.media_id === mediaId && item.media_type === mediaType
                           );
 
                           return (

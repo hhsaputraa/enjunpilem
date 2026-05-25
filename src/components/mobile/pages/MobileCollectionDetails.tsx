@@ -147,7 +147,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
       const firstError = results.find((r) => r.error);
       if (firstError?.error) throw firstError.error;
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Gagal menyimpan urutan',
         description: error.message,

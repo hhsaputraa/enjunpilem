@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { TMDBMediaItem } from "@/types/tmdb"
 import { MovieCard } from "@/components/MovieCard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -11,7 +12,7 @@ const ItemMoreCollection = ({
   title,
   queryKey,
   queryFn,
-}: { title: string; queryKey: string; queryFn: (page: number) => Promise<any> }) => {
+}: { title: string; queryKey: string; queryFn: (page: number) => Promise<{ items: TMDBMediaItem[]; totalPages: number }> }) => {
   const [page, setPage] = useState(1)
 
   const { data, isLoading, isFetching } = useQuery({
@@ -56,10 +57,10 @@ const ItemMoreCollection = ({
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 gap-y-10">
-            {items.map((item: any) => (
+            {items.map((item: TMDBMediaItem) => (
               <div key={item.id} className="w-full transition-transform duration-300 hover:scale-105">
                 <MovieCard
-                  id={item.id}
+                  id={Number(item.id)}
                   title={item.title || item.name}
                   posterPath={item.poster_path}
                   overview={item.overview}

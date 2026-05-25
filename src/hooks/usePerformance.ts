@@ -1,11 +1,5 @@
 import { useEffect } from 'react';
 
-interface PerformanceMetrics {
-  loadTime: number;
-  renderTime: number;
-  memoryUsage?: number;
-}
-
 export const usePerformance = (componentName: string) => {
   useEffect(() => {
     // Skip all performance tracking in production
@@ -20,7 +14,7 @@ export const usePerformance = (componentName: string) => {
       
       // Log memory usage if available
       if ('memory' in performance) {
-        const memory = (performance as any).memory;
+        const memory = (performance as unknown as { memory: { usedJSHeapSize: number } }).memory;
         console.log(`💾 Memory usage: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)}MB`);
       }
     };
@@ -66,8 +60,11 @@ export const initPerformanceObserver = () => {
       // First Input Delay
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          console.log('⚡ FID:', entry.processingStart - entry.startTime, 'ms');
+        entries.forEach((entry) => {
+          const timingEntry = entry as PerformanceEntry & { processingStart?: number };
+          if (timingEntry.processingStart !== undefined) {
+            console.log('⚡ FID:', timingEntry.processingStart - timingEntry.startTime, 'ms');
+          }
         });
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
@@ -76,9 +73,12 @@ export const initPerformanceObserver = () => {
       const clsObserver = new PerformanceObserver((list) => {
         let clsValue = 0;
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+        entries.forEach((entry) => {
+          const layoutShiftEntry = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
+          if (layoutShiftEntry.hadRecentInput !== undefined && layoutShiftEntry.value !== undefined) {
+            if (!layoutShiftEntry.hadRecentInput) {
+              clsValue += layoutShiftEntry.value;
+            }
           }
         });
         console.log('📐 CLS:', clsValue.toFixed(4));

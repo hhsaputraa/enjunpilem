@@ -18,7 +18,7 @@ const ImportCollection = () => {
     if (!user || user.id !== ALLOWED_USER_ID) {
       navigate("/collections");
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, ALLOWED_USER_ID]);
 
   if (loading || !user || user.id !== ALLOWED_USER_ID) return (
     <div className="min-h-screen bg-background flex items-center justify-center">

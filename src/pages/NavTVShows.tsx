@@ -1,11 +1,11 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { getPopularTVShows, getTopRatedTVShows, getAiringTodayTVShows } from '@/services/tmdb';
 import { MovieCard } from '@/components/MovieCard';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TMDBMediaItem } from '@/types/tmdb';
 
-const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; isLoading: boolean }) => (
+const ContentRow = ({ title, items, isLoading }: { title: string; items: TMDBMediaItem[]; isLoading: boolean }) => (
   <section className="mt-8">
     <h2 className="text-2xl font-semibold mb-4">{title}</h2>
     <ScrollArea className="w-full whitespace-nowrap rounded-md">
@@ -15,10 +15,10 @@ const ContentRow = ({ title, items, isLoading }: { title: string; items: any[]; 
             <Skeleton key={i} className="w-[200px] h-[300px] rounded-lg flex-shrink-0" />
           ))
         ) : (
-          items?.map((item: any) => (
+          items?.map((item: TMDBMediaItem) => (
             <div key={item.id} className="w-[200px] flex-shrink-0">
               <MovieCard
-                id={item.id}
+                id={Number(item.id)}
                 title={item.name}
                 posterPath={item.poster_path}
                 overview={item.overview}

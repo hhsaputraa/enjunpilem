@@ -2,14 +2,14 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CollectionConfig } from '@/config/collections';
 import { getCollectionBySlugPreview } from '@/services/tmdb';
-import { CarouselRow } from './CarouselRow';
+import { CarouselRow, CarouselItem } from './CarouselRow';
 import { transformTMDBData } from '@/hooks/useMobileApi';
 
 interface MobileAutoCarouselRowProps {
   collection: CollectionConfig;
   showViewAll?: boolean;
   onViewAll?: () => void;
-  onItemClick?: (item: any) => void;
+  onItemClick?: (item: CarouselItem) => void;
   onWatchlistToggle?: (id: string) => void;
 }
 

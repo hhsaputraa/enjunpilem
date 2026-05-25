@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useQuery } from "@tanstack/react-query"
+import { TMDBMediaItem } from "@/types/tmdb"
 import { Link } from "react-router-dom"
 import { useState, useEffect } from "react"
 import {
@@ -28,7 +29,7 @@ const ContentRow = ({
   icon,
 }: {
   title: string
-  items: any[]
+  items: TMDBMediaItem[]
   isLoading: boolean
   showLoadMore?: boolean
   loadMorePath?: string
@@ -70,13 +71,13 @@ const ContentRow = ({
               ))
           ) : (
             <>
-              {items?.slice(0, 12).map((item: any) => (
+              {items?.slice(0, 12).map((item: TMDBMediaItem) => (
                 <div
                   key={item.id}
                   className="w-[220px] flex-shrink-0 group transition-transform duration-300 hover:scale-105"
                 >
                   <MovieCard
-                    id={item.id}
+                    id={Number(item.id)}
                     title={item.title || item.name}
                     posterPath={item.poster_path}
                     overview={item.overview}
@@ -108,7 +109,7 @@ const ContentRow = ({
   </section>
 )
 
-const HeroSlider = ({ movies }: { movies: any[] }) => {
+const HeroSlider = ({ movies }: { movies: TMDBMediaItem[] }) => {
   const [currentSlide, setCurrentSlide] = useState(0)
   const slideCount = Math.min(3, movies?.length || 0)
 

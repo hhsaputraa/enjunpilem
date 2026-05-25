@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Check, Loader2, User, X } from "lucide-react";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [username, setUsername] = useState("");
   const [checking, setChecking] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);

@@ -125,7 +125,7 @@ const Collections = () => {
   const filteredAndSortedCollections = useMemo(() => {
     if (!collections) return [];
     
-    let result = collections.filter(collection => 
+    const result = collections.filter(collection => 
       collection.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -179,7 +179,7 @@ const Collections = () => {
       setNewCollectionShared(false);
       setIsDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error creating collection",
         description: error.message,
@@ -207,7 +207,7 @@ const Collections = () => {
       setIsEditDialogOpen(false);
       setEditingCollection(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating collection",
         description: error.message,
@@ -236,7 +236,7 @@ const Collections = () => {
           : 'Only you can see this collection.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: 'Failed to update sharing', description: error.message, variant: 'destructive' });
     },
   });
@@ -258,7 +258,7 @@ const Collections = () => {
       queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection deleted successfully" });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error deleting collection",
         description: error.message,
