@@ -40,6 +40,23 @@ export const MobileHome: React.FC = () => {
   const popularItems = popularMovies.data ? transformTMDBData(popularMovies.data) : [];
   const enjunTopItems = enjunTopData ? transformTMDBData(enjunTopData) : [];
 
+  // Dynamic LCP image preloading to speed up mobile paint metrics (LCP/FCP)
+  React.useEffect(() => {
+    if (heroItems.length > 0) {
+      const firstBackdrop = heroItems[0].backdrop;
+      const existingPreload = document.querySelector(`link[href="${firstBackdrop}"][rel="preload"]`);
+      if (!existingPreload) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = firstBackdrop;
+        // Inject with high priority so the browser fetches it immediately
+        link.setAttribute('fetchpriority', 'high');
+        document.head.appendChild(link);
+      }
+    }
+  }, [heroItems]);
+
   const hasError = trending.error || popularMovies.error;
 
   const handleItemClick = (item: CarouselItem) => {
