@@ -20,6 +20,7 @@ import {
 import { useContentDetails, formatContentForMobile, useTVSeasonDetails } from '@/hooks/useMobileApi';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { getWatchedEpisodes, updateWatchedEpisode } from '@/services/tmdb';
+import { addToWatchHistory } from '@/services/history';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { TMDBGenre, TMDBEpisode } from '@/types/tmdb';
@@ -67,6 +68,32 @@ export const MobileWatch: React.FC = () => {
     selectedSeason
   );
   const episodes = seasonDetails?.episodes || [];
+
+  // Save movie or TV progress to watch history when played
+  useEffect(() => {
+    if (!user || !movie || !movieDetails) return;
+    
+    // For TV shows, wait until episodes are loaded if they exist
+    if (movieType === 'tv' && isLoadingSeason) return;
+
+    const currentEpisode = movieType === 'tv' ? episodes.find(e => e.episode_number === selectedEpisode) : null;
+    
+    addToWatchHistory({
+      media_id: parseInt(movieId),
+      media_type: movieType,
+      title: movie.title,
+      poster_path: movieDetails.poster_path || '',
+      backdrop_path: movieDetails.backdrop_path || '',
+      rating: movie.rating,
+      release_year: movie.year,
+      season_number: movieType === 'tv' ? selectedSeason : undefined,
+      episode_number: movieType === 'tv' ? selectedEpisode : undefined,
+      episode_name: movieType === 'tv' ? (currentEpisode?.name || `Episode ${selectedEpisode}`) : undefined,
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['watchHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-stats-watched'] });
+    });
+  }, [user, movie, movieType, movieId, movieDetails, selectedSeason, selectedEpisode, episodes, isLoadingSeason, queryClient]);
 
   const handleBack = () => {
     navigate(-1);
