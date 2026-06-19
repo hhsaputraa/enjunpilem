@@ -247,6 +247,65 @@ export type Database = {
           },
         ]
       }
+      watch_history: {
+        Row: {
+          id: string
+          user_id: string
+          media_id: number
+          media_type: string
+          title: string
+          poster_path: string | null
+          backdrop_path: string | null
+          rating: number | null
+          release_year: string | null
+          progress_percent: number | null
+          last_watched_at: string
+          season_number: number | null
+          episode_number: number | null
+          episode_name: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          media_id: number
+          media_type: string
+          title: string
+          poster_path?: string | null
+          backdrop_path?: string | null
+          rating?: number | null
+          release_year?: string | null
+          progress_percent?: number | null
+          last_watched_at?: string
+          season_number?: number | null
+          episode_number?: number | null
+          episode_name?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          media_id?: number
+          media_type?: string
+          title?: string
+          poster_path?: string | null
+          backdrop_path?: string | null
+          rating?: number | null
+          release_year?: string | null
+          progress_percent?: number | null
+          last_watched_at?: string
+          season_number?: number | null
+          episode_number?: number | null
+          episode_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
