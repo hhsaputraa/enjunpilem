@@ -96,10 +96,23 @@ export const MobileProfile: React.FC = () => {
     enabled: !!authUser,
   });
 
+  const { data: watchedCount = 0 } = useQuery({
+    queryKey: ['profile-stats-watched', authUser?.id],
+    queryFn: async () => {
+      if (!authUser) return 0;
+      const { count } = await supabase
+        .from('watch_history')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', authUser.id);
+      return count ?? 0;
+    },
+    enabled: !!authUser,
+  });
+
   const userStats = {
     watchlistCount,
     favoritesCount,
-    watchedCount: 0, // TODO: history table belum ada
+    watchedCount,
   };
 
   const settingItems: SettingItem[] = [
