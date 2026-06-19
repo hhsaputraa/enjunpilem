@@ -67,7 +67,7 @@ export const MobileWatch: React.FC = () => {
     movieType === 'tv' ? movieId : '',
     selectedSeason
   );
-  const episodes = seasonDetails?.episodes || [];
+  const episodes = React.useMemo(() => seasonDetails?.episodes || [], [seasonDetails?.episodes]);
 
   // Save movie or TV progress to watch history when played
   useEffect(() => {
