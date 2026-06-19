@@ -35,10 +35,21 @@ export const MobileHome: React.FC = () => {
   });
 
   // Transform data for mobile
-  const heroItems = trending.data ? transformTMDBData(trending.data.slice(0, 5)) : [];
-  const trendingItems = trending.data ? transformTMDBData(trending.data) : [];
-  const popularItems = popularMovies.data ? transformTMDBData(popularMovies.data) : [];
-  const enjunTopItems = enjunTopData ? transformTMDBData(enjunTopData) : [];
+  const heroItems = React.useMemo(() => {
+    return trending.data ? transformTMDBData(trending.data.slice(0, 5)) : [];
+  }, [trending.data]);
+
+  const trendingItems = React.useMemo(() => {
+    return trending.data ? transformTMDBData(trending.data) : [];
+  }, [trending.data]);
+
+  const popularItems = React.useMemo(() => {
+    return popularMovies.data ? transformTMDBData(popularMovies.data) : [];
+  }, [popularMovies.data]);
+
+  const enjunTopItems = React.useMemo(() => {
+    return enjunTopData ? transformTMDBData(enjunTopData) : [];
+  }, [enjunTopData]);
 
   // Dynamic LCP image preloading to speed up mobile paint metrics (LCP/FCP)
   React.useEffect(() => {

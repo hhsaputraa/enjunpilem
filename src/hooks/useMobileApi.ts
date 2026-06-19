@@ -129,10 +129,14 @@ export const useSearch = (query: string, enabled: boolean = true) => {
 // Hook for mixed content (movies + TV shows)
 export const useMixedContent = () => {
   const trendingQuery = useTrending();
-  const popularMoviesQuery = usePopularMovies();
-  const popularTVQuery = usePopularTVShows();
-  const topRatedMoviesQuery = useTopRatedMovies();
-  const nowPlayingQuery = useNowPlayingMovies();
+  
+  // Defer popularMovies query until trending is loaded to avoid clogging the mobile network pipe
+  const popularMoviesQuery = useQuery({
+    queryKey: ['popular-movies'],
+    queryFn: () => getPopularMovies(1),
+    staleTime: 10 * 60 * 1000,
+    enabled: !trendingQuery.isLoading, // Only fetch after trending has loaded!
+  });
 
   return {
     trending: {
@@ -145,22 +149,7 @@ export const useMixedContent = () => {
       isLoading: popularMoviesQuery.isLoading,
       error: popularMoviesQuery.error,
     },
-    popularTV: {
-      data: Array.isArray(popularTVQuery.data) ? popularTVQuery.data : (popularTVQuery.data?.items || []),
-      isLoading: popularTVQuery.isLoading,
-      error: popularTVQuery.error,
-    },
-    topRatedMovies: {
-      data: Array.isArray(topRatedMoviesQuery.data) ? topRatedMoviesQuery.data : (topRatedMoviesQuery.data?.items || []),
-      isLoading: topRatedMoviesQuery.isLoading,
-      error: topRatedMoviesQuery.error,
-    },
-    nowPlaying: {
-      data: Array.isArray(nowPlayingQuery.data) ? nowPlayingQuery.data : (nowPlayingQuery.data?.items || []),
-      isLoading: nowPlayingQuery.isLoading,
-      error: nowPlayingQuery.error,
-    },
-    isLoading: trendingQuery.isLoading || popularMoviesQuery.isLoading || popularTVQuery.isLoading,
+    isLoading: trendingQuery.isLoading || popularMoviesQuery.isLoading,
     // Pisah: hero hanya butuh trending, jangan blok render karena popular/TV belum selesai
     isHeroLoading: trendingQuery.isLoading,
   };
