@@ -17,6 +17,9 @@ interface MobileAddToSheetProps {
   title: string;
   posterPath?: string;
   overview?: string;
+  voteAverage?: number;
+  releaseDate?: string;
+  firstAirDate?: string;
 }
 
 export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
@@ -27,6 +30,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
   title,
   posterPath,
   overview,
+  voteAverage,
+  releaseDate,
+  firstAirDate,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,6 +71,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
         title: mediaType === 'movie' ? title : undefined,
         name: mediaType === 'tv' ? title : undefined,
         overview,
+        vote_average: voteAverage,
+        release_date: releaseDate,
+        first_air_date: firstAirDate,
       });
       if (error) throw error;
     },
@@ -93,6 +102,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
         title: mediaType === 'movie' ? title : undefined,
         name: mediaType === 'tv' ? title : undefined,
         overview,
+        vote_average: voteAverage,
+        release_date: releaseDate,
+        first_air_date: firstAirDate,
       });
       if (itemErr) throw itemErr;
     },

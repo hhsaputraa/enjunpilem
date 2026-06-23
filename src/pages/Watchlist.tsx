@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { promisePool } from '@/lib/promisePool';
 
 const Watchlist = () => {
   const navigate = useNavigate();
@@ -29,15 +30,21 @@ const Watchlist = () => {
 
       if (!watchlistData) return [];
 
-      const mediaDetails = await Promise.all(
-        watchlistData.map(async (item) => {
+      const settledResults = await promisePool(
+        watchlistData,
+        async (item) => {
           const details = await (item.media_type === 'movie' 
             ? getMovieDetails(item.media_id.toString())
             : getTVDetails(item.media_id.toString())
           );
-          return { ...details, media_type: item.media_type, watchlist_id: item.id };
-        })
+          return { ...details, media_type: item.media_type, watchlist_id: item.id } as TMDBMediaItem & { watchlist_id: string };
+        },
+        5
       );
+
+      const mediaDetails = settledResults
+        .filter((res): res is PromiseFulfilledResult<TMDBMediaItem & { watchlist_id: string }> => res.status === 'fulfilled')
+        .map((res) => res.value);
 
       return mediaDetails;
     },

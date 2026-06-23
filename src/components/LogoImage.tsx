@@ -29,7 +29,7 @@ export const LogoImage = ({ size, className = '', alt = 'EnjunPilem Logo' }: Log
       height={size}
       className={className}
       loading="eager"
-      fetchPriority="high"
+      fetchpriority="high"
       decoding="async"
     />
   </picture>

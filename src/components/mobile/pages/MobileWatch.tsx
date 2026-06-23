@@ -23,7 +23,7 @@ import { getWatchedEpisodes, updateWatchedEpisode } from '@/services/tmdb';
 import { addToWatchHistory } from '@/services/history';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { TMDBGenre, TMDBEpisode } from '@/types/tmdb';
+import { TMDBGenre, TMDBEpisode, TMDBSeason } from '@/types/tmdb';
 
 export const MobileWatch: React.FC = () => {
   const navigate = useNavigate();
@@ -258,18 +258,18 @@ export const MobileWatch: React.FC = () => {
               
               {/* Season Selector */}
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {Array.from({ length: movieDetails.number_of_seasons || 1 }, (_, i) => (
+                {(movieDetails.seasons || []).map((season: TMDBSeason) => (
                   <Button
-                    key={i + 1}
-                    variant={selectedSeason === i + 1 ? "default" : "outline"}
+                    key={season.id}
+                    variant={selectedSeason === season.season_number ? "default" : "outline"}
                     size="sm"
                     onClick={() => {
-                      setSelectedSeason(i + 1);
+                      setSelectedSeason(season.season_number);
                       setSelectedEpisode(1);
                     }}
                     className="flex-shrink-0 rounded-full px-4"
                   >
-                    Season {i + 1}
+                    {season.name}
                   </Button>
                 ))}
               </div>

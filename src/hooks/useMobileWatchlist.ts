@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from './useMobileAuth';
 import { useToastHelpers } from '@/components/mobile/Toast';
+import { promisePool } from '@/lib/promisePool';
+import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 
 // DB row shape (from generated types). Title/poster are NOT stored in `watchlist` table —
 // they live on TMDB. We keep the mobile API backward-compatible by carrying optional UI
@@ -49,11 +51,42 @@ export const useMobileWatchlist = () => {
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        ...r,
-        tmdb_id: String(r.media_id),
-        created_at: r.added_at,
-      })) as WatchlistItem[];
+
+      const settledResults = await promisePool(
+        data ?? [],
+        async (r) => {
+          try {
+            const tmdbData = await (r.media_type === 'movie'
+              ? getMovieDetails(r.media_id.toString())
+              : getTVDetails(r.media_id.toString())
+            );
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: tmdbData?.title || tmdbData?.name || 'Unknown',
+              poster_path: tmdbData?.poster_path || undefined,
+              vote_average: tmdbData?.vote_average || 0,
+              release_date: tmdbData?.release_date || tmdbData?.first_air_date || '',
+            };
+          } catch (e) {
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: 'Unknown',
+              vote_average: 0,
+              release_date: '',
+            };
+          }
+        },
+        5
+      );
+
+      return settledResults.map((res) => {
+        if (res.status === 'fulfilled') return res.value;
+        return res.reason;
+      });
     },
     enabled: !!user,
   });
@@ -162,11 +195,42 @@ export const useMobileFavorites = () => {
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        ...r,
-        tmdb_id: String(r.media_id),
-        created_at: r.added_at,
-      })) as WatchlistItem[];
+
+      const settledResults = await promisePool(
+        data ?? [],
+        async (r) => {
+          try {
+            const tmdbData = await (r.media_type === 'movie'
+              ? getMovieDetails(r.media_id.toString())
+              : getTVDetails(r.media_id.toString())
+            );
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: tmdbData?.title || tmdbData?.name || 'Unknown',
+              poster_path: tmdbData?.poster_path || undefined,
+              vote_average: tmdbData?.vote_average || 0,
+              release_date: tmdbData?.release_date || tmdbData?.first_air_date || '',
+            };
+          } catch (e) {
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: 'Unknown',
+              vote_average: 0,
+              release_date: '',
+            };
+          }
+        },
+        5
+      );
+
+      return settledResults.map((res) => {
+        if (res.status === 'fulfilled') return res.value;
+        return res.reason;
+      });
     },
     enabled: !!user,
   });

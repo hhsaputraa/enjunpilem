@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '../MobileLayout';
@@ -14,8 +12,6 @@ import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight, Lock
 import { useMobileWatchlist, WatchlistItem as DBWatchlistItem } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
-import { useQueries } from '@tanstack/react-query';
-import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { TMDBMediaItem } from '@/types/tmdb';
 import { MobileCollections } from './MobileCollections';
 import { MobileCollectionDetails } from './MobileCollectionDetails';
@@ -73,18 +69,6 @@ export const MobileWatchlist: React.FC = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch details for all watchlist entries in parallel from TMDB
-  const tmdbQueries = useQueries({
-    queries: (watchlist || []).map((item) => ({
-      queryKey: ['tmdb-detail', item.media_type, item.tmdb_id],
-      queryFn: () => item.media_type === 'movie' 
-        ? getMovieDetails(item.tmdb_id!)
-        : getTVDetails(item.tmdb_id!),
-      staleTime: 1000 * 60 * 60, // 1 hour
-      enabled: !!item.tmdb_id && !!user,
-    }))
-  });
-
   // Scroll to top on page change
   React.useEffect(() => {
     const scrollContainer = document.querySelector('.overflow-y-auto');
@@ -118,27 +102,15 @@ export const MobileWatchlist: React.FC = () => {
     );
   }
 
-  const isLoadingDetails = tmdbQueries.some(q => q.isLoading);
-  const isPreparing = isLoading || isLoadingDetails;
-
-  // Combine watchlist entries with their TMDB details
-  const enrichedWatchlist = watchlist.map((item, index) => {
-    const tmdbData = tmdbQueries[index]?.data;
-    return {
-      ...item,
-      title: tmdbData?.title || tmdbData?.name || 'Unknown',
-      poster_path: tmdbData?.poster_path,
-      vote_average: tmdbData?.vote_average || 0,
-      release_date: tmdbData?.release_date || tmdbData?.first_air_date || '',
-    };
-  });
+  const isPreparing = isLoading;
+  const enrichedWatchlist = watchlist;
 
   // Transform Supabase data to mobile format
-  const transformWatchlistItem = (item: EnrichedWatchlistItem): MobileWatchlistItem => ({
+  const transformWatchlistItem = (item: DBWatchlistItem): MobileWatchlistItem => ({
     id: item.tmdb_id || '',
-    title: item.title,
+    title: item.title || 'Unknown',
     poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
-    rating: item.vote_average,
+    rating: item.vote_average || 0,
     year: item.release_date ? new Date(item.release_date).getFullYear().toString() : '',
     type: item.media_type as 'movie' | 'tv',
     addedAt: item.created_at || new Date().toISOString(),

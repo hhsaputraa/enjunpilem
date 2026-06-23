@@ -2,6 +2,7 @@
  * useMobileAuth — Hook untuk aksi autentikasi (signIn, signOut, dll).
  * Membaca state user/loading dari AuthContext global (BUKAN membuat listener sendiri).
  */
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToastHelpers } from '@/components/mobile/Toast';
@@ -147,11 +148,13 @@ export const useAuthGuard = (redirectTo: string = '/auth') => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  if (!loading && !user) {
-    navigate(redirectTo, {
-      state: { redirectTo: window.location.pathname },
-    });
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate(redirectTo, {
+        state: { redirectTo: window.location.pathname },
+      });
+    }
+  }, [user, loading, navigate, redirectTo]);
 
   return { user, loading, isAuthenticated: !!user };
 };
@@ -161,9 +164,11 @@ export const useGuestGuard = (redirectTo: string = '/') => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  if (!loading && user) {
-    navigate(redirectTo);
-  }
+  useEffect(() => {
+    if (!loading && user) {
+      navigate(redirectTo);
+    }
+  }, [user, loading, navigate, redirectTo]);
 
   return { user, loading, isGuest: !user };
 };

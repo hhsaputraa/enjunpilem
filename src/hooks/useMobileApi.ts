@@ -91,7 +91,7 @@ export const useTVSeasonDetails = (tvId: string, seasonNumber: number) => {
   return useQuery({
     queryKey: ['tv-season-details', tvId, seasonNumber],
     queryFn: () => getTVSeasonDetails(tvId, seasonNumber),
-    enabled: !!tvId && seasonNumber > 0,
+    enabled: !!tvId && seasonNumber >= 0,
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 };

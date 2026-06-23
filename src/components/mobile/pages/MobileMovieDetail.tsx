@@ -234,8 +234,6 @@ export const MobileMovieDetail: React.FC = () => {
                   <Plus className="w-5 h-5" />
                 )}
               </Button>
-              
-              
             </div>
           </div>
 
@@ -329,6 +327,9 @@ export const MobileMovieDetail: React.FC = () => {
         title={movie.title}
         posterPath={movieDetails?.poster_path}
         overview={movie.overview}
+        voteAverage={movieDetails?.vote_average}
+        releaseDate={movieDetails?.release_date}
+        firstAirDate={movieDetails?.first_air_date}
       />
     </DetailLayout>
   );
