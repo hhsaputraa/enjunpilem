@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { TMDBMediaItem } from '@/types/tmdb';
+import { TMDBMediaItem, TMDBEpisode } from '@/types/tmdb';
 import { useState, useEffect } from 'react';
 import { 
   getMovieDetails, 
@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 import { EpisodeSelector } from '@/components/EpisodeSelector';
 import { useAuth } from '@/contexts/AuthContext';
+import { addToWatchHistory } from '@/services/history';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -108,6 +109,34 @@ const Watch = () => {
       setSelectedEpisode(watchedEpisode.episode_number);
     }
   }, [watchedEpisode, watchedEpisodeLoading, validType]);
+
+  // Save movie or TV progress to watch history when played
+  useEffect(() => {
+    if (!user || !validType || !mediaId || !details) return;
+    
+    // For TV shows, wait until episodes are loaded if they exist
+    if (validType === 'tv' && seasonLoading) return;
+
+    const currentEpisode = validType === 'tv' ? seasonDetails?.episodes?.find((e: TMDBEpisode) => e.episode_number === selectedEpisode) : null;
+    
+    addToWatchHistory({
+      media_id: mediaId,
+      media_type: validType as 'movie' | 'tv',
+      title: details.title || details.name || '',
+      poster_path: details.poster_path || '',
+      backdrop_path: details.backdrop_path || '',
+      rating: details.vote_average || 0,
+      release_year: validType === 'movie' 
+        ? (details.release_date ? new Date(details.release_date).getFullYear().toString() : '')
+        : (details.first_air_date ? new Date(details.first_air_date).getFullYear().toString() : ''),
+      season_number: validType === 'tv' ? selectedSeason : undefined,
+      episode_number: validType === 'tv' ? selectedEpisode : undefined,
+      episode_name: validType === 'tv' ? (currentEpisode?.name || `Episode ${selectedEpisode}`) : undefined,
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['watchHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-stats-watched'] });
+    });
+  }, [user, details, validType, mediaId, selectedSeason, selectedEpisode, seasonDetails, seasonLoading, queryClient]);
 
   const markAsWatched = useMutation({
     mutationFn: async () => {
