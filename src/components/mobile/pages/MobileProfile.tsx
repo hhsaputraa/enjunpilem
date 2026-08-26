@@ -13,7 +13,6 @@ import {
   Moon,
   Sun,
   Globe,
-  Download,
   Trash2,
   Info,
   LogOut,
@@ -25,12 +24,13 @@ import {
 } from 'lucide-react';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { AvatarPicker } from '@/components/AvatarPicker';
 import { Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToastHelpers } from '../Toast';
 
 interface UserProfile {
   id: string;
@@ -62,6 +62,8 @@ interface SettingItem {
 
 export const MobileProfile: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { showSuccess, showInfo } = useToastHelpers();
   const { user: authUser, loading, signOut, getUserDisplayName, getUserInitials } = useMobileAuth();
   const { data: profile } = useUserProfile(authUser?.id);
   const avatarUrl = profile?.avatar_url || authUser?.avatar_url;
@@ -145,23 +147,14 @@ export const MobileProfile: React.FC = () => {
       onToggle: setNotifications,
     },
     {
-      id: 'downloads',
-      label: 'Unduhan',
-      description: 'Kelola konten yang diunduh',
-      icon: Download,
-      type: 'navigation',
-      badge: '2',
-      onClick: () => navigate('/downloads'),
-    },
-    {
       id: 'clear-cache',
       label: 'Hapus Cache',
       description: 'Bersihkan data sementara aplikasi',
       icon: Trash2,
       type: 'action',
       onClick: () => {
-        // Handle clear cache
-        console.log('Clear cache');
+        queryClient.clear();
+        showSuccess('Cache Dibersihkan', 'Data sementara aplikasi berhasil dibersihkan');
       },
     },
     {
@@ -169,8 +162,10 @@ export const MobileProfile: React.FC = () => {
       label: 'Tentang Aplikasi',
       description: 'Versi 2.0.0',
       icon: Info,
-      type: 'navigation',
-      onClick: () => navigate('/about'),
+      type: 'action',
+      onClick: () => {
+        showInfo('EnjunPilem v2.0.0', 'Platform streaming film & serial TV favorit Anda.');
+      },
     },
     {
       id: 'logout',
@@ -182,10 +177,6 @@ export const MobileProfile: React.FC = () => {
       onClick: signOut,
     },
   ];
-
-  const handleEditProfile = () => {
-    navigate('/profile/edit');
-  };
 
   const handleStatClick = (type: 'watchlist' | 'favorites' | 'watched') => {
     switch (type) {

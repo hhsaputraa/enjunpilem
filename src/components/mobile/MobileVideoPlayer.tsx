@@ -80,12 +80,7 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0 bg-primary/20 border border-primary/30 rounded-full px-2 py-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[9px] text-primary font-bold uppercase tracking-wider">
-                  {server === 'vidrock' ? 'Vidrock' : 'VidSrc'}
-                </span>
-              </div>
+              
             </div>
           </div>
         </div>
