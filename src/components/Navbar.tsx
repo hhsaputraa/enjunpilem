@@ -111,20 +111,20 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden min-w-0 flex-1 lg:flex items-center justify-center gap-0 rounded-full border border-border/60 bg-muted/80 p-1 shadow-sm backdrop-blur-sm lg:mx-3">
+        <nav className="hidden min-w-0 flex-1 lg:flex items-center gap-0 rounded-full border border-border/60 bg-muted/80 p-1 shadow-sm backdrop-blur-sm lg:mx-3">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               className={cn(
-                "flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-2 text-[13px] font-medium transition-all duration-300 lg:px-2.5",
+                "flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-1.5 py-2 text-[13px] font-medium leading-none transition-colors duration-200 xl:px-2",
                 isActive(link.path)
-                  ? "bg-background text-foreground shadow-sm scale-105"
+                  ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-background/50"
               )}
             >
-              {link.icon && <link.icon className="w-4 h-4" />}
-              {link.name}
+              {link.icon && <link.icon className="size-4 shrink-0" />}
+              <span className="whitespace-nowrap">{link.name}</span>
             </Link>
           ))}
         </nav>
