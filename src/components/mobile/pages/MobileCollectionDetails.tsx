@@ -69,6 +69,11 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Automatically scroll to top when changing page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   const { data: items, isLoading } = useQuery({
     queryKey: ['collection-items', collectionId],
     queryFn: async () => {

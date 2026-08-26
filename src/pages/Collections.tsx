@@ -84,6 +84,11 @@ const Collections = () => {
     setCurrentPage(1);
   }, [searchQuery, sortBy]);
 
+  // Scroll to top on page change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],
     queryFn: async () => {

@@ -34,6 +34,13 @@ export const MobileSharedFilms: React.FC = () => {
     setVisibleCount(6);
   }, [searchQuery]);
 
+  // Scroll to top when opening a collection
+  React.useEffect(() => {
+    if (selected) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selected]);
+
   const { data: collections, isLoading } = useQuery({
     queryKey: ['shared-collections'],
     queryFn: async () => {

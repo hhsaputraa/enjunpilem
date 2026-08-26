@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { TMDBMediaItem } from "@/types/tmdb";
@@ -25,6 +25,11 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Automatically scroll to top when changing page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   // Dynamic query based on passed queryFn
   const { data, isLoading, isFetching, error } = useQuery({

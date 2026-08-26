@@ -65,6 +65,11 @@ const SharedFilms = () => {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  // Scroll to top on page change or when opening a collection
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage, selected]);
+
   const { data: collections, isLoading } = useQuery({
     queryKey: ['shared-collections'],
     queryFn: async () => {
