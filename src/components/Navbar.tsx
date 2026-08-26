@@ -92,9 +92,8 @@ const Navbar = () => {
     <header 
       className={cn(
         "sticky top-0 z-50 w-full transition-colors duration-300",
-        scrolled 
-          ? "bg-background/80 backdrop-blur-md border-b border-border/40 shadow-sm transition-shadow duration-300" 
-          : "bg-transparent border-b border-transparent"
+        "bg-background/95 backdrop-blur-md border-b border-border/60 shadow-sm",
+        scrolled && "shadow-md"
       )}
     >
       <div className="container mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -112,7 +111,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1.5 p-1 bg-muted/50 rounded-full border border-white/5 backdrop-blur-sm">
+        <nav className="hidden md:flex items-center gap-1.5 p-1 bg-muted/80 rounded-full border border-border/60 shadow-sm backdrop-blur-sm">
           {navLinks.map((link) => (
             <Link
               key={link.path}

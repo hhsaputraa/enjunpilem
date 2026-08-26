@@ -35,8 +35,8 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
               width="1280"
               height="720"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />

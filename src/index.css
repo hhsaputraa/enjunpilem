@@ -54,8 +54,6 @@
   html { background: hsl(var(--background)); transition: background-color 200ms ease, color 200ms ease; }
   body {
     @apply min-h-screen bg-background text-foreground font-sans antialiased;
-    background-image: radial-gradient(circle at top center, hsl(var(--primary) / 0.09), transparent 38%);
-    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 { @apply font-bold tracking-tight text-foreground; }
 }

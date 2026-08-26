@@ -81,9 +81,9 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="min-h-screen p-6 bg-background flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="h-12 w-48 bg-zinc-800/50 rounded-lg"></div>
-          <div className="h-4 w-64 bg-zinc-800/50 rounded-lg"></div>
+        <div className="flex flex-col items-center gap-4" aria-label="Loading profile">
+          <div className="skeleton h-12 w-48 rounded-lg"></div>
+          <div className="skeleton h-4 w-64 rounded-lg"></div>
         </div>
       </div>
     );
@@ -108,9 +108,9 @@ const Profile = () => {
         <h1 className="text-3xl font-bold mb-8">My Profile</h1>
         
         {isLoading ? (
-          <div className="animate-pulse">
-            <div className="h-12 bg-gray-800 rounded mb-4"></div>
-            <div className="h-12 bg-gray-800 rounded"></div>
+          <div className="flex flex-col gap-4" aria-label="Loading profile details">
+            <div className="skeleton h-12 rounded mb-0"></div>
+            <div className="skeleton h-12 rounded"></div>
           </div>
         ) : (
           <div className="space-y-6">
