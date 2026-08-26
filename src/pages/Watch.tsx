@@ -23,6 +23,8 @@ import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 import { EpisodeSelector } from '@/components/EpisodeSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { addToWatchHistory } from '@/services/history';
+import { useStreamingServer } from '@/hooks/useStreamingServer';
+import { ServerSelector } from '@/components/ServerSelector';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -33,6 +35,7 @@ const Watch = () => {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const { user } = useAuth();
+  const { server, setServer, getEmbedUrl } = useStreamingServer();
   
   const validType = type === 'movie' || type === 'tv' ? type : null;
   const mediaId = id ? parseInt(id) : null;
@@ -351,13 +354,15 @@ const Watch = () => {
             )}
           </div>
 
+          <div className="flex items-center justify-between mb-3 bg-card/60 backdrop-blur-sm p-3 rounded-xl border border-border/50 shadow-sm">
+            <ServerSelector currentServer={server} onSelectServer={setServer} />
+          </div>
+
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black shadow-lg">
             <iframe
-              src={type === 'movie' 
-                ? `https://vidsrc-embed.ru/embed/movie?tmdb=${id}`
-                : `https://vidsrc-embed.ru/embed/tv?tmdb=${id}&season=${selectedSeason}&episode=${selectedEpisode}`
-              }
-              className="w-full h-full"
+              key={`${server}-${id}-${selectedSeason}-${selectedEpisode}`}
+              src={getEmbedUrl(validType as 'movie' | 'tv', id!, selectedSeason, selectedEpisode)}
+              className="w-full h-full border-0"
               allowFullScreen
               scrolling="no"
             />
