@@ -20,8 +20,7 @@ export const ServerSelector: React.FC<ServerSelectorProps> = ({
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mr-1">
-        <Server className="w-3.5 h-3.5 text-primary" />
-        Server Streaming:
+        Server:
       </span>
       {STREAMING_SERVERS.map((srv) => {
         const isActive = currentServer === srv.id;

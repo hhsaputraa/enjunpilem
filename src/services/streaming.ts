@@ -7,8 +7,8 @@ export interface ServerOption {
 }
 
 export const STREAMING_SERVERS: ServerOption[] = [
-  { id: 'vidsrc', name: 'VidSrc', label: 'Server 1 (VidSrc)' },
-  { id: 'vidrock', name: 'Vidrock', label: 'Server 2 (Vidrock)' },
+  { id: 'vidsrc', name: 'VidSrc', label: 'Server 1' },
+  { id: 'vidrock', name: 'Vidrock', label: 'Server 2' },
 ];
 
 export const getStreamingUrl = (
