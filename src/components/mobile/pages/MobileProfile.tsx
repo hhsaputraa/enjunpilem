@@ -31,6 +31,7 @@ import { AvatarPicker } from '@/components/AvatarPicker';
 import { Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToastHelpers } from '../Toast';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface UserProfile {
   id: string;
@@ -67,7 +68,8 @@ export const MobileProfile: React.FC = () => {
   const { user: authUser, loading, signOut, getUserDisplayName, getUserInitials } = useMobileAuth();
   const { data: profile } = useUserProfile(authUser?.id);
   const avatarUrl = profile?.avatar_url || authUser?.avatar_url;
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const [language, setLanguage] = useState('id');
   const [notifications, setNotifications] = useState(true);
 
@@ -120,12 +122,12 @@ export const MobileProfile: React.FC = () => {
   const settingItems: SettingItem[] = [
     {
       id: 'theme',
-      label: 'Mode Gelap',
-      description: 'Gunakan tema gelap untuk kenyamanan mata',
+      label: isDarkMode ? 'Mode Gelap' : 'Mode Terang',
+      description: isDarkMode ? 'Gunakan tema gelap untuk kenyamanan mata' : 'Gunakan tema terang untuk tampilan bersih',
       icon: isDarkMode ? Moon : Sun,
       type: 'toggle',
       value: isDarkMode,
-      onToggle: setIsDarkMode,
+      onToggle: () => toggleTheme(),
     },
     {
       id: 'language',

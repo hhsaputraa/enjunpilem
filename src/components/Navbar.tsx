@@ -21,6 +21,7 @@ import { useUserProfile } from "@/hooks/useUserProfile"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 import { LogoImage } from "@/components/LogoImage"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 const Navbar = () => {
   const { user } = useAuth()
@@ -134,6 +135,8 @@ const Navbar = () => {
           <div className="hidden lg:block w-full max-w-[240px]">
             <SearchBar />
           </div>
+
+          <ThemeToggle />
 
           <div className="lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => navigate("/search")}>
