@@ -149,12 +149,12 @@ export const MobileProfile: React.FC = () => {
     {
       id: 'clear-cache',
       label: 'Hapus Cache',
-      description: 'Bersihkan data sementara aplikasi',
+      description: 'Bersihkan data',
       icon: Trash2,
       type: 'action',
       onClick: () => {
         queryClient.clear();
-        showSuccess('Cache Dibersihkan', 'Data sementara aplikasi berhasil dibersihkan');
+        showSuccess('Cache Dibersihkan', 'Data berhasil dibersihkan');
       },
     },
     {
