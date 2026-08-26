@@ -96,7 +96,7 @@ const Navbar = () => {
         scrolled && "shadow-md"
       )}
     >
-      <div className="container mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-3 px-4 lg:px-6">
         {/* Logo */}
         <Link 
           to="/" 
@@ -111,13 +111,13 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1.5 p-1 bg-muted/80 rounded-full border border-border/60 shadow-sm backdrop-blur-sm">
+        <nav className="hidden min-w-0 flex-1 md:flex items-center justify-center gap-0.5 rounded-full border border-border/60 bg-muted/80 p-1 shadow-sm backdrop-blur-sm lg:mx-4">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               className={cn(
-                "flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-all duration-300 lg:px-4",
                 isActive(link.path)
                   ? "bg-background text-foreground shadow-sm scale-105"
                   : "text-muted-foreground hover:text-foreground hover:bg-background/50"
