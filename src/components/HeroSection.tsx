@@ -70,7 +70,7 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
           </h1>
 
           {/* Overview */}
-          <p className="text-muted-foreground text-sm sm:text-base lg:text-lg leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md">
+          <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md">
             {featuredItem.overview}
           </p>
 

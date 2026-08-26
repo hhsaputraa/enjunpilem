@@ -111,13 +111,13 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden min-w-0 flex-1 md:flex items-center justify-center gap-0.5 rounded-full border border-border/60 bg-muted/80 p-1 shadow-sm backdrop-blur-sm lg:mx-4">
+        <nav className="hidden min-w-0 flex-1 lg:flex items-center justify-center gap-0 rounded-full border border-border/60 bg-muted/80 p-1 shadow-sm backdrop-blur-sm lg:mx-3">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               className={cn(
-                "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-all duration-300 lg:px-4",
+                "flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-2 text-[13px] font-medium transition-all duration-300 lg:px-2.5",
                 isActive(link.path)
                   ? "bg-background text-foreground shadow-sm scale-105"
                   : "text-muted-foreground hover:text-foreground hover:bg-background/50"

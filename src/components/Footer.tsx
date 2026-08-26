@@ -4,7 +4,7 @@ import { Film, Building2, Heart, Zap } from "lucide-react"
 
 const Footer = () => {
   return (
-    <footer className="relative mt-20 overflow-hidden border-t border-border bg-muted/35 py-16">
+    <footer className="relative mt-20 overflow-hidden border-t border-border bg-secondary/60 py-16">
 
       <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="relative flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
                 <LogoImage size={32} className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-primary via-cyan-400 to-blue-500 text-transparent bg-clip-text">
+<h3 className="text-2xl font-bold text-primary">
                 EnjunPilem
               </h3>
             </Link>
