@@ -333,7 +333,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                         <span className={cn(
                           "text-[8px] font-black px-1.5 py-0.25 rounded-md uppercase tracking-wider",
                           item.media_type === 'tv' 
-                            ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" 
+                            ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" 
                             : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                         )}>
                           {item.media_type === 'tv' ? 'TV' : 'Film'}
@@ -422,7 +422,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                           <span className={cn(
                             "text-[8px] font-black px-1.5 py-0.25 rounded-md uppercase tracking-wider",
                             item.media_type === 'tv' 
-                              ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" 
+                              ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" 
                               : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                           )}>
                             {item.media_type === 'tv' ? 'TV' : 'Film'}

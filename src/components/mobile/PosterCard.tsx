@@ -174,7 +174,7 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
                 "text-2xs font-medium px-1.5 py-0.5 flex items-center justify-center",
                 type === 'movie' 
                   ? "bg-blue-500/20 text-blue-300 border-blue-500/30" 
-                  : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                  : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
               )}
             >
               {type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}

@@ -228,7 +228,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
               variant="ghost"
               onClick={handleCollectionClick}
             >
-              <FolderPlus className="w-5 h-5 text-purple-400" />
+              <FolderPlus className="w-5 h-5 text-cyan-400" />
               <div className="text-left">
                 <p className="font-semibold leading-tight">Tambah ke Koleksi</p>
                 <p className="text-xs text-muted-foreground font-normal">

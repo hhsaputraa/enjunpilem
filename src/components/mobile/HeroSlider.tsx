@@ -267,7 +267,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
                 'bg-black/60 backdrop-blur-sm border-white/20 flex items-center gap-1',
                 currentItem.type === 'movie'
                   ? 'text-blue-300 border-blue-400/30'
-                  : 'text-purple-300 border-purple-400/30'
+                  : 'text-cyan-300 border-cyan-400/30'
               )}
             >
               {currentItem.type === 'movie' ? (

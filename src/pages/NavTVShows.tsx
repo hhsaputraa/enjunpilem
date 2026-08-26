@@ -54,7 +54,7 @@ const NavTVShows = () => {
   return (
     <div className="min-h-screen p-6 bg-background">
       <div className="max-w-[1400px] mx-auto">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-purple-400 to-pink-600 text-transparent bg-clip-text">
+        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
           TV Shows
         </h1>
         

@@ -191,7 +191,7 @@ export const MobileSearch: React.FC = () => {
                         ) : item.isMovie ? (
                           <Film className="h-3.5 w-3.5 text-blue-400" />
                         ) : (
-                          <Tv className="h-3.5 w-3.5 text-purple-400" />
+                          <Tv className="h-3.5 w-3.5 text-cyan-400" />
                         )}
                         <span className="truncate max-w-[120px]">{item.title}</span>
                       </Button>
@@ -313,7 +313,7 @@ export const MobileSearch: React.FC = () => {
                               "text-2xs px-1.5 py-0.5 flex items-center justify-center",
                               item.type === 'movie'
                                 ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
-                                : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
                             )}
                           >
                             {item.type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}

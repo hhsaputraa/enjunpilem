@@ -180,7 +180,7 @@ export const MobileHome: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => navigate('/explore')}
-              className="h-14 flex flex-col gap-1 bg-gradient-to-br from-primary/5 to-purple-500/5 border-primary/20 hover:bg-primary/10"
+              className="h-14 flex flex-col gap-1 bg-gradient-to-br from-teal-500/10 to-cyan-500/5 border-primary/20 hover:bg-primary/10"
             >
               <Compass className="w-5 h-5 text-primary" />
               <span className="text-sm font-medium">Jelajahi</span>
