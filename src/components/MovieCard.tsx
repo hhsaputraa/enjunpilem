@@ -3,7 +3,7 @@ import { getResponsiveImageUrl } from '@/services/tmdb';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { cn } from "@/lib/utils";
 
 interface MovieCardProps {
@@ -17,7 +17,7 @@ interface MovieCardProps {
   priority?: boolean;
 }
 
-export const MovieCard = ({
+export const MovieCard = memo(({
   id,
   title,
   posterPath,
@@ -119,4 +119,6 @@ export const MovieCard = ({
       </Link>
     </div>
   );
-};
+});
+
+MovieCard.displayName = 'MovieCard';

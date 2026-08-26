@@ -23,7 +23,7 @@ const Favorites = () => {
       if (!user) return [];
       const { data: favoritesData } = await supabase
         .from('favorites')
-        .select('*')
+        .select('id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
 

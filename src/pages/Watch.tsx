@@ -74,7 +74,7 @@ const Watch = () => {
       if (!user || !validType || !mediaId) return false;
       const { data } = await supabase
         .from('favorites')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .eq('media_id', mediaId)
         .eq('media_type', validType)
@@ -90,7 +90,7 @@ const Watch = () => {
       if (!user || !validType || !mediaId) return false;
       const { data } = await supabase
         .from('watchlist')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .eq('media_id', mediaId)
         .eq('media_type', validType)

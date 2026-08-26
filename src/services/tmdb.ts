@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { tmdbConfig } from '@/config/env';
 import { TMDBList, TMDBMediaItem } from '@/types/tmdb';
+import { supabase } from '@/integrations/supabase/client';
 
 // Use environment configuration
 const API_KEY = tmdbConfig.apiKey;
@@ -105,14 +106,34 @@ export const getTopRatedMovies = async (page: number = 1): Promise<{ items: TMDB
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getMovieDetails = async (id: string) => {
-  const response = await axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`);
-  return response.data;
+const detailsCache = new Map<string, Promise<any>>();
+
+export const getMovieDetails = (id: string) => {
+  const cacheKey = `movie_${id}`;
+  if (!detailsCache.has(cacheKey)) {
+    const promise = axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`)
+      .then(res => res.data)
+      .catch(err => {
+        detailsCache.delete(cacheKey);
+        throw err;
+      });
+    detailsCache.set(cacheKey, promise);
+  }
+  return detailsCache.get(cacheKey)!;
 };
 
-export const getTVDetails = async (id: string) => {
-  const response = await axios.get(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`);
-  return response.data;
+export const getTVDetails = (id: string) => {
+  const cacheKey = `tv_${id}`;
+  if (!detailsCache.has(cacheKey)) {
+    const promise = axios.get(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`)
+      .then(res => res.data)
+      .catch(err => {
+        detailsCache.delete(cacheKey);
+        throw err;
+      });
+    detailsCache.set(cacheKey, promise);
+  }
+  return detailsCache.get(cacheKey)!;
 };
 
 export const getTVSeasonDetails = async (id: string, seasonNumber: number) => {
@@ -309,7 +330,6 @@ interface WatchedEpisode {
 }
 
 export const getWatchedEpisodes = async (tvId: string): Promise<WatchedEpisode | null> => {
-  const { supabase } = await import('@/integrations/supabase/client');
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
   
@@ -320,7 +340,7 @@ export const getWatchedEpisodes = async (tvId: string): Promise<WatchedEpisode |
     .eq('user_id', session.session.user.id)
     .single();
   
-  if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') {
+  if (error && error.code !== 'PGRST116') {
     console.error('Error fetching watched episodes:', error);
   }
   
@@ -333,45 +353,24 @@ export const updateWatchedEpisode = async (
   episodeNumber: number, 
   tvName: string
 ): Promise<WatchedEpisode | null> => {
-  const { supabase } = await import('@/integrations/supabase/client');
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
-  
-  const { data: existingRecord } = await supabase
+
+  const { data, error } = await supabase
     .from('watched_episodes')
-    .select('*')
-    .eq('tv_id', parseInt(tvId))
-    .eq('user_id', session.session.user.id)
+    .upsert({
+      user_id: session.session.user.id,
+      tv_id: parseInt(tvId),
+      tv_name: tvName,
+      season_number: seasonNumber,
+      episode_number: episodeNumber,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'user_id,tv_id'
+    })
+    .select()
     .single();
-  
-  if (existingRecord) {
-    const { data, error } = await supabase
-      .from('watched_episodes')
-      .update({
-        season_number: seasonNumber,
-        episode_number: episodeNumber,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingRecord.id)
-      .select()
-      .single();
-    
-    if (error) console.error('Error updating watched episode:', error);
-    return data as WatchedEpisode | null;
-  } else {
-    const { data, error } = await supabase
-      .from('watched_episodes')
-      .insert({
-        user_id: session.session.user.id,
-        tv_id: parseInt(tvId),
-        tv_name: tvName,
-        season_number: seasonNumber,
-        episode_number: episodeNumber
-      })
-      .select()
-      .single();
-    
-    if (error) console.error('Error inserting watched episode:', error);
-    return data as WatchedEpisode | null;
-  }
+
+  if (error) console.error('Error updating watched episode:', error);
+  return data as WatchedEpisode | null;
 };

@@ -47,7 +47,7 @@ export const useMobileWatchlist = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('watchlist')
-        .select('*')
+        .select('id, user_id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
       if (error) throw error;
@@ -191,7 +191,7 @@ export const useMobileFavorites = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('favorites')
-        .select('*')
+        .select('id, user_id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
       if (error) throw error;

@@ -190,24 +190,17 @@ export const useExploreContent = (
   return useQuery({
     queryKey,
     queryFn: async () => {
-      let data: TMDBMediaItem[] = [];
-      
-      // Jika sebuah genre disematkan (tidak kosong / undefined), kita pakai Discover API.
-      // Jika kosong (semua), kita pakai Popular Endpoint standar.
-      if (type === 'movie' || type === 'all') {
-        const movies = genre 
-          ? await getDiscoverMovies(genre, page)
-          : await getPopularMovies(page);
-        data = [...data, ...(movies.items || [])];
-      }
-      
-      if (type === 'tv' || type === 'all') {
-        const tvShows = genre 
-          ? await getDiscoverTV(genre, page)
-          : await getPopularTVShows(page);
-        data = [...data, ...(tvShows.items || [])];
-      }
-      
+      const fetchMovies = (type === 'movie' || type === 'all')
+        ? (genre ? getDiscoverMovies(genre, page) : getPopularMovies(page))
+        : Promise.resolve({ items: [], totalPages: 0 });
+
+      const fetchTV = (type === 'tv' || type === 'all')
+        ? (genre ? getDiscoverTV(genre, page) : getPopularTVShows(page))
+        : Promise.resolve({ items: [], totalPages: 0 });
+
+      const [movies, tvShows] = await Promise.all([fetchMovies, fetchTV]);
+      const data = [...(movies.items || []), ...(tvShows.items || [])];
+
       // Bila mode 'all', ini akan mereturn gabungan movie dan TV yang relevan dengan genre tersebut.
       return transformTMDBData(data);
     },

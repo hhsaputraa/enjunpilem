@@ -24,7 +24,7 @@ const Watchlist = () => {
       if (!user) return [];
       const { data: watchlistData } = await supabase
         .from('watchlist')
-        .select('*')
+        .select('id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
 

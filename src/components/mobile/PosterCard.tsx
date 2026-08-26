@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 // Using regular img tag instead of next/image
 import { Star, Play, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ interface PosterCardProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'responsive';
   showOverlay?: boolean;
+  priority?: boolean;
   onClick?: () => void;
   onWatchlistToggle?: (id: string) => void;
 }
@@ -30,7 +31,7 @@ const sizeClasses = {
   responsive: 'w-full aspect-[2/3]',
 };
 
-export const PosterCard: React.FC<PosterCardProps> = ({
+export const PosterCard: React.FC<PosterCardProps> = memo(({
   id,
   title,
   poster,
@@ -41,6 +42,7 @@ export const PosterCard: React.FC<PosterCardProps> = ({
   className,
   size = 'md',
   showOverlay = true,
+  priority = false,
   onClick,
   onWatchlistToggle,
 }) => {
@@ -90,6 +92,8 @@ export const PosterCard: React.FC<PosterCardProps> = ({
             <img
               src={poster}
               alt={title}
+              loading={priority ? 'eager' : 'lazy'}
+              decoding="async"
               className={cn(
                 "w-full h-full object-cover transition-all duration-300",
                 imageLoaded ? "opacity-100" : "opacity-0",
@@ -204,7 +208,9 @@ export const PosterCard: React.FC<PosterCardProps> = ({
       )}
     </div>
   );
-};
+});
+
+PosterCard.displayName = 'PosterCard';
 
 // Skeleton version
 export const PosterCardSkeleton: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'responsive' }> = ({ 

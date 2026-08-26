@@ -50,35 +50,42 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
   };
 
   return (
-    <div className={cn("w-full space-y-2.5 p-2", className)}>
-      {/* Video Player Frame */}
-      <div className="relative w-full bg-black overflow-hidden rounded-2xl border border-border/10 aspect-video shadow-2xl">
+    <div className="w-full space-y-2">
+      {/* Video Player Container */}
+      <div 
+        className={cn(
+          "relative w-full bg-black overflow-hidden rounded-2xl border border-border/10 aspect-video shadow-2xl flex flex-col justify-between",
+          className
+        )}
+      >
         {/* Floating Back & Title Bar */}
-        <div className="absolute top-3 left-3 right-3 z-50 pointer-events-none flex items-center gap-2.5">
-          <Button
-            onClick={handleBack}
-            className="w-10 h-10 rounded-full bg-black/70 hover:bg-black/90 border border-white/10 backdrop-blur-md flex items-center justify-center text-white pointer-events-auto active:scale-95 transition-all shadow-lg flex-shrink-0"
-            size="icon"
-            variant="ghost"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="bg-black/70 border border-white/10 backdrop-blur-md rounded-2xl px-3.5 py-1.5 flex items-center justify-between pointer-events-auto shadow-lg min-w-0 flex-1 max-w-[85%] sm:max-w-[50%]">
-            <div className="min-w-0 flex-1 pr-2">
-              <h4 className="text-white text-xs font-bold truncate leading-tight">
-                {movieTitle}
-              </h4>
-              {type === 'tv' && (
-                <p className="text-[10px] text-gray-300 font-medium">
-                  S{season} • E{episode}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0 bg-primary/20 border border-primary/30 rounded-full px-2 py-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[9px] text-primary font-bold uppercase tracking-wider">
-                {server === 'vidrock' ? 'Vidrock' : 'VidSrc'}
-              </span>
+        <div className="absolute top-3 left-3 right-3 z-50 pointer-events-none flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Button
+              onClick={handleBack}
+              className="w-10 h-10 rounded-full bg-black/70 hover:bg-black/90 border border-white/10 backdrop-blur-md flex items-center justify-center text-white pointer-events-auto active:scale-95 transition-all shadow-lg flex-shrink-0"
+              size="icon"
+              variant="ghost"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="bg-black/70 border border-white/10 backdrop-blur-md rounded-2xl px-3.5 py-1.5 flex items-center justify-between pointer-events-auto shadow-lg min-w-0 flex-1 max-w-[85%] sm:max-w-[50%]">
+              <div className="min-w-0 flex-1 pr-2">
+                <h4 className="text-white text-xs font-bold truncate leading-tight">
+                  {movieTitle}
+                </h4>
+                {type === 'tv' && (
+                  <p className="text-[10px] text-gray-300 font-medium">
+                    S{season} • E{episode}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0 bg-primary/20 border border-primary/30 rounded-full px-2 py-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[9px] text-primary font-bold uppercase tracking-wider">
+                  {server === 'vidrock' ? 'Vidrock' : 'VidSrc'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -127,12 +134,12 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
         />
       </div>
 
-      {/* Server Selector Bar (Below the video player, not overlaying video area) */}
-      <div className="px-3.5 py-2.5 bg-card/80 border border-border/50 rounded-2xl backdrop-blur-md flex items-center justify-between shadow-sm">
-        <ServerSelector 
-          currentServer={server} 
-          onSelectServer={handleServerChange} 
-          size="sm" 
+      {/* Server Selector Bar (Moved outside the video player overlay) */}
+      <div className="px-3 py-2 bg-card/60 backdrop-blur-sm rounded-xl border border-border/40 flex items-center justify-between shadow-sm">
+        <ServerSelector
+          currentServer={server}
+          onSelectServer={handleServerChange}
+          size="sm"
         />
       </div>
     </div>
