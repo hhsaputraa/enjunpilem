@@ -42,14 +42,14 @@ interface SharedCollection {
   description: string | null;
   user_id: string | null;
   created_at: string;
+  profiles?: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
   collection_items: Array<{
     id: string;
     poster_path: string | null;
   }>;
-}
-
-interface ProfileMap {
-  [userId: string]: { username: string | null; avatar_url: string | null };
 }
 
 const SharedFilms = () => {
@@ -76,6 +76,7 @@ const SharedFilms = () => {
           description,
           user_id,
           created_at,
+          profiles:user_id ( username, avatar_url ),
           collection_items ( id, poster_path )
         `)
         .eq('is_shared', true)
@@ -83,33 +84,9 @@ const SharedFilms = () => {
 
       if (error) throw error;
       const filteredData = (data || []).filter(c => c.collection_items && c.collection_items.length > 0);
-      return filteredData as SharedCollection[];
+      return filteredData as unknown as SharedCollection[];
     },
-  });
-
-  const { data: profiles } = useQuery({
-    queryKey: ['shared-collection-profiles', collections?.map((c) => c.user_id).join(',')],
-    enabled: !!collections && collections.length > 0,
-    queryFn: async () => {
-      const ids = Array.from(
-        new Set(
-          (collections || [])
-            .map((c) => c.user_id)
-            .filter((id): id is string => !!id)
-        )
-      );
-      if (ids.length === 0) return {} as ProfileMap;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .in('id', ids);
-      if (error) throw error;
-      const map: ProfileMap = {};
-      (data || []).forEach((p) => {
-        map[p.id] = { username: p.username, avatar_url: p.avatar_url };
-      });
-      return map;
-    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const filtered = useMemo(() => {
@@ -120,9 +97,9 @@ const SharedFilms = () => {
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.description || '').toLowerCase().includes(q) ||
-        (profiles?.[c.user_id || '']?.username || '').toLowerCase().includes(q)
+        (c.profiles?.username || '').toLowerCase().includes(q)
     );
-  }, [collections, searchQuery, profiles]);
+  }, [collections, searchQuery]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedShared = filtered.slice(
@@ -131,9 +108,8 @@ const SharedFilms = () => {
   );
 
   if (selected) {
-    const ownerProfile = profiles?.[selected.user_id || ''];
-    const ownerName = ownerProfile?.username || null;
-    const ownerAvatarUrl = ownerProfile?.avatar_url || null;
+    const ownerName = selected.profiles?.username || null;
+    const ownerAvatarUrl = selected.profiles?.avatar_url || null;
     return (
       <div className="min-h-screen p-6 bg-background">
         <div className="max-w-7xl mx-auto">
@@ -156,16 +132,18 @@ const SharedFilms = () => {
       <div className="min-h-screen bg-background">
         {/* Animated Hero Section */}
         <div className="relative h-[450px] overflow-hidden flex items-center justify-center pt-20">
-          {/* Animated Background Posters */}
+          {/* Background Posters */}
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-background to-background z-10" />
-            <div className="flex gap-4 opacity-10 blur-sm scale-110 animate-pulse transition-all [transition-duration:3000ms]">
+            <div className="flex gap-4 opacity-10 blur-sm scale-110 transition-opacity">
                 {collections?.slice(0, 8).map((c, i) => (
                   <img 
                     key={i}
                     src={getImageUrl(c.collection_items[0]?.poster_path || '', 'w300')} 
                     className="w-48 h-72 object-cover rounded-2xl grayscale"
                     alt=""
+                    loading="lazy"
+                    decoding="async"
                   />
                 ))}
             </div>
@@ -184,8 +162,8 @@ const SharedFilms = () => {
             </p>
 
             <div className="relative max-w-xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500">
-               <div className="absolute inset-0 bg-[#0AC4E0]/20 blur-3xl -z-10 rounded-full" />
-               <div className="relative flex items-center p-2 rounded-2xl bg-zinc-900/50 backdrop-blur-2xl border border-white/10 group focus-within:border-[#0AC4E0]/50 transition-all shadow-2xl">
+               <div className="absolute inset-0 bg-[#0AC4E0]/20 blur-xl -z-10 rounded-full" />
+               <div className="relative flex items-center p-2 rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-white/10 group focus-within:border-[#0AC4E0]/50 transition-all shadow-2xl">
                   <Search className="w-5 h-5 text-muted-foreground ml-4 group-focus-within:text-[#0AC4E0] transition-colors" />
                   <Input
                     placeholder="Search collections or creators..."
@@ -241,11 +219,8 @@ const SharedFilms = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {paginatedShared.map((collection) => {
-                const ownerProfile = profiles?.[collection.user_id || ''];
-                const ownerName = ownerProfile?.username;
-                const ownerAvatar =
-                  ownerProfile?.avatar_url ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`;
+                const ownerName = collection.profiles?.username || 'User';
+                const ownerAvatar = collection.profiles?.avatar_url || undefined;
                 return (
                   <div
                     key={collection.id}

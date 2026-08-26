@@ -262,6 +262,7 @@ export const CollectionDetails = ({
       if (error) throw error;
       return (data || []) as CollectionItem[];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // Sync server data to local state
