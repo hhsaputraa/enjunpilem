@@ -23,7 +23,7 @@ export const ContentRow = ({
 }: ContentRowProps) => (
   <section 
     className="mb-12 relative z-0"
-    style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 360px' }}
+    style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 360px' }}
   >
     <div className="flex items-center justify-between mb-6 px-1 min-h-[52px]">
       <div className="flex items-center gap-3">

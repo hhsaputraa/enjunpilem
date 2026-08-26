@@ -89,6 +89,9 @@ export const useMobileWatchlist = () => {
       });
     },
     enabled: !!user,
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const addToWatchlistMutation = useMutation({
@@ -233,6 +236,9 @@ export const useMobileFavorites = () => {
       });
     },
     enabled: !!user,
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const addToFavoritesMutation = useMutation({

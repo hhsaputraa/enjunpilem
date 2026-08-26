@@ -12,8 +12,10 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
   if (!trending || trending.length === 0) return null
 
   const featuredItem = trending[0]
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const backdropSize = isMobile ? 'w780' : 'w1280';
   const backdropUrl = featuredItem?.backdrop_path
-    ? `https://image.tmdb.org/t/p/w1280${featuredItem.backdrop_path}`
+    ? `https://image.tmdb.org/t/p/${backdropSize}${featuredItem.backdrop_path}`
     : null
 
   return (
