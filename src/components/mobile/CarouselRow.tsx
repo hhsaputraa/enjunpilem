@@ -58,7 +58,7 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
     <section 
       className={cn("space-y-3", className)}
       aria-label={title}
-      style={{ contentVisibility: 'auto' }} // Optimize rendering of off-screen content
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 260px' }} // Optimize rendering of off-screen content
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4">

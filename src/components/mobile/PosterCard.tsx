@@ -74,7 +74,7 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
   return (
     <div
       className={cn(
-        "relative group cursor-pointer",
+        "relative group cursor-pointer transform-gpu will-change-transform",
         "transition-transform duration-200 ease-out",
         "hover:scale-105 active:scale-95",
         sizeClasses[size],

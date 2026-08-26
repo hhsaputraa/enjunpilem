@@ -40,7 +40,7 @@ export const MovieCard = memo(({
   return (
     <div className="group relative">
       <Link to={`/${mediaType}/${id}`} className="block">
-        <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-muted shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] ring-1 ring-border/50 hover:ring-primary/50">
+        <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-muted shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] ring-1 ring-border/50 hover:ring-primary/50 transform-gpu will-change-transform">
           {/* Image container — aspect-ratio menjaga dimensi tetap sebelum gambar load */}
           <div className="relative h-full w-full overflow-hidden">
             {!imageError ? (
