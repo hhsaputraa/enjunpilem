@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BookmarkPlus, FolderPlus, X, Loader2 } from 'lucide-react';
+import { BookmarkPlus, FolderPlus, X, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -321,7 +321,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
                       </p>
                     </div>
                     {alreadyAdded && (
-                      <span className="text-xs text-primary font-medium flex-shrink-0">✓ Sudah ada</span>
+                      <span className="text-xs text-primary font-medium flex-shrink-0 flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" /> Sudah ada
+                      </span>
                     )}
                   </button>
                 );

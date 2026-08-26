@@ -129,6 +129,7 @@ const Layout = () => {
         <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/watch/:type/:id" element={<Watch />} />
             <Route path="/:type/:id" element={<Watch />} />
             <Route path="/search" element={<Search />} />
             <Route path="/auth" element={<Auth />} />

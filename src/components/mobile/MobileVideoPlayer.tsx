@@ -8,11 +8,14 @@ import { cn } from '@/lib/utils';
 import { useStreamingServer } from '@/hooks/useStreamingServer';
 import { StreamingServer } from '@/services/streaming';
 import { ServerSelector } from '@/components/ServerSelector';
+import { useVidrockProgress } from '@/hooks/useVidrockProgress';
 
 interface MobileVideoPlayerProps {
   movieId: string;
   movieTitle: string;
   type: 'movie' | 'tv';
+  posterPath?: string;
+  backdropPath?: string;
   season?: number;
   episode?: number;
   onClose?: () => void;
@@ -23,6 +26,8 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
   movieId,
   movieTitle,
   type,
+  posterPath,
+  backdropPath,
   season = 1,
   episode = 1,
   onClose,
@@ -32,6 +37,18 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { server, setServer, getEmbedUrl } = useStreamingServer();
+
+  // Track Vidrock iframe progress & sync to Supabase + LocalStorage
+  useVidrockProgress({
+    mediaId: parseInt(movieId) || 0,
+    mediaType: type,
+    title: movieTitle,
+    posterPath,
+    backdropPath,
+    season,
+    episode,
+    enabled: !!movieId && server === 'vidrock',
+  });
 
   const handleBack = () => {
     if (onClose) {

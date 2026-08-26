@@ -1,14 +1,37 @@
-/* eslint-disable react-refresh/only-export-components */
-'use client';
-
 import React, { useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import {
+  Film,
+  Zap,
+  Smile,
+  Flame,
+  Ghost,
+  Heart,
+  Rocket,
+  Palette,
+  Wand2,
+  Compass,
+  ShieldAlert,
+  Tv,
+  Swords,
+  BookOpen,
+  Users,
+  Baby,
+  Search,
+  Newspaper,
+  Video,
+  Sparkles,
+  MessageSquare,
+  Mic,
+  Landmark,
+  Sun
+} from 'lucide-react';
 
 interface Genre {
   id: string;
   name: string;
-  emoji?: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 interface GenreChipsProps {
@@ -20,18 +43,18 @@ interface GenreChipsProps {
 }
 
 const popularGenres: Genre[] = [
-  { id: 'all', name: 'Semua', emoji: '🎬' },
-  { id: '28', name: 'Action', emoji: '💥' },
-  { id: '35', name: 'Comedy', emoji: '😂' },
-  { id: '18', name: 'Drama', emoji: '🎭' },
-  { id: '27', name: 'Horror', emoji: '👻' },
-  { id: '10749', name: 'Romance', emoji: '💕' },
-  { id: '878', name: 'Sci-Fi', emoji: '🚀' },
-  { id: '53', name: 'Thriller', emoji: '🔥' },
-  { id: '16', name: 'Animation', emoji: '🎨' },
-  { id: '14', name: 'Fantasy', emoji: '🧙' },
-  { id: '12', name: 'Adventure', emoji: '🗺️' },
-  { id: '80', name: 'Crime', emoji: '🕵️' },
+  { id: 'all', name: 'Semua', icon: Film },
+  { id: '28', name: 'Action', icon: Zap },
+  { id: '35', name: 'Comedy', icon: Smile },
+  { id: '18', name: 'Drama', icon: Film },
+  { id: '27', name: 'Horror', icon: Ghost },
+  { id: '10749', name: 'Romance', icon: Heart },
+  { id: '878', name: 'Sci-Fi', icon: Rocket },
+  { id: '53', name: 'Thriller', icon: Flame },
+  { id: '16', name: 'Animation', icon: Palette },
+  { id: '14', name: 'Fantasy', icon: Wand2 },
+  { id: '12', name: 'Adventure', icon: Compass },
+  { id: '80', name: 'Crime', icon: ShieldAlert },
 ];
 
 export const GenreChips: React.FC<GenreChipsProps> = ({
@@ -72,6 +95,7 @@ export const GenreChips: React.FC<GenreChipsProps> = ({
       >
         {genres.map((genre) => {
           const selected = isSelected(genre.id);
+          const IconComponent = genre.icon;
           
           return (
             <button
@@ -87,7 +111,7 @@ export const GenreChips: React.FC<GenreChipsProps> = ({
               <Badge
                 variant={selected ? "default" : "secondary"}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium",
+                  "px-4 py-2 text-sm font-medium flex items-center gap-1.5",
                   "border transition-all duration-200",
                   "whitespace-nowrap",
                   selected
@@ -95,8 +119,8 @@ export const GenreChips: React.FC<GenreChipsProps> = ({
                     : "bg-secondary/50 text-secondary-foreground border-border hover:bg-secondary hover:border-primary/50"
                 )}
               >
-                {genre.emoji && (
-                  <span className="mr-1.5">{genre.emoji}</span>
+                {IconComponent && (
+                  <IconComponent className="w-3.5 h-3.5" />
                 )}
                 {genre.name}
               </Badge>
@@ -124,23 +148,23 @@ export const MovieGenreChips: React.FC<Omit<GenreChipsProps, 'genres'>> = (props
 
 export const TVGenreChips: React.FC<Omit<GenreChipsProps, 'genres'>> = (props) => {
   const tvGenres: Genre[] = [
-    { id: 'all', name: 'Semua', emoji: '📺' },
-    { id: '10759', name: 'Action & Adventure', emoji: '⚔️' },
-    { id: '16', name: 'Animation', emoji: '🎨' },
-    { id: '35', name: 'Comedy', emoji: '😂' },
-    { id: '80', name: 'Crime', emoji: '🕵️' },
-    { id: '99', name: 'Documentary', emoji: '📖' },
-    { id: '18', name: 'Drama', emoji: '🎭' },
-    { id: '10751', name: 'Family', emoji: '👨‍👩‍👧‍👦' },
-    { id: '10762', name: 'Kids', emoji: '🧸' },
-    { id: '9648', name: 'Mystery', emoji: '🔍' },
-    { id: '10763', name: 'News', emoji: '📰' },
-    { id: '10764', name: 'Reality', emoji: '📹' },
-    { id: '10765', name: 'Sci-Fi & Fantasy', emoji: '🌟' },
-    { id: '10766', name: 'Soap', emoji: '💭' },
-    { id: '10767', name: 'Talk', emoji: '🎤' },
-    { id: '10768', name: 'War & Politics', emoji: '🏛️' },
-    { id: '37', name: 'Western', emoji: '🤠' },
+    { id: 'all', name: 'Semua', icon: Tv },
+    { id: '10759', name: 'Action & Adventure', icon: Swords },
+    { id: '16', name: 'Animation', icon: Palette },
+    { id: '35', name: 'Comedy', icon: Smile },
+    { id: '80', name: 'Crime', icon: ShieldAlert },
+    { id: '99', name: 'Documentary', icon: BookOpen },
+    { id: '18', name: 'Drama', icon: Film },
+    { id: '10751', name: 'Family', icon: Users },
+    { id: '10762', name: 'Kids', icon: Baby },
+    { id: '9648', name: 'Mystery', icon: Search },
+    { id: '10763', name: 'News', icon: Newspaper },
+    { id: '10764', name: 'Reality', icon: Video },
+    { id: '10765', name: 'Sci-Fi & Fantasy', icon: Sparkles },
+    { id: '10766', name: 'Soap', icon: MessageSquare },
+    { id: '10767', name: 'Talk', icon: Mic },
+    { id: '10768', name: 'War & Politics', icon: Landmark },
+    { id: '37', name: 'Western', icon: Sun },
   ];
   
   return <GenreChips genres={tvGenres} {...props} />;

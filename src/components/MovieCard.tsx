@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { getResponsiveImageUrl } from '@/services/tmdb';
 import { Badge } from '@/components/ui/badge';
-import { Star, Calendar, Play } from 'lucide-react';
+import { Star, Calendar, Play, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, memo } from 'react';
 import { cn } from "@/lib/utils";
@@ -68,8 +68,8 @@ export const MovieCard = memo(({
               </>
             ) : (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="text-3xl mb-2 opacity-50">🎬</div>
+                <div className="text-center text-muted-foreground flex flex-col items-center justify-center">
+                  <Film className="w-8 h-8 mb-2 opacity-50" />
                   <div className="text-sm">No Image</div>
                 </div>
               </div>

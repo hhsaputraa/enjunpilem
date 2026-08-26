@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { addToWatchHistory } from '@/services/history';
 import { useStreamingServer } from '@/hooks/useStreamingServer';
 import { ServerSelector } from '@/components/ServerSelector';
+import { useVidrockProgress } from '@/hooks/useVidrockProgress';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -107,11 +108,16 @@ const Watch = () => {
   });
 
   useEffect(() => {
-    if (watchedEpisode && !watchedEpisodeLoading && validType === 'tv') {
+    if (location.state?.season) {
+      setSelectedSeason(location.state.season);
+    }
+    if (location.state?.episode) {
+      setSelectedEpisode(location.state.episode);
+    } else if (watchedEpisode && !watchedEpisodeLoading && validType === 'tv') {
       setSelectedSeason(watchedEpisode.season_number);
       setSelectedEpisode(watchedEpisode.episode_number);
     }
-  }, [watchedEpisode, watchedEpisodeLoading, validType]);
+  }, [watchedEpisode, watchedEpisodeLoading, validType, location.state]);
 
   // Save movie or TV progress to watch history when played
   useEffect(() => {
@@ -140,6 +146,18 @@ const Watch = () => {
       queryClient.invalidateQueries({ queryKey: ['profile-stats-watched'] });
     });
   }, [user, details, validType, mediaId, selectedSeason, selectedEpisode, seasonDetails, seasonLoading, queryClient]);
+
+  // Track Vidrock iframe progress & sync to Supabase + LocalStorage
+  useVidrockProgress({
+    mediaId: mediaId || 0,
+    mediaType: (validType as 'movie' | 'tv') || 'movie',
+    title: details?.title || details?.name || '',
+    posterPath: details?.poster_path || '',
+    backdropPath: details?.backdrop_path || '',
+    season: selectedSeason,
+    episode: selectedEpisode,
+    enabled: !!validType && !!mediaId && server === 'vidrock',
+  });
 
   const markAsWatched = useMutation({
     mutationFn: async () => {

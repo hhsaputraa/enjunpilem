@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { LogoImage } from "@/components/LogoImage"
+import { Film, Building2, Heart, Zap } from "lucide-react"
 
 const Footer = () => {
   return (
@@ -27,7 +28,7 @@ const Footer = () => {
 
           <div>
             <h4 className="font-bold text-foreground mb-6 flex items-center gap-2">
-              <span className="text-primary">🎭</span>
+              <Film className="w-4 h-4 text-primary" />
               Explore
             </h4>
             <ul className="space-y-3">
@@ -52,7 +53,7 @@ const Footer = () => {
 
           <div>
             <h4 className="font-bold text-foreground mb-6 flex items-center gap-2">
-              <span className="text-primary">🏢</span>
+              <Building2 className="w-4 h-4 text-primary" />
               Company
             </h4>
             <ul className="space-y-3">
@@ -82,9 +83,9 @@ const Footer = () => {
               <p className="text-muted-foreground text-sm">
                 © {new Date().getFullYear()} EnjunPilem. All rights reserved.
               </p>
-              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground/80">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground/80">
                 <span>Made with</span>
-                <span className="text-red-500 animate-pulse">❤️</span>
+                <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />
                 <span>for movie lovers</span>
               </div>
             </div>
@@ -92,8 +93,8 @@ const Footer = () => {
               <div className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-white/5 backdrop-blur-sm">
                 v2.0.0
               </div>
-              <div className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-white/5 backdrop-blur-sm">
-                🚀 Fast & Secure
+              <div className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-white/5 backdrop-blur-sm flex items-center gap-1">
+                <Zap className="w-3 h-3 text-cyan-400" /> Fast & Secure
               </div>
             </div>
           </div>

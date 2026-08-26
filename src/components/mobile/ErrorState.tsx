@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, RefreshCw, Wifi, Server } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Wifi, Server, Lock, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -138,9 +138,7 @@ export const AuthError: React.FC<{
   onLogin?: () => void;
 }> = ({ onLogin }) => (
   <ErrorState
-    icon={
-      <div className="text-6xl mb-2">🔐</div>
-    }
+    icon={<Lock className="w-12 h-12 text-muted-foreground/60 mb-2" />}
     title="Perlu Login"
     description="Kamu perlu login untuk mengakses fitur ini."
     action={onLogin ? {
@@ -155,9 +153,7 @@ export const NotFoundError: React.FC<{
   resource?: string;
 }> = ({ onGoHome, resource = "halaman" }) => (
   <ErrorState
-    icon={
-      <div className="text-6xl mb-2">🔍</div>
-    }
+    icon={<Search className="w-12 h-12 text-muted-foreground/60 mb-2" />}
     title="Tidak Ditemukan"
     description={`${resource} yang kamu cari tidak ditemukan atau sudah tidak tersedia.`}
     action={onGoHome ? {

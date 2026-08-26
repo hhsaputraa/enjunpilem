@@ -10,7 +10,7 @@ import { SearchError } from '../ErrorState';
 import { NoSearchResults } from '../EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Clock, X, RefreshCw, Bookmark, Check } from 'lucide-react';
+import { TrendingUp, Clock, X, RefreshCw, Bookmark, Check, Film, Tv, Flame } from 'lucide-react';
 import { useSearch as useSearchAPI, useTrending, transformTMDBData } from '@/hooks/useMobileApi';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { cn } from '@/lib/utils';
@@ -80,14 +80,16 @@ export const MobileSearch: React.FC = () => {
         .map((item: TMDBMediaItem) => ({
           title: item.title || item.name || '',
           type: item.media_type || (item.title ? 'movie' : 'tv'),
-          emoji: item.media_type === 'movie' || item.title ? '🎬' : '📺'
+          isMovie: item.media_type === 'movie' || !!item.title,
+          isTrending: false,
         }))
         .filter((item: { title: string }) => item.title);
     }
     return fallbackTrendingSearches.map(title => ({
       title,
       type: 'mixed',
-      emoji: '🔥'
+      isMovie: false,
+      isTrending: true,
     }));
   }, [trendingData]);
 
@@ -176,7 +178,7 @@ export const MobileSearch: React.FC = () => {
                       />
                     ))
                   ) : (
-                    trendingSearches.map((item: { title: string; type: string; emoji: string }, index: number) => (
+                    trendingSearches.map((item: { title: string; type: string; isMovie: boolean; isTrending: boolean }, index: number) => (
                       <Button
                         key={index}
                         variant="outline"
@@ -184,7 +186,13 @@ export const MobileSearch: React.FC = () => {
                         onClick={() => handleTrendingClick(item.title)}
                         className="h-8 text-sm bg-secondary/50 hover:bg-secondary transition-colors flex items-center gap-1.5 px-3"
                       >
-                        <span className="text-xs">{item.emoji}</span>
+                        {item.isTrending ? (
+                          <Flame className="h-3.5 w-3.5 text-orange-400" />
+                        ) : item.isMovie ? (
+                          <Film className="h-3.5 w-3.5 text-blue-400" />
+                        ) : (
+                          <Tv className="h-3.5 w-3.5 text-purple-400" />
+                        )}
                         <span className="truncate max-w-[120px]">{item.title}</span>
                       </Button>
                     ))
@@ -302,13 +310,13 @@ export const MobileSearch: React.FC = () => {
                           <Badge
                             variant="secondary"
                             className={cn(
-                              "text-2xs",
+                              "text-2xs px-1.5 py-0.5 flex items-center justify-center",
                               item.type === 'movie'
                                 ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
                                 : "bg-purple-500/20 text-purple-300 border-purple-500/30"
                             )}
                           >
-                            {item.type === 'movie' ? '🎬' : '📺'}
+                            {item.type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}
                           </Badge>
                           
                           {item.year && (

@@ -8,11 +8,12 @@ import { MobileAutoCarouselRow } from '../MobileAutoCarouselRow';
 import { HeroSkeleton, CarouselRowSkeleton } from '../Skeletons';
 import { NetworkError } from '../ErrorState';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Compass, Bookmark } from 'lucide-react';
 import { useMixedContent, transformTMDBData } from '@/hooks/useMobileApi';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
 import { getEnjunTop } from '@/services/tmdb';
 import { COLLECTIONS } from '@/config/collections';
+import { ContinueWatchingRow } from '@/components/ContinueWatchingRow';
 
 export const MobileHome: React.FC = () => {
   const navigate = useNavigate();
@@ -122,6 +123,11 @@ export const MobileHome: React.FC = () => {
           </div>
         </section>
 
+        {/* Lanjutkan Menonton Section */}
+        <section className="px-4">
+          <ContinueWatchingRow />
+        </section>
+
         {/* Trending Now (ga pake lihat semua) */}
         <CarouselRow
           title="Trending Now"
@@ -176,7 +182,7 @@ export const MobileHome: React.FC = () => {
               onClick={() => navigate('/explore')}
               className="h-14 flex flex-col gap-1 bg-gradient-to-br from-primary/5 to-purple-500/5 border-primary/20 hover:bg-primary/10"
             >
-              <span className="text-lg">🎭</span>
+              <Compass className="w-5 h-5 text-primary" />
               <span className="text-sm font-medium">Jelajahi</span>
             </Button>
             <Button
@@ -184,7 +190,7 @@ export const MobileHome: React.FC = () => {
               onClick={() => navigate('/watchlist')}
               className="h-14 flex flex-col gap-1 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border-blue-500/20 hover:bg-blue-500/10"
             >
-              <span className="text-lg">📚</span>
+              <Bookmark className="w-5 h-5 text-blue-400" />
               <span className="text-sm font-medium">Watchlist</span>
             </Button>
           </div>

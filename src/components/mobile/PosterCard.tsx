@@ -2,7 +2,7 @@
 
 import React, { useState, memo } from 'react';
 // Using regular img tag instead of next/image
-import { Star, Play, Plus, Check } from 'lucide-react';
+import { Star, Play, Plus, Check, Film, Tv } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
@@ -105,8 +105,8 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/60 flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <div className="text-2xl mb-1">🎬</div>
+            <div className="text-center text-muted-foreground flex flex-col items-center justify-center">
+              <Film className="w-6 h-6 mb-1 opacity-60" />
               <div className="text-xs">No Image</div>
             </div>
           </div>
@@ -171,13 +171,13 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
             <Badge 
               variant="secondary" 
               className={cn(
-                "text-2xs font-medium",
+                "text-2xs font-medium px-1.5 py-0.5 flex items-center justify-center",
                 type === 'movie' 
                   ? "bg-blue-500/20 text-blue-300 border-blue-500/30" 
                   : "bg-purple-500/20 text-purple-300 border-purple-500/30"
               )}
             >
-              {type === 'movie' ? '🎬' : '📺'}
+              {type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}
             </Badge>
           </div>
         )}

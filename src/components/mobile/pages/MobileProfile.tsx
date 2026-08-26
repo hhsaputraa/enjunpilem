@@ -383,8 +383,8 @@ export const MobileProfile: React.FC = () => {
             <div className="text-xs text-muted-foreground">
               Versi 2.0.0 • Build 2024.01
             </div>
-            <div className="text-xs text-muted-foreground">
-              Made with ❤️ for movie lovers
+            <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+              Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for movie lovers
             </div>
           </div>
         </section>

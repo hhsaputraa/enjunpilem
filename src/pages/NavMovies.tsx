@@ -291,7 +291,7 @@ const NavMovies = () => {
         {/* Hero Section with Background Image Slider */}
         <HeroSlider movies={popularMovies?.items || []} />
 
-        {/* ✅ AUTO CONTENT ROWS DARI KONFIGURASI */}
+        {/* AUTO CONTENT ROWS DARI KONFIGURASI */}
         {selectedCollections.map((collection) => (
           <AutoContentRow
             key={collection.id}

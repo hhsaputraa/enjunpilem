@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Trash2, Grid, List, Star, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Grid, List, Star, Search, ChevronUp, ChevronDown, Film } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -308,7 +308,9 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">🎬</div>
+                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                          <Film className="w-4 h-4 opacity-50" />
+                        </div>
                       )}
 
                       {/* Rating Badge */}
@@ -404,7 +406,9 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">🎬</div>
+                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                            <Film className="w-4 h-4 opacity-50" />
+                          </div>
                         )}
                       </div>
 
