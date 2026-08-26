@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import {
   getTrending,
   getPopularMovies,
@@ -9,6 +10,7 @@ import {
 
   getMovieDetails,
   getTVDetails,
+  getTVSeasonDetails,
   getMovieCredits,
   getTVCredits,
   getMovieRecommendations,
@@ -84,6 +86,16 @@ export const useContentDetails = (type: 'movie' | 'tv', id: string) => {
   });
 };
 
+// Hook for TV season details
+export const useTVSeasonDetails = (tvId: string, seasonNumber: number) => {
+  return useQuery({
+    queryKey: ['tv-season-details', tvId, seasonNumber],
+    queryFn: () => getTVSeasonDetails(tvId, seasonNumber),
+    enabled: !!tvId && seasonNumber >= 0,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+};
+
 // Hook for movie/TV credits
 export const useContentCredits = (type: 'movie' | 'tv', id: string) => {
   return useQuery({
@@ -117,48 +129,41 @@ export const useSearch = (query: string, enabled: boolean = true) => {
 // Hook for mixed content (movies + TV shows)
 export const useMixedContent = () => {
   const trendingQuery = useTrending();
-  const popularMoviesQuery = usePopularMovies();
-  const popularTVQuery = usePopularTVShows();
-  const topRatedMoviesQuery = useTopRatedMovies();
-  const nowPlayingQuery = useNowPlayingMovies();
+  
+  // Defer popularMovies query until trending is loaded to avoid clogging the mobile network pipe
+  const popularMoviesQuery = useQuery({
+    queryKey: ['popular-movies'],
+    queryFn: () => getPopularMovies(1),
+    staleTime: 10 * 60 * 1000,
+    enabled: !trendingQuery.isLoading, // Only fetch after trending has loaded!
+  });
 
   return {
     trending: {
-      data: trendingQuery.data?.items || trendingQuery.data || [],
+      data: Array.isArray(trendingQuery.data) ? trendingQuery.data : (trendingQuery.data?.items || []),
       isLoading: trendingQuery.isLoading,
       error: trendingQuery.error,
     },
     popularMovies: {
-      data: popularMoviesQuery.data?.items || popularMoviesQuery.data || [],
+      data: Array.isArray(popularMoviesQuery.data) ? popularMoviesQuery.data : (popularMoviesQuery.data?.items || []),
       isLoading: popularMoviesQuery.isLoading,
       error: popularMoviesQuery.error,
     },
-    popularTV: {
-      data: popularTVQuery.data?.items || popularTVQuery.data || [],
-      isLoading: popularTVQuery.isLoading,
-      error: popularTVQuery.error,
-    },
-    topRatedMovies: {
-      data: topRatedMoviesQuery.data?.items || topRatedMoviesQuery.data || [],
-      isLoading: topRatedMoviesQuery.isLoading,
-      error: topRatedMoviesQuery.error,
-    },
-    nowPlaying: {
-      data: nowPlayingQuery.data?.items || nowPlayingQuery.data || [],
-      isLoading: nowPlayingQuery.isLoading,
-      error: nowPlayingQuery.error,
-    },
-    isLoading: trendingQuery.isLoading || popularMoviesQuery.isLoading || popularTVQuery.isLoading,
+    isLoading: trendingQuery.isLoading || popularMoviesQuery.isLoading,
+    // Pisah: hero hanya butuh trending, jangan blok render karena popular/TV belum selesai
+    isHeroLoading: trendingQuery.isLoading,
   };
 };
 
 // Utility functions
-export const formatContentForMobile = (item: any) => {
+export const formatContentForMobile = (item: TMDBMediaItem) => {
   return {
     id: item.id.toString(),
     title: item.title || item.name || 'Unknown Title',
-    poster: getResponsiveImageUrl(item.poster_path),
-    backdrop: getImageUrl(item.backdrop_path, 'w780'), // Optimized for mobile (original is too large)
+    poster: getResponsiveImageUrl(item.poster_path || ''),
+    // CRITICAL: Use w500 instead of w780 for faster LCP on mobile
+    // w500 is sufficient for 400px hero height and loads ~40% faster
+    backdrop: getImageUrl(item.backdrop_path || '', 'w500'),
     rating: item.vote_average,
     year: item.release_date ? new Date(item.release_date).getFullYear().toString() : 
           item.first_air_date ? new Date(item.first_air_date).getFullYear().toString() : '',
@@ -169,7 +174,7 @@ export const formatContentForMobile = (item: any) => {
 };
 
 // Transform TMDB data for mobile components
-export const transformTMDBData = (data: any[]) => {
+export const transformTMDBData = (data: TMDBMediaItem[]) => {
   return data.map(formatContentForMobile);
 };
 
@@ -185,24 +190,17 @@ export const useExploreContent = (
   return useQuery({
     queryKey,
     queryFn: async () => {
-      let data: any[] = [];
-      
-      // Jika sebuah genre disematkan (tidak kosong / undefined), kita pakai Discover API.
-      // Jika kosong (semua), kita pakai Popular Endpoint standar.
-      if (type === 'movie' || type === 'all') {
-        const movies = genre 
-          ? await getDiscoverMovies(genre, page)
-          : await getPopularMovies(page);
-        data = [...data, ...(movies.items || [])];
-      }
-      
-      if (type === 'tv' || type === 'all') {
-        const tvShows = genre 
-          ? await getDiscoverTV(genre, page)
-          : await getPopularTVShows(page);
-        data = [...data, ...(tvShows.items || [])];
-      }
-      
+      const fetchMovies = (type === 'movie' || type === 'all')
+        ? (genre ? getDiscoverMovies(genre, page) : getPopularMovies(page))
+        : Promise.resolve({ items: [], totalPages: 0 });
+
+      const fetchTV = (type === 'tv' || type === 'all')
+        ? (genre ? getDiscoverTV(genre, page) : getPopularTVShows(page))
+        : Promise.resolve({ items: [], totalPages: 0 });
+
+      const [movies, tvShows] = await Promise.all([fetchMovies, fetchTV]);
+      const data = [...(movies.items || []), ...(tvShows.items || [])];
+
       // Bila mode 'all', ini akan mereturn gabungan movie dan TV yang relevan dengan genre tersebut.
       return transformTMDBData(data);
     },

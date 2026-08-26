@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from './useMobileAuth';
 import { useToastHelpers } from '@/components/mobile/Toast';
+import { promisePool } from '@/lib/promisePool';
+import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 
 // DB row shape (from generated types). Title/poster are NOT stored in `watchlist` table —
 // they live on TMDB. We keep the mobile API backward-compatible by carrying optional UI
@@ -45,15 +47,46 @@ export const useMobileWatchlist = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('watchlist')
-        .select('*')
+        .select('id, user_id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        ...r,
-        tmdb_id: String(r.media_id),
-        created_at: r.added_at,
-      })) as WatchlistItem[];
+
+      const settledResults = await promisePool(
+        data ?? [],
+        async (r) => {
+          try {
+            const tmdbData = await (r.media_type === 'movie'
+              ? getMovieDetails(r.media_id.toString())
+              : getTVDetails(r.media_id.toString())
+            );
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: tmdbData?.title || tmdbData?.name || 'Unknown',
+              poster_path: tmdbData?.poster_path || undefined,
+              vote_average: tmdbData?.vote_average || 0,
+              release_date: tmdbData?.release_date || tmdbData?.first_air_date || '',
+            };
+          } catch (e) {
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: 'Unknown',
+              vote_average: 0,
+              release_date: '',
+            };
+          }
+        },
+        5
+      );
+
+      return settledResults.map((res) => {
+        if (res.status === 'fulfilled') return res.value;
+        return res.reason;
+      });
     },
     enabled: !!user,
   });
@@ -73,11 +106,11 @@ export const useMobileWatchlist = () => {
       if (error) throw error;
       return { ...data, title: item.title };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { title: string }) => {
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
       showSuccess('Ditambahkan ke Watchlist', `"${data.title}" berhasil ditambahkan`);
     },
-    onError: (err: any) => showError('Gagal menambahkan', err.message),
+    onError: (err: Error) => showError('Gagal menambahkan', err.message),
   });
 
   const removeFromWatchlistMutation = useMutation({
@@ -96,7 +129,7 @@ export const useMobileWatchlist = () => {
       const item = watchlist.find((w) => w.tmdb_id === tmdbId);
       showSuccess('Dihapus dari Watchlist', `"${item?.title || 'Item'}" telah dihapus`);
     },
-    onError: (err: any) => showError('Gagal menghapus', err.message),
+    onError: (err: Error) => showError('Gagal menghapus', err.message),
   });
 
   const isInWatchlist = (tmdbId: string) => watchlist.some((i) => i.tmdb_id === tmdbId);
@@ -121,8 +154,9 @@ export const useMobileWatchlist = () => {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['watchlist', user?.id] });
       showSuccess('Berhasil dihapus', `${tmdbIds.length} item telah dihapus dari watchlist`);
-    } catch (err: any) {
-      showError('Gagal menghapus', err.message);
+    } catch (err) {
+      const error = err as Error;
+      showError('Gagal menghapus', error.message);
     }
   };
 
@@ -157,15 +191,46 @@ export const useMobileFavorites = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from('favorites')
-        .select('*')
+        .select('id, user_id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        ...r,
-        tmdb_id: String(r.media_id),
-        created_at: r.added_at,
-      })) as WatchlistItem[];
+
+      const settledResults = await promisePool(
+        data ?? [],
+        async (r) => {
+          try {
+            const tmdbData = await (r.media_type === 'movie'
+              ? getMovieDetails(r.media_id.toString())
+              : getTVDetails(r.media_id.toString())
+            );
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: tmdbData?.title || tmdbData?.name || 'Unknown',
+              poster_path: tmdbData?.poster_path || undefined,
+              vote_average: tmdbData?.vote_average || 0,
+              release_date: tmdbData?.release_date || tmdbData?.first_air_date || '',
+            };
+          } catch (e) {
+            return {
+              ...r,
+              tmdb_id: String(r.media_id),
+              created_at: r.added_at,
+              title: 'Unknown',
+              vote_average: 0,
+              release_date: '',
+            };
+          }
+        },
+        5
+      );
+
+      return settledResults.map((res) => {
+        if (res.status === 'fulfilled') return res.value;
+        return res.reason;
+      });
     },
     enabled: !!user,
   });
@@ -185,11 +250,11 @@ export const useMobileFavorites = () => {
       if (error) throw error;
       return { ...data, title: item.title };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { title: string }) => {
       queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] });
       showSuccess('Ditambahkan ke Favorit', `"${data.title}" berhasil ditambahkan`);
     },
-    onError: (err: any) => showError('Gagal menambahkan', err.message),
+    onError: (err: Error) => showError('Gagal menambahkan', err.message),
   });
 
   const removeFromFavoritesMutation = useMutation({
@@ -208,7 +273,7 @@ export const useMobileFavorites = () => {
       const item = favorites.find((f) => f.tmdb_id === tmdbId);
       showSuccess('Dihapus dari Favorit', `"${item?.title || 'Item'}" telah dihapus`);
     },
-    onError: (err: any) => showError('Gagal menghapus', err.message),
+    onError: (err: Error) => showError('Gagal menghapus', err.message),
   });
 
   const isInFavorites = (tmdbId: string) => favorites.some((i) => i.tmdb_id === tmdbId);

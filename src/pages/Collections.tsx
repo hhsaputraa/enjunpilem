@@ -50,6 +50,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useAuth } from '@/contexts/AuthContext';
 
 type ViewMode = 'grid' | 'compact';
 type SortOption = 'newest' | 'alphabetical' | 'items';
@@ -62,7 +63,7 @@ const Collections = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -82,18 +83,6 @@ const Collections = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortBy]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections'],
@@ -136,7 +125,7 @@ const Collections = () => {
   const filteredAndSortedCollections = useMemo(() => {
     if (!collections) return [];
     
-    let result = collections.filter(collection => 
+    const result = collections.filter(collection => 
       collection.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -190,7 +179,7 @@ const Collections = () => {
       setNewCollectionShared(false);
       setIsDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error creating collection",
         description: error.message,
@@ -218,7 +207,7 @@ const Collections = () => {
       setIsEditDialogOpen(false);
       setEditingCollection(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating collection",
         description: error.message,
@@ -247,7 +236,7 @@ const Collections = () => {
           : 'Only you can see this collection.',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({ title: 'Failed to update sharing', description: error.message, variant: 'destructive' });
     },
   });
@@ -269,7 +258,7 @@ const Collections = () => {
       queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       toast({ title: "Collection deleted successfully" });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error deleting collection",
         description: error.message,
@@ -300,6 +289,17 @@ const Collections = () => {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="h-12 w-48 bg-zinc-800/50 rounded-lg"></div>
+          <div className="h-4 w-64 bg-zinc-800/50 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

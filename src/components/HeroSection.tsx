@@ -2,8 +2,10 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Star } from "lucide-react"
 
+import { TMDBMediaItem } from "@/types/tmdb"
+
 interface HeroSectionProps {
-  trending: any[]
+  trending: TMDBMediaItem[]
 }
 
 export const HeroSection = ({ trending }: HeroSectionProps) => {
@@ -15,24 +17,29 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
     : null
 
   return (
-    <div className="relative w-full h-full min-h-[500px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5 group bg-background">
-      {/* Background Image with optimized loading and overlay */}
-      {backdropUrl ? (
-        <div className="absolute inset-0 transition-transform duration-1000 group-hover:scale-105">
-          <img 
-            src={backdropUrl} 
-            alt={featuredItem.title || featuredItem.name || "Featured"}
-            className="w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-        </div>
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
-      )}
+    <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/5 group bg-muted/50">
+      {/* Background Image — absolute agar tidak mempengaruhi tinggi container */}
+      <div className="absolute inset-0 transition-transform duration-1000 group-hover:scale-105">
+        {backdropUrl ? (
+          <>
+            <img 
+              src={backdropUrl} 
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              width="1280"
+              height="720"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
+        )}
+      </div>
 
       {/* Content Container */}
       <div className="relative h-full flex flex-col justify-end sm:justify-center p-6 sm:p-10 lg:p-16 text-white pb-12 sm:pb-16">

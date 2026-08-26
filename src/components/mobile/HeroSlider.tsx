@@ -44,12 +44,13 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
+  const widthRef = useRef(0); // Cache width to avoid forced reflow
 
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const currentItem = items[currentIndex];
 
-  const width = containerRef.current?.clientWidth ?? 0;
-  const dragPct = width > 0 ? (dragPx / width) * 100 : 0;
+  // Use cached width instead of reading clientWidth on every render
+  const dragPct = widthRef.current > 0 ? (dragPx / widthRef.current) * 100 : 0;
 
   const clearTimer = () => {
     if (intervalRef.current) {
@@ -86,7 +87,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
     setIsUserInteracting(true);
     clearTimer();
     dragStartX.current = e.clientX;
-
+    
+    // Cache width once at start of drag to avoid forced reflow
+    if (containerRef.current) {
+      widthRef.current = containerRef.current.clientWidth;
+    }
 
     if (e.pointerType !== 'touch') {
       try {
@@ -135,6 +140,11 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
     setIsUserInteracting(true);
     clearTimer();
     dragStartX.current = e.touches[0].clientX;
+    
+    // Cache width once at start of drag to avoid forced reflow
+    if (containerRef.current) {
+      widthRef.current = containerRef.current.clientWidth;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -158,7 +168,7 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
   return (
     <div
       ref={containerRef}
-      className={cn('relative w-full h-[400px] rounded-2xl overflow-hidden select-none', className)}
+      className={cn('relative w-full h-[400px] rounded-2xl overflow-hidden select-none bg-gradient-to-br from-gray-900 to-gray-800', className)}
       // Gunakan pan-y: biar scroll vertikal tetap jalan, tapi kita handle swipe horizontal
       style={{ touchAction: 'pan-y' }}
       role="region"
@@ -184,6 +194,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
           <img
             src={prevItem.backdrop}
             alt=""
+            width={1280}
+            height={720}
             className="absolute inset-0 w-full h-full object-cover"
             style={{
               transform: `translateX(${-100 + dragPct / 3}%)`,
@@ -201,13 +213,17 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
         <img
           src={currentItem.backdrop}
           alt={currentItem.title}
+          width={1280}
+          height={720}
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             transform: `translateX(${dragPct}%)`,
             transition: isDragging.current ? 'none' : 'transform 600ms cubic-bezier(0.22,1,0.36,1)',
             pointerEvents: 'none',
-            willChange: 'transform, opacity',
-            opacity: isImageLoaded ? 1 : 0,
+            willChange: 'transform',
+            // CRITICAL: Image must be visible immediately for LCP detection
+            // Lighthouse fails if image has opacity:0 or display:none during load
+            opacity: 1,
           }}
           draggable={false}
           loading="eager"
@@ -220,6 +236,8 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
           <img
             src={nextItem.backdrop}
             alt=""
+            width={1280}
+            height={720}
             className="absolute inset-0 w-full h-full object-cover"
             style={{
               transform: `translateX(${100 + dragPct / 3}%)`,
@@ -284,22 +302,38 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
 
       {/* Indicators */}
       {items.length > 1 && (
-        <div className="absolute bottom-4 right-4 flex gap-1.5">
-          {items.map((_, index) => (
+        <div className="absolute bottom-4 right-4 flex gap-1.5" role="tablist" aria-label="Slide navigation">
+          {items.map((item, index) => (
             <button
               key={index}
+              role="tab"
               onClick={() => {
                 setIsUserInteracting(true);
                 goToSlide(index);
                 window.setTimeout(() => setIsUserInteracting(false), 250);
               }}
               className={cn(
-                'w-2 h-2 rounded-full transition-[width,background-color] duration-200',
-                index === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
+                // Invisible larger touch target wrapping the visible dot
+                'relative flex items-center justify-center',
+                'w-6 h-6 rounded-full', // 24x24px minimum touch target
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
               )}
-              aria-label={`Go to slide ${index + 1}`}
-              aria-current={index === currentIndex}
-            />
+              aria-label={`Go to slide ${index + 1}: ${item.title}`}
+              aria-selected={index === currentIndex}
+            >
+              {/* Visual dot — gunakan transform:scaleX bukan width agar GPU-composited
+                  (width transition tidak bisa di-composite, menyebabkan layout thrashing) */}
+              <span
+                className={cn(
+                  'block rounded-full h-2 w-6 pointer-events-none origin-left',
+                  index === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/70'
+                )}
+                style={{
+                  transform: index === currentIndex ? 'scaleX(1)' : 'scaleX(0.333)',
+                  transition: 'transform 200ms ease, background-color 200ms ease',
+                }}
+              />
+            </button>
           ))}
         </div>
       )}

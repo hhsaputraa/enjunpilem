@@ -1,8 +1,6 @@
 import React from 'react';
 import { PageLayout } from '../MobileLayout';
 import { useMobileFavorites } from '@/hooks/useMobileWatchlist';
-import { useQueries } from '@tanstack/react-query';
-import { getMovieDetails, getTVDetails } from '@/services/tmdb';
 import { useNavigate } from 'react-router-dom';
 import { getImageUrl } from '@/services/tmdb';
 import { Heart, Search, Film } from 'lucide-react';
@@ -12,30 +10,8 @@ export const MobileFavorites: React.FC = () => {
   const navigate = useNavigate();
   const { favorites, isLoading: isLoadingFavorites } = useMobileFavorites();
 
-  // Fetch details for all favorites
-  const tmdbQueries = useQueries({
-    queries: favorites.map((fav) => ({
-      queryKey: ['tmdb-detail', fav.media_type, fav.tmdb_id],
-      queryFn: () => fav.media_type === 'movie' 
-        ? getMovieDetails(fav.tmdb_id!)
-        : getTVDetails(fav.tmdb_id!),
-      staleTime: 1000 * 60 * 60, // 1 hour
-      enabled: !!fav.tmdb_id,
-    }))
-  });
-
-  const isLoadingDetails = tmdbQueries.some(q => q.isLoading);
-  const isPreparing = isLoadingFavorites || isLoadingDetails;
-
-  // Combine favorite entries with their TMDB details
-  const enrichedFavorites = favorites.map((fav, index) => {
-    const tmdbData = tmdbQueries[index].data;
-    return {
-      ...fav,
-      title: tmdbData?.title || tmdbData?.name || 'Unknown',
-      poster_path: tmdbData?.poster_path,
-    };
-  }).filter(fav => fav.poster_path); // Optionally filter ones that couldn't load
+  const isPreparing = isLoadingFavorites;
+  const enrichedFavorites = favorites.filter(fav => fav.poster_path);
 
   return (
     <PageLayout title="Favorit">

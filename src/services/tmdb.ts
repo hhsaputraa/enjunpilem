@@ -1,7 +1,8 @@
 
 import axios from 'axios';
-import { supabase } from '@/integrations/supabase/client';
 import { tmdbConfig } from '@/config/env';
+import { TMDBList, TMDBMediaItem } from '@/types/tmdb';
+import { supabase } from '@/integrations/supabase/client';
 
 // Use environment configuration
 const API_KEY = tmdbConfig.apiKey;
@@ -13,12 +14,12 @@ const ACCESS_TOKEN = tmdbConfig.accessToken;
 const V4_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Cache for account lists to avoid repeated TMDB calls
-let accountListsCache: any[] | null = null;
+let accountListsCache: TMDBList[] | null = null;
 
 const slugify = (str: string) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-export const getAccountLists = async (): Promise<any[]> => {
+export const getAccountLists = async (): Promise<TMDBList[]> => {
   if (accountListsCache) return accountListsCache;
 
   try {
@@ -55,12 +56,12 @@ export const getAccountLists = async (): Promise<any[]> => {
   return accountListsCache;
 };
 
-const findListBySlug = async (slug: string) => {
+const findListBySlug = async (slug: string): Promise<TMDBList | undefined> => {
   const lists = await getAccountLists();
-  return lists.find((list: any) => list.slug === slug || slugify(list.name) === slug);
+  return lists.find((list: TMDBList) => list.slug === slug || slugify(list.name) === slug);
 };
 
-const fetchListItems = async (listId: string, page = 1) => {
+const fetchListItems = async (listId: string | number, page = 1) => {
   try {
     if (ACCESS_TOKEN) {
       const response = await axios.get(`${V4_BASE_URL}/list/${listId}`, {
@@ -85,34 +86,54 @@ const fetchListItems = async (listId: string, page = 1) => {
   }
 };
 
-export const getTrending = async (page: number = 1) => {
+export const getTrending = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getPopularMovies = async (page: number = 1) => {
+export const getPopularMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getPopularTVShows = async (page: number = 1) => {
+export const getPopularTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getTopRatedMovies = async (page: number = 1) => {
+export const getTopRatedMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getMovieDetails = async (id: string) => {
-  const response = await axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`);
-  return response.data;
+const detailsCache = new Map<string, Promise<any>>();
+
+export const getMovieDetails = (id: string) => {
+  const cacheKey = `movie_${id}`;
+  if (!detailsCache.has(cacheKey)) {
+    const promise = axios.get(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`)
+      .then(res => res.data)
+      .catch(err => {
+        detailsCache.delete(cacheKey);
+        throw err;
+      });
+    detailsCache.set(cacheKey, promise);
+  }
+  return detailsCache.get(cacheKey)!;
 };
 
-export const getTVDetails = async (id: string) => {
-  const response = await axios.get(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`);
-  return response.data;
+export const getTVDetails = (id: string) => {
+  const cacheKey = `tv_${id}`;
+  if (!detailsCache.has(cacheKey)) {
+    const promise = axios.get(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`)
+      .then(res => res.data)
+      .catch(err => {
+        detailsCache.delete(cacheKey);
+        throw err;
+      });
+    detailsCache.set(cacheKey, promise);
+  }
+  return detailsCache.get(cacheKey)!;
 };
 
 export const getTVSeasonDetails = async (id: string, seasonNumber: number) => {
@@ -140,18 +161,18 @@ export const getResponsiveImageUrl = (path: string) => {
 
   // Gunakan ukuran yang lebih kecil untuk mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const size = isMobile ? 'w300' : 'w342'; // Changed from w500 to w342 to fix enormous network payloads
+  const size = isMobile ? 'w185' : 'w342'; // Changed from w300 to w185 to optimize download size and satisfy Google PageSpeed mobile metrics
 
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
 
 // Merge /similar + /recommendations, dedupe, prioritize /similar (genre/keyword based),
 // and filter out low-quality entries (no poster, very low vote_count).
-const mergeAndFilterRelated = (similar: any[] = [], recommended: any[] = []) => {
-  const seen = new Set<number>();
-  const merged: any[] = [];
+const mergeAndFilterRelated = (similar: TMDBMediaItem[] = [], recommended: TMDBMediaItem[] = []) => {
+  const seen = new Set<number | string>();
+  const merged: TMDBMediaItem[] = [];
 
-  const pushIfGood = (item: any) => {
+  const pushIfGood = (item: TMDBMediaItem) => {
     if (!item || !item.id || seen.has(item.id)) return;
     if (!item.poster_path) return; // buang yang tanpa poster
     if ((item.vote_count ?? 0) < 50) return; // buang yang vote_count terlalu rendah
@@ -202,17 +223,17 @@ export const getTVCredits = async (id: string) => {
   return response.data;
 };
 
-export const getNowPlayingMovies = async (page: number = 1) => {
+export const getNowPlayingMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getTopRatedTVShows = async (page: number = 1) => {
+export const getTopRatedTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/tv/top_rated?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
 
-export const getAiringTodayTVShows = async (page: number = 1) => {
+export const getAiringTodayTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const response = await axios.get(`${BASE_URL}/tv/airing_today?api_key=${API_KEY}&page=${page}`);
   return { items: response.data.results, totalPages: response.data.total_pages };
 };
@@ -224,7 +245,7 @@ export const getEnjunTop = async () => {
   return items;
 };
 
-export const getEnjunChoice = async (page: number = 1) => {
+export const getEnjunChoice = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
   const list = await findListBySlug('enjun-choice');
   if (!list) return { items: [], totalPages: 0 };
   return fetchListItems(list.id, page);
@@ -319,7 +340,7 @@ export const getWatchedEpisodes = async (tvId: string): Promise<WatchedEpisode |
     .eq('user_id', session.session.user.id)
     .single();
   
-  if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') {
+  if (error && error.code !== 'PGRST116') {
     console.error('Error fetching watched episodes:', error);
   }
   
@@ -334,42 +355,22 @@ export const updateWatchedEpisode = async (
 ): Promise<WatchedEpisode | null> => {
   const { data: session } = await supabase.auth.getSession();
   if (!session?.session?.user) return null;
-  
-  const { data: existingRecord } = await supabase
+
+  const { data, error } = await supabase
     .from('watched_episodes')
-    .select('*')
-    .eq('tv_id', parseInt(tvId))
-    .eq('user_id', session.session.user.id)
+    .upsert({
+      user_id: session.session.user.id,
+      tv_id: parseInt(tvId),
+      tv_name: tvName,
+      season_number: seasonNumber,
+      episode_number: episodeNumber,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'user_id,tv_id'
+    })
+    .select()
     .single();
-  
-  if (existingRecord) {
-    const { data, error } = await supabase
-      .from('watched_episodes')
-      .update({
-        season_number: seasonNumber,
-        episode_number: episodeNumber,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingRecord.id)
-      .select()
-      .single();
-    
-    if (error) console.error('Error updating watched episode:', error);
-    return data as WatchedEpisode | null;
-  } else {
-    const { data, error } = await supabase
-      .from('watched_episodes')
-      .insert({
-        user_id: session.session.user.id,
-        tv_id: parseInt(tvId),
-        tv_name: tvName,
-        season_number: seasonNumber,
-        episode_number: episodeNumber
-      })
-      .select()
-      .single();
-    
-    if (error) console.error('Error inserting watched episode:', error);
-    return data as WatchedEpisode | null;
-  }
+
+  if (error) console.error('Error updating watched episode:', error);
+  return data as WatchedEpisode | null;
 };

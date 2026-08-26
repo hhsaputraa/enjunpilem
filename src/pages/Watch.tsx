@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TMDBMediaItem, TMDBEpisode } from '@/types/tmdb';
 import { useState, useEffect } from 'react';
 import { 
   getMovieDetails, 
@@ -20,6 +21,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
 import { EpisodeSelector } from '@/components/EpisodeSelector';
+import { useAuth } from '@/contexts/AuthContext';
+import { addToWatchHistory } from '@/services/history';
+import { useStreamingServer } from '@/hooks/useStreamingServer';
+import { ServerSelector } from '@/components/ServerSelector';
 
 const Watch = () => {
   const { type, id } = useParams();
@@ -29,22 +34,11 @@ const Watch = () => {
   const queryClient = useQueryClient();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
+  const { server, setServer, getEmbedUrl } = useStreamingServer();
   
   const validType = type === 'movie' || type === 'tv' ? type : null;
   const mediaId = id ? parseInt(id) : null;
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleAuthRedirect = () => {
     navigate('/auth', { 
@@ -80,7 +74,7 @@ const Watch = () => {
       if (!user || !validType || !mediaId) return false;
       const { data } = await supabase
         .from('favorites')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .eq('media_id', mediaId)
         .eq('media_type', validType)
@@ -96,7 +90,7 @@ const Watch = () => {
       if (!user || !validType || !mediaId) return false;
       const { data } = await supabase
         .from('watchlist')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .eq('media_id', mediaId)
         .eq('media_type', validType)
@@ -118,6 +112,34 @@ const Watch = () => {
       setSelectedEpisode(watchedEpisode.episode_number);
     }
   }, [watchedEpisode, watchedEpisodeLoading, validType]);
+
+  // Save movie or TV progress to watch history when played
+  useEffect(() => {
+    if (!user || !validType || !mediaId || !details) return;
+    
+    // For TV shows, wait until episodes are loaded if they exist
+    if (validType === 'tv' && seasonLoading) return;
+
+    const currentEpisode = validType === 'tv' ? seasonDetails?.episodes?.find((e: TMDBEpisode) => e.episode_number === selectedEpisode) : null;
+    
+    addToWatchHistory({
+      media_id: mediaId,
+      media_type: validType as 'movie' | 'tv',
+      title: details.title || details.name || '',
+      poster_path: details.poster_path || '',
+      backdrop_path: details.backdrop_path || '',
+      rating: details.vote_average || 0,
+      release_year: validType === 'movie' 
+        ? (details.release_date ? new Date(details.release_date).getFullYear().toString() : '')
+        : (details.first_air_date ? new Date(details.first_air_date).getFullYear().toString() : ''),
+      season_number: validType === 'tv' ? selectedSeason : undefined,
+      episode_number: validType === 'tv' ? selectedEpisode : undefined,
+      episode_name: validType === 'tv' ? (currentEpisode?.name || `Episode ${selectedEpisode}`) : undefined,
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['watchHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-stats-watched'] });
+    });
+  }, [user, details, validType, mediaId, selectedSeason, selectedEpisode, seasonDetails, seasonLoading, queryClient]);
 
   const markAsWatched = useMutation({
     mutationFn: async () => {
@@ -141,7 +163,7 @@ const Watch = () => {
         description: `Marked S${selectedSeason}:E${selectedEpisode} as watched`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating progress",
         description: error.message,
@@ -181,7 +203,7 @@ const Watch = () => {
         title: isFavorite ? "Removed from favorites" : "Added to favorites",
       });
     },
-    onError: (error: any) => {
+    onError: (error: { message: string; code?: string }) => {
       if (error.code === '23505') {
         queryClient.invalidateQueries({ queryKey: ['favorite', validType, mediaId] });
         toast({
@@ -228,7 +250,7 @@ const Watch = () => {
         title: isInWatchlist ? "Removed from watchlist" : "Added to watchlist",
       });
     },
-    onError: (error: any) => {
+    onError: (error: { message: string; code?: string }) => {
       if (error.code === '23505') {
         queryClient.invalidateQueries({ queryKey: ['watchlist', validType, mediaId] });
         toast({
@@ -332,13 +354,15 @@ const Watch = () => {
             )}
           </div>
 
+          <div className="flex items-center justify-between mb-3 bg-card/60 backdrop-blur-sm p-3 rounded-xl border border-border/50 shadow-sm">
+            <ServerSelector currentServer={server} onSelectServer={setServer} />
+          </div>
+
           <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black shadow-lg">
             <iframe
-              src={type === 'movie' 
-                ? `https://vidsrc.xyz/embed/movie/${id}`
-                : `https://vidsrc.xyz/embed/tv/${id}/${selectedSeason}-${selectedEpisode}`
-              }
-              className="w-full h-full"
+              key={`${server}-${id}-${selectedSeason}-${selectedEpisode}`}
+              src={getEmbedUrl(validType as 'movie' | 'tv', id!, selectedSeason, selectedEpisode)}
+              className="w-full h-full border-0"
               allowFullScreen
               scrolling="no"
             />
@@ -404,10 +428,10 @@ const Watch = () => {
               <h2 className="text-2xl font-semibold mb-4">More Like This</h2>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex space-x-4">
-                  {recommendations.map((item: any, index: number) => (
+                  {recommendations.map((item: TMDBMediaItem, index: number) => (
                     <div key={item.id} className="w-[200px] flex-shrink-0">
                       <MovieCard
-                        id={item.id}
+                        id={Number(item.id)}
                         title={item.title || item.name}
                         posterPath={item.poster_path}
                         overview={item.overview}

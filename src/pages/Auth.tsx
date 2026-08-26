@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff, Fingerprint, Binary, ChevronDown, ChevronUp } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
+import { LogoImage } from "@/components/LogoImage"
 
 const Auth = () => {
   const [loading, setLoading] = useState(false)
@@ -42,9 +43,10 @@ const Auth = () => {
       })
       if (error) throw error
       navigate(redirectTo)
-    } catch (error: any) {
-      toast({ title: "Failed to sign in with Google", description: error.message, variant: "destructive" })
-      setGoogleLoading(false)
+    } catch (error) {
+      const err = error as Error;
+      toast({ title: "Failed to sign in with Google", description: err.message, variant: "destructive" })
+      setGoogleLoading(false);
     }
   }
 
@@ -60,8 +62,9 @@ const Auth = () => {
       })
       if (error) throw error
       navigate(redirectTo)
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" })
+    } catch (error) {
+      const err = error as Error;
+      toast({ title: "Error", description: err.message, variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -78,7 +81,7 @@ const Auth = () => {
         to="/"
         className="mb-8 z-10 flex items-center gap-2 group"
       >
-        <img src="/image.png" alt="EnjunPilem Logo" className="h-28 w-28" />
+        <LogoImage size={112} className="h-28 w-28" />
       </Link>
 
       <Card className="w-full max-w-md border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500">
@@ -129,7 +132,7 @@ const Auth = () => {
             <div className="animate-in fade-in slide-in-from-top-2 duration-300">
               <form onSubmit={handleSignIn} className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="signinEmail" className="text-slate-300">Scan</Label>
+                  <Label htmlFor="signinEmail" className="text-slate-300">Passkey</Label>
                   <div className="relative">
                     <Fingerprint className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <Input

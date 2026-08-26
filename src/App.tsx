@@ -1,18 +1,34 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useIsMobile } from "./hooks/use-mobile";
-import Navbar from "./components/Navbar";
-import Footer from "@/components/Footer";
 import { AuthGuard } from "./components/AuthGuard";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PageLoading } from "./components/mobile/Skeletons";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// Desktop Pages (Lazy)
+// ─── EAGER IMPORTS — critical path, harus ada sebelum apapun render ───────────
+// MobileHome: eager karena LCP ada di sini (hero image)
+import { MobileHome } from "./components/mobile/pages/MobileHome";
+// TooltipProvider: eager karena dia wrap seluruh tree — lazy = null screen
+import { TooltipProvider } from "@/components/ui/tooltip";
+// ToastProvider mobile: eager karena dia wrap seluruh mobile tree
+import { ToastProvider } from "./components/mobile/Toast";
+
+// ─── LAZY — tidak di critical path ────────────────────────────────────────────
+// Shell desktop
+const Navbar = lazy(() => import("./components/Navbar"));
+const Footer = lazy(() => import("@/components/Footer"));
+
+// UI providers — render di luar tree utama, tidak block LCP
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
+
+// Mobile shell
+const BottomNav = lazy(() => import("./components/mobile/BottomNav").then(m => ({ default: m.BottomNav })));
+
+// Desktop Pages
 const Index = lazy(() => import("./pages/Index"));
 const Watch = lazy(() => import("./pages/Watch"));
 const Search = lazy(() => import("./pages/Search"));
@@ -31,12 +47,7 @@ const SharedFilms = lazy(() => import("./pages/SharedFilms"));
 const ImportCollection = lazy(() => import("./pages/ImportCollection"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
-// Mobile Layout Components (Non-lazy for shell stability)
-import { BottomNav } from "./components/mobile/BottomNav";
-import { ToastProvider } from "./components/mobile/Toast";
-
-// Mobile Pages (Lazy)
-const MobileHome = lazy(() => import("./components/mobile/pages/MobileHome").then(m => ({ default: m.MobileHome })));
+// Mobile Pages (Lazy — not on critical path)
 const MobileExplore = lazy(() => import("./components/mobile/pages/MobileExplore").then(m => ({ default: m.MobileExplore })));
 const MobileSearch = lazy(() => import("./components/mobile/pages/MobileSearch").then(m => ({ default: m.MobileSearch })));
 const MobileWatchlist = lazy(() => import("./components/mobile/pages/MobileWatchlist").then(m => ({ default: m.MobileWatchlist })));
@@ -49,53 +60,72 @@ const MobileHistory = lazy(() => import("./components/mobile/pages/MobileHistory
 const MobileWatch = lazy(() => import("./components/mobile/pages/MobileWatch").then(m => ({ default: m.MobileWatch })));
 const MobileAuth = lazy(() => import("./components/mobile/pages/MobileAuth").then(m => ({ default: m.MobileAuth })));
 
-const queryClient = new QueryClient();
+// QueryClient dengan config optimal
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// SilentSuspense hanya untuk komponen yang TIDAK block render utama
+const SilentSuspense = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={null}>{children}</Suspense>
+);
 
 const Layout = () => {
-  const location = useLocation();
   const isMobile = useIsMobile();
 
-  // Mobile Layout
+  // ─── MOBILE LAYOUT ──────────────────────────────────────────────────────────
   if (isMobile) {
     return (
+      // ToastProvider & TooltipProvider sekarang EAGER — tidak ada null screen
       <ToastProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
+          {/* Toaster/Sonner lazy OK — tidak block render konten */}
+          <SilentSuspense><Toaster /></SilentSuspense>
+          <SilentSuspense><Sonner /></SilentSuspense>
           <ScrollToTop />
-          <Suspense fallback={<PageLoading />}>
-            <Routes>
-              <Route path="/" element={<MobileHome />} />
-              <Route path="/explore" element={<MobileExplore />} />
-              <Route path="/search" element={<MobileSearch />} />
-              <Route path="/watchlist" element={<MobileWatchlist />} />
-              <Route path="/profile" element={<MobileProfile />} />
-              <Route path="/movie/:id" element={<MobileMovieDetail />} />
-              <Route path="/tv/:id" element={<MobileMovieDetail />} />
-              <Route path="/watch/:type/:id" element={<MobileWatch />} />
-              <Route path="/auth" element={<MobileAuth />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/collections" element={<MobileCollections />} />
-              <Route path="/shared-films" element={<MobileSharedFilms />} />
-              <Route path="/favorites" element={<MobileFavorites />} />
-              <Route path="/history" element={<MobileHistory />} />
-              <Route path="/detail-list-collection" element={<DetailListCollectionRouter />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <BottomNav />
+          {/*
+            Route "/" render MobileHome langsung — eager import, tidak ada Suspense.
+            Semua route lain lazy dengan per-route Suspense.
+          */}
+          <Routes>
+            <Route path="/" element={<MobileHome />} />
+            <Route path="/explore" element={<Suspense fallback={<PageLoading />}><MobileExplore /></Suspense>} />
+            <Route path="/search" element={<Suspense fallback={<PageLoading />}><MobileSearch /></Suspense>} />
+            <Route path="/watchlist" element={<Suspense fallback={<PageLoading />}><MobileWatchlist /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={<PageLoading />}><MobileProfile /></Suspense>} />
+            <Route path="/movie/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
+            <Route path="/tv/:id" element={<Suspense fallback={<PageLoading />}><MobileMovieDetail /></Suspense>} />
+            <Route path="/watch/:type/:id" element={<Suspense fallback={<PageLoading />}><MobileWatch /></Suspense>} />
+            <Route path="/auth" element={<Suspense fallback={<PageLoading />}><MobileAuth /></Suspense>} />
+            <Route path="/onboarding" element={<Suspense fallback={<PageLoading />}><Onboarding /></Suspense>} />
+            <Route path="/collections" element={<Suspense fallback={<PageLoading />}><MobileCollections /></Suspense>} />
+            <Route path="/shared-films" element={<Suspense fallback={<PageLoading />}><MobileSharedFilms /></Suspense>} />
+            <Route path="/favorites" element={<Suspense fallback={<PageLoading />}><MobileFavorites /></Suspense>} />
+            <Route path="/history" element={<Suspense fallback={<PageLoading />}><MobileHistory /></Suspense>} />
+            <Route path="/detail-list-collection" element={<Suspense fallback={<PageLoading />}><DetailListCollectionRouter /></Suspense>} />
+            <Route path="*" element={<Suspense fallback={<PageLoading />}><NotFound /></Suspense>} />
+          </Routes>
+          <SilentSuspense><BottomNav /></SilentSuspense>
         </TooltipProvider>
       </ToastProvider>
     );
   }
 
+  // ─── DESKTOP LAYOUT ─────────────────────────────────────────────────────────
   return (
     <TooltipProvider>
       <ScrollToTop />
-      <Navbar />
-      <main className={`${location.pathname === "/" ? "" : ""}`}>
-        <Toaster />
-        <Sonner />
+      <SilentSuspense><Navbar /></SilentSuspense>
+      <main>
+        <SilentSuspense><Toaster /></SilentSuspense>
+        <SilentSuspense><Sonner /></SilentSuspense>
         <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -118,7 +148,7 @@ const Layout = () => {
           </Routes>
         </Suspense>
       </main>
-      <Footer />
+      <SilentSuspense><Footer /></SilentSuspense>
     </TooltipProvider>
   );
 };
@@ -127,9 +157,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
-        <AuthGuard>
-          <Layout />
-        </AuthGuard>
+        <ErrorBoundary>
+          <AuthGuard>
+            <Layout />
+          </AuthGuard>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>

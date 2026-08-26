@@ -52,7 +52,7 @@ export const AvatarPicker = ({ userId, currentAvatarUrl, trigger }: AvatarPicker
       setOpen(false);
       setPendingUrl(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Gagal memperbarui avatar',
         description: error.message,

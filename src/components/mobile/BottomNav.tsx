@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 'use client';
 
 import React from 'react';
@@ -36,7 +37,7 @@ const baseNavItems: NavItem[] = [
   },
   {
     id: 'watchlist',
-    label: 'Watchlist',
+    label: 'Pustaka',
     icon: Bookmark,
     href: '/watchlist',
     protected: true,
@@ -106,7 +107,8 @@ export const BottomNav: React.FC = () => {
               onClick={() => handleNavigation(item)}
               className={cn(
                 "flex flex-col items-center justify-center",
-                "min-w-0 flex-1 py-1 px-1",
+                "min-w-[44px] min-h-[44px]", // WCAG minimum touch target
+                "flex-1 py-2 px-2",
                 "transition-all duration-200 ease-out",
                 "rounded-xl relative",
                 "focus:outline-none focus:ring-2 focus:ring-primary/20",
@@ -115,7 +117,7 @@ export const BottomNav: React.FC = () => {
                   : "text-muted-foreground hover:text-foreground"
               )}
               aria-label={item.label}
-              aria-selected={active}
+              aria-current={active ? "page" : undefined}
             >
               {/* Active indicator */}
               {active && (

@@ -6,7 +6,7 @@ import { getImageUrl } from '@/services/tmdb';
 import { Search, Users, TrendingUp, Clock, Eye, Heart, MessageCircle, Share2, Film as FilmIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CollectionDetails } from '@/components/CollectionDetails';
+import { MobileCollectionDetails } from './MobileCollectionDetails';
 
 interface SharedCollection {
   id: string;
@@ -14,19 +14,25 @@ interface SharedCollection {
   description: string | null;
   user_id: string | null;
   created_at: string;
+  profiles?: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
   collection_items: Array<{
     id: string;
     poster_path: string | null;
   }>;
 }
 
-interface ProfileMap {
-  [userId: string]: { username: string | null; avatar_url: string | null };
-}
-
 export const MobileSharedFilms: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selected, setSelected] = useState<SharedCollection | null>(null);
+  const [visibleCount, setVisibleCount] = useState(6);
+
+  // Reset limit when search changes
+  React.useEffect(() => {
+    setVisibleCount(6);
+  }, [searchQuery]);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['shared-collections'],
@@ -39,6 +45,7 @@ export const MobileSharedFilms: React.FC = () => {
           description,
           user_id,
           created_at,
+          profiles:user_id ( username, avatar_url ),
           collection_items ( id, poster_path )
         `)
         .eq('is_shared', true)
@@ -46,33 +53,9 @@ export const MobileSharedFilms: React.FC = () => {
 
       if (error) throw error;
       const filteredData = (data || []).filter(c => c.collection_items && c.collection_items.length > 0);
-      return filteredData as SharedCollection[];
+      return filteredData as unknown as SharedCollection[];
     },
-  });
-
-  const { data: profiles } = useQuery({
-    queryKey: ['shared-collection-profiles', collections?.map((c) => c.user_id).join(',')],
-    enabled: !!collections && collections.length > 0,
-    queryFn: async () => {
-      const ids = Array.from(
-        new Set(
-          (collections || [])
-            .map((c) => c.user_id)
-            .filter((id): id is string => !!id)
-        )
-      );
-      if (ids.length === 0) return {} as ProfileMap;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .in('id', ids);
-      if (error) throw error;
-      const map: ProfileMap = {};
-      (data || []).forEach((p) => {
-        map[p.id] = { username: p.username, avatar_url: p.avatar_url };
-      });
-      return map;
-    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const filtered = useMemo(() => {
@@ -83,18 +66,21 @@ export const MobileSharedFilms: React.FC = () => {
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.description || '').toLowerCase().includes(q) ||
-        (profiles?.[c.user_id || '']?.username || '').toLowerCase().includes(q)
+        (c.profiles?.username || '').toLowerCase().includes(q)
     );
-  }, [collections, searchQuery, profiles]);
+  }, [collections, searchQuery]);
+
+  const visibleCollections = useMemo(() => {
+    return filtered.slice(0, visibleCount);
+  }, [filtered, visibleCount]);
 
   if (selected) {
-    const ownerProfile = profiles?.[selected.user_id || ''];
-    const ownerName = ownerProfile?.username || null;
-    const ownerAvatarUrl = ownerProfile?.avatar_url || null;
+    const ownerName = selected.profiles?.username || null;
+    const ownerAvatarUrl = selected.profiles?.avatar_url || null;
     return (
       <PageLayout title={selected.name}>
         <div className="flex-1 overflow-y-auto pb-24">
-          <CollectionDetails
+          <MobileCollectionDetails
             collectionId={selected.id}
             collectionName={selected.name}
             description={selected.description}
@@ -119,9 +105,11 @@ export const MobileSharedFilms: React.FC = () => {
               {collections?.slice(0, 4).map((c, i) => (
                 <img 
                   key={i}
-                  src={getImageUrl(c.collection_items[0]?.poster_path || '', 'w300')} 
+                  src={getImageUrl(c.collection_items[0]?.poster_path || '', 'w185')} 
                   className="w-1/3 object-cover rounded-xl"
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                 />
               ))}
             </div>
@@ -169,12 +157,9 @@ export const MobileSharedFilms: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            {filtered.map((collection) => {
-              const ownerProfile = profiles?.[collection.user_id || ''];
-              const ownerName = ownerProfile?.username;
-              const ownerAvatar =
-                ownerProfile?.avatar_url ||
-                `https://api.dicebear.com/7.x/avataaars/svg?seed=${collection.user_id}`;
+            {visibleCollections.map((collection) => {
+              const ownerName = collection.profiles?.username || 'User';
+              const ownerAvatar = collection.profiles?.avatar_url || undefined;
               return (
                 <div
                   key={collection.id}
@@ -222,6 +207,8 @@ export const MobileSharedFilms: React.FC = () => {
                                  <img
                                    src={getImageUrl(item.poster_path, 'w300')}
                                    alt=""
+                                   loading="lazy"
+                                   decoding="async"
                                    className="w-full h-full object-cover"
                                  />
                                ) : (
@@ -258,6 +245,15 @@ export const MobileSharedFilms: React.FC = () => {
                 </div>
               );
             })}
+
+            {visibleCount < filtered.length && (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 6)}
+                className="w-full py-3 mt-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-teal-400 transition-all"
+              >
+                Muat Lebih Banyak ({filtered.length - visibleCount} sisa)
+              </button>
+            )}
           </div>
         )}
       </div>

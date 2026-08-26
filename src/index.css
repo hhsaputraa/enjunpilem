@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent FOIT/FOUT — font swap agar teks langsung tampil dengan fallback font */
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 222 84% 4.9%;

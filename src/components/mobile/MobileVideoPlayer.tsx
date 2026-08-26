@@ -1,24 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
-  Minimize, 
-  ArrowLeft,
-  Settings,
-  SkipBack,
-  SkipForward,
-  RotateCcw,
-  RotateCw
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { useStreamingServer } from '@/hooks/useStreamingServer';
+import { StreamingServer } from '@/services/streaming';
+import { ServerSelector } from '@/components/ServerSelector';
 
 interface MobileVideoPlayerProps {
   movieId: string;
@@ -40,78 +29,9 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
   className,
 }) => {
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLIFrameElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  const [volume, setVolume] = useState([100]);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Auto-hide controls after 3 seconds
-  useEffect(() => {
-    if (!showControls) return;
-
-    const timer = setTimeout(() => {
-      setShowControls(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [showControls]);
-
-  // Generate VidSrc URL
-  const getVideoUrl = () => {
-    const baseUrl = 'https://vidsrc.xyz/embed';
-    
-    if (type === 'movie') {
-      return `${baseUrl}/movie?tmdb=${movieId}`;
-    } else {
-      return `${baseUrl}/tv?tmdb=${movieId}&season=${season}&episode=${episode}`;
-    }
-  };
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    // Note: We can't control iframe video directly, this is just for UI state
-  };
-
-  const handleMute = () => {
-    setIsMuted(!isMuted);
-  };
-
-  const handleFullscreen = async () => {
-    try {
-      if (!isFullscreen) {
-        // Enter fullscreen
-        if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
-        }
-        // Lock orientation to landscape on mobile
-        if (screen.orientation && screen.orientation.lock) {
-          try {
-            await screen.orientation.lock('landscape');
-          } catch (e) {
-            console.log('Orientation lock not supported');
-          }
-        }
-      } else {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        }
-        // Unlock orientation
-        if (screen.orientation && screen.orientation.unlock) {
-          screen.orientation.unlock();
-        }
-      }
-      setIsFullscreen(!isFullscreen);
-    } catch (error) {
-      console.error('Fullscreen error:', error);
-    }
-  };
+  const { server, setServer, getEmbedUrl } = useStreamingServer();
 
   const handleBack = () => {
     if (onClose) {
@@ -121,212 +41,106 @@ export const MobileVideoPlayer: React.FC<MobileVideoPlayerProps> = ({
     }
   };
 
-  const handleSkip = (seconds: number) => {
-    // This would require postMessage communication with iframe
-    console.log(`Skip ${seconds} seconds`);
-  };
-
-  const showControlsTemporarily = () => {
-    setShowControls(true);
-  };
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const handleServerChange = (newServer: StreamingServer) => {
+    if (newServer !== server) {
+      setIsLoading(true);
+      setError(null);
+      setServer(newServer);
     }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div 
-      className={cn(
-        "relative w-full h-full bg-black",
-        isFullscreen ? "fixed inset-0 z-[9999]" : "aspect-video",
-        className
-      )}
-      onClick={showControlsTemporarily}
-    >
-      {/* Video Player */}
-      <iframe
-        ref={videoRef}
-        src={getVideoUrl()}
-        className="w-full h-full"
-        allowFullScreen
-        allow="autoplay; encrypted-media; picture-in-picture"
-        onLoad={() => setIsLoading(false)}
-        onError={() => {
-          setError('Failed to load video');
-          setIsLoading(false);
-        }}
-      />
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-            <p className="text-white text-sm">Memuat video...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-          <div className="text-center text-white space-y-4">
-            <p className="text-lg font-semibold">Gagal memuat video</p>
-            <p className="text-sm text-gray-300">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()}
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-black"
-            >
-              Coba Lagi
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Controls Overlay */}
+    <div className="w-full space-y-2">
+      {/* Video Player Container */}
       <div 
         className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60",
-          "transition-opacity duration-300",
-          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+          "relative w-full bg-black overflow-hidden rounded-2xl border border-border/10 aspect-video shadow-2xl flex flex-col justify-between",
+          className
         )}
       >
-        {/* Top Controls */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="text-white hover:bg-white/20 rounded-full"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
+        {/* Floating Back & Title Bar */}
+        <div className="absolute top-3 left-3 right-3 z-50 pointer-events-none flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Button
+              onClick={handleBack}
+              className="w-10 h-10 rounded-full bg-black/70 hover:bg-black/90 border border-white/10 backdrop-blur-md flex items-center justify-center text-white pointer-events-auto active:scale-95 transition-all shadow-lg flex-shrink-0"
+              size="icon"
+              variant="ghost"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="bg-black/70 border border-white/10 backdrop-blur-md rounded-2xl px-3.5 py-1.5 flex items-center justify-between pointer-events-auto shadow-lg min-w-0 flex-1 max-w-[85%] sm:max-w-[50%]">
+              <div className="min-w-0 flex-1 pr-2">
+                <h4 className="text-white text-xs font-bold truncate leading-tight">
+                  {movieTitle}
+                </h4>
+                {type === 'tv' && (
+                  <p className="text-[10px] text-gray-300 font-medium">
+                    S{season} • E{episode}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0 bg-primary/20 border border-primary/30 rounded-full px-2 py-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[9px] text-primary font-bold uppercase tracking-wider">
+                  {server === 'vidrock' ? 'Vidrock' : 'VidSrc'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <div className="flex-1 mx-4">
-            <h3 className="text-white font-semibold text-lg truncate">
-              {movieTitle}
-            </h3>
-            {type === 'tv' && (
-              <p className="text-gray-300 text-sm">
-                Season {season} • Episode {episode}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-white/80 text-xs font-medium tracking-wide">
+                Menghubungkan {server === 'vidrock' ? 'Vidrock' : 'VidSrc'}...
               </p>
-            )}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-white/20 rounded-full"
-          >
-            <Settings className="h-6 w-6" />
-          </Button>
-        </div>
-
-        {/* Center Play/Pause */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handlePlayPause}
-            className="w-16 h-16 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm"
-          >
-            {isPlaying ? (
-              <Pause className="h-8 w-8" />
-            ) : (
-              <Play className="h-8 w-8 ml-1" />
-            )}
-          </Button>
-        </div>
-
-        {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 space-y-4">
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <Slider
-              value={[currentTime]}
-              max={duration || 100}
-              step={1}
-              className="w-full"
-              onValueChange={(value) => setCurrentTime(value[0])}
-            />
-            <div className="flex justify-between text-xs text-gray-300">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
             </div>
           </div>
+        )}
 
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleSkip(-10)}
-                className="text-white hover:bg-white/20 rounded-full"
+        {/* Error State */}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20 p-4">
+            <div className="text-center space-y-4 max-w-sm">
+              <p className="text-white font-bold">Gagal memuat pemutar video</p>
+              <p className="text-xs text-gray-400 leading-relaxed">{error}</p>
+              <Button 
+                onClick={() => {
+                  setError(null);
+                  setIsLoading(true);
+                }}
+                variant="outline"
+                className="text-white border-white/20 hover:bg-white hover:text-black rounded-xl text-xs"
               >
-                <RotateCcw className="h-5 w-5" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handlePlayPause}
-                className="text-white hover:bg-white/20 rounded-full"
-              >
-                {isPlaying ? (
-                  <Pause className="h-5 w-5" />
-                ) : (
-                  <Play className="h-5 w-5 ml-0.5" />
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleSkip(10)}
-                className="text-white hover:bg-white/20 rounded-full"
-              >
-                <RotateCw className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleMute}
-                className="text-white hover:bg-white/20 rounded-full"
-              >
-                {isMuted ? (
-                  <VolumeX className="h-5 w-5" />
-                ) : (
-                  <Volume2 className="h-5 w-5" />
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleFullscreen}
-                className="text-white hover:bg-white/20 rounded-full"
-              >
-                {isFullscreen ? (
-                  <Minimize className="h-5 w-5" />
-                ) : (
-                  <Maximize className="h-5 w-5" />
-                )}
+                Coba Hubungkan Kembali
               </Button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Video Player IFrame */}
+        <iframe
+          key={`${server}-${movieId}-${season}-${episode}`}
+          src={getEmbedUrl(type, movieId, season, episode)}
+          className="w-full h-full border-0 z-10"
+          allowFullScreen
+          scrolling="no"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          onLoad={() => setIsLoading(false)}
+        />
+      </div>
+
+      {/* Server Selector Bar (Moved outside the video player overlay) */}
+      <div className="px-3 py-2 bg-card/60 backdrop-blur-sm rounded-xl border border-border/40 flex items-center justify-between shadow-sm">
+        <ServerSelector
+          currentServer={server}
+          onSelectServer={handleServerChange}
+          size="sm"
+        />
       </div>
     </div>
   );

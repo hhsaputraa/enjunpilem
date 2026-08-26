@@ -4,6 +4,8 @@ import {
   getOscarWonPaginated 
 } from '@/services/tmdb';
 
+import { TMDBMediaItem } from '@/types/tmdb';
+
 export interface CollectionConfig {
   id: string;
   title: string;
@@ -11,7 +13,7 @@ export interface CollectionConfig {
   icon: string; // lucide icon name
   color: string; // tailwind color class
   description?: string;
-  queryFn?: (page: number) => Promise<any>; // Optional custom function
+  queryFn?: (page: number) => Promise<TMDBMediaItem[] | { items: TMDBMediaItem[]; totalPages: number }>; // Optional custom function
 }
 
 // Konfigurasi semua koleksi di satu tempat

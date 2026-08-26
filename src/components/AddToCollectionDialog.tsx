@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddToCollectionDialogProps {
   mediaId: number;
@@ -49,19 +50,7 @@ export const AddToCollectionDialog = ({
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!isOpen) {
@@ -113,8 +102,8 @@ export const AddToCollectionDialog = ({
           media_id: mediaId,
           media_type: mediaType,
           poster_path: posterPath,
-          title,
-          name,
+          title: mediaType === 'movie' ? title : undefined,
+          name: mediaType === 'tv' ? title : undefined,
           overview,
           vote_average: voteAverage,
           release_date: releaseDate,
@@ -129,7 +118,7 @@ export const AddToCollectionDialog = ({
       setSearchQuery('');
       setIsOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error creating collection",
         description: error.message,
@@ -147,8 +136,8 @@ export const AddToCollectionDialog = ({
           media_id: mediaId,
           media_type: mediaType,
           poster_path: posterPath,
-          title,
-          name,
+          title: mediaType === 'movie' ? title : undefined,
+          name: mediaType === 'tv' ? title : undefined,
           overview,
           vote_average: voteAverage,
           release_date: releaseDate,
@@ -162,7 +151,7 @@ export const AddToCollectionDialog = ({
       toast({ title: "Added to collection" });
       setIsOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error adding to collection",
         description: error.message,
@@ -229,7 +218,7 @@ export const AddToCollectionDialog = ({
                       <div className="space-y-1">
                         {collections.map((collection) => {
                           const isAlreadyAdded = collection.collection_items?.some(
-                            (item: any) => item.media_id === mediaId && item.media_type === mediaType
+                            (item: { media_id: number; media_type: string }) => item.media_id === mediaId && item.media_type === mediaType
                           );
 
                           return (
@@ -334,3 +323,5 @@ export const AddToCollectionDialog = ({
     </Dialog>
   );
 };
+
+

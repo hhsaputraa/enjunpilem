@@ -1,31 +1,21 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
-import { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { promisePool } from '@/lib/promisePool';
 
 const Favorites = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const { data: favorites, isLoading } = useQuery({
     queryKey: ['favorites', user?.id],
@@ -33,21 +23,27 @@ const Favorites = () => {
       if (!user) return [];
       const { data: favoritesData } = await supabase
         .from('favorites')
-        .select('*')
+        .select('id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
 
       if (!favoritesData) return [];
 
-      const mediaDetails = await Promise.all(
-        favoritesData.map(async (item) => {
+      const settledResults = await promisePool(
+        favoritesData,
+        async (item) => {
           const details = await (item.media_type === 'movie' 
             ? getMovieDetails(item.media_id.toString())
             : getTVDetails(item.media_id.toString())
           );
-          return { ...details, media_type: item.media_type, favorite_id: item.id };
-        })
+          return { ...details, media_type: item.media_type, favorite_id: item.id } as TMDBMediaItem & { favorite_id: string };
+        },
+        5
       );
+
+      const mediaDetails = settledResults
+        .filter((res): res is PromiseFulfilledResult<TMDBMediaItem & { favorite_id: string }> => res.status === 'fulfilled')
+        .map((res) => res.value);
 
       return mediaDetails;
     },
@@ -99,11 +95,11 @@ const Favorites = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {favorites?.map((item: any) => (
+            {favorites?.map((item: TMDBMediaItem & { favorite_id: string }) => (
               <div key={`${item.media_type}-${item.id}`} className="relative group">
                 <div className="relative">
                   <MovieCard
-                    id={item.id}
+                    id={Number(item.id)}
                     title={item.title || item.name}
                     posterPath={item.poster_path}
                     overview={item.overview}

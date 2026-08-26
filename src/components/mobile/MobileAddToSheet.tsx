@@ -17,6 +17,9 @@ interface MobileAddToSheetProps {
   title: string;
   posterPath?: string;
   overview?: string;
+  voteAverage?: number;
+  releaseDate?: string;
+  firstAirDate?: string;
 }
 
 export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
@@ -27,6 +30,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
   title,
   posterPath,
   overview,
+  voteAverage,
+  releaseDate,
+  firstAirDate,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,7 +58,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user && showCollections,
+    enabled: !!user && isOpen,
   });
 
   const addToCollectionMutation = useMutation({
@@ -65,6 +71,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
         title: mediaType === 'movie' ? title : undefined,
         name: mediaType === 'tv' ? title : undefined,
         overview,
+        vote_average: voteAverage,
+        release_date: releaseDate,
+        first_air_date: firstAirDate,
       });
       if (error) throw error;
     },
@@ -73,7 +82,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
       showSuccess('Berhasil!', `"${title}" ditambahkan ke koleksi`);
       handleClose();
     },
-    onError: (err: any) => showError('Gagal', err.message),
+    onError: (err: Error) => showError('Gagal', err.message),
   });
 
   const createCollectionMutation = useMutation({
@@ -93,6 +102,9 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
         title: mediaType === 'movie' ? title : undefined,
         name: mediaType === 'tv' ? title : undefined,
         overview,
+        vote_average: voteAverage,
+        release_date: releaseDate,
+        first_air_date: firstAirDate,
       });
       if (itemErr) throw itemErr;
     },
@@ -101,7 +113,7 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
       showSuccess('Koleksi dibuat!', `"${title}" ditambahkan ke koleksi baru`);
       handleClose();
     },
-    onError: (err: any) => showError('Gagal', err.message),
+    onError: (err: Error) => showError('Gagal', err.message),
   });
 
   const handleClose = () => {
@@ -140,185 +152,183 @@ export const MobileAddToSheet: React.FC<MobileAddToSheetProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
         onClick={handleClose}
       />
 
       {/* Bottom Sheet */}
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 z-50",
+        "fixed bottom-0 left-0 right-0 z-[110]",
         "bg-background border-t border-border/50",
         "rounded-t-3xl shadow-2xl",
         "animate-slide-up",
-        "pb-safe-bottom"
+        "pb-6 pb-safe-bottom"
       )}>
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
         </div>
 
-        {!showCollections ? (
-          /* Main Menu */
-          <div className="px-4 pb-6 pt-2">
-            {/* Film Preview */}
-            <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl bg-secondary/30">
-              {posterPath && (
-                <img
-                  src={`https://image.tmdb.org/t/p/w92${posterPath}`}
-                  alt={title}
-                  className="w-12 h-18 rounded-lg object-cover flex-shrink-0"
-                  style={{ height: '72px' }}
-                />
+        {/* Main Menu */}
+        <div className={cn("px-4 pb-6 pt-2 transition-all duration-300", showCollections && "hidden")}>
+          {/* Film Preview */}
+          <div className="flex items-center gap-3 mb-5 p-3 rounded-2xl bg-secondary/30">
+            {posterPath && (
+              <img
+                src={`https://image.tmdb.org/t/p/w92${posterPath}`}
+                alt={title}
+                className="w-12 h-18 rounded-lg object-cover flex-shrink-0"
+                style={{ height: '72px' }}
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-0.5">
+                {mediaType === 'movie' ? 'Film' : 'Serial TV'}
+              </p>
+              <p className="font-bold text-sm truncate text-foreground">{title}</p>
+              {overview && (
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">{overview}</p>
               )}
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-0.5">
-                  {mediaType === 'movie' ? 'Film' : 'Serial TV'}
-                </p>
-                <p className="font-bold text-sm truncate text-foreground">{title}</p>
-                {overview && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">{overview}</p>
-                )}
-              </div>
             </div>
+          </div>
 
-            <h3 className="text-lg font-bold mb-4">Simpan ke...</h3>
+          <h3 className="text-lg font-bold mb-4">Simpan ke...</h3>
 
-            <div className="space-y-3">
-              {/* Watchlist Button */}
-              <Button
-                className={cn(
-                  "w-full h-14 justify-start gap-4 rounded-2xl text-base",
-                  inWatchlist
-                    ? "bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20"
-                    : "bg-secondary/50 hover:bg-secondary text-foreground"
-                )}
-                variant="ghost"
-                onClick={handleWatchlistClick}
-                disabled={isAddingToWatchlist || isRemovingFromWatchlist}
-              >
-                {(isAddingToWatchlist || isRemovingFromWatchlist) ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <BookmarkPlus className={cn("w-5 h-5", inWatchlist && "fill-primary")} />
-                )}
-                <div className="text-left">
-                  <p className="font-semibold leading-tight">
-                    {inWatchlist ? 'Hapus dari Watchlist' : 'Tambah ke Watchlist'}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-normal">
-                    {inWatchlist ? 'Sudah ada di daftar tonton' : 'Simpan untuk ditonton nanti'}
-                  </p>
-                </div>
-              </Button>
-
-              {/* Add to Collection Button */}
-              <Button
-                className="w-full h-14 justify-start gap-4 rounded-2xl text-base bg-secondary/50 hover:bg-secondary text-foreground"
-                variant="ghost"
-                onClick={handleCollectionClick}
-              >
-                <FolderPlus className="w-5 h-5 text-purple-400" />
-                <div className="text-left">
-                  <p className="font-semibold leading-tight">Tambah ke Koleksi</p>
-                  <p className="text-xs text-muted-foreground font-normal">
-                    Atur film ke dalam koleksi pilihan
-                  </p>
-                </div>
-              </Button>
-            </div>
-
-            {/* Close button */}
+          <div className="space-y-3">
+            {/* Watchlist Button */}
             <Button
+              className={cn(
+                "w-full h-14 justify-start gap-4 rounded-2xl text-base",
+                inWatchlist
+                  ? "bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20"
+                  : "bg-secondary/50 hover:bg-secondary text-foreground"
+              )}
               variant="ghost"
-              onClick={handleClose}
-              className="w-full mt-3 text-muted-foreground hover:text-foreground"
+              onClick={handleWatchlistClick}
+              disabled={isAddingToWatchlist || isRemovingFromWatchlist}
             >
-              Batal
+              {(isAddingToWatchlist || isRemovingFromWatchlist) ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <BookmarkPlus className={cn("w-5 h-5", inWatchlist && "fill-primary")} />
+              )}
+              <div className="text-left">
+                <p className="font-semibold leading-tight">
+                  {inWatchlist ? 'Hapus dari Watchlist' : 'Tambah ke Watchlist'}
+                </p>
+                <p className="text-xs text-muted-foreground font-normal">
+                  {inWatchlist ? 'Sudah ada di daftar tonton' : 'Simpan untuk ditonton nanti'}
+                </p>
+              </div>
+            </Button>
+
+            {/* Add to Collection Button */}
+            <Button
+              className="w-full h-14 justify-start gap-4 rounded-2xl text-base bg-secondary/50 hover:bg-secondary text-foreground"
+              variant="ghost"
+              onClick={handleCollectionClick}
+            >
+              <FolderPlus className="w-5 h-5 text-purple-400" />
+              <div className="text-left">
+                <p className="font-semibold leading-tight">Tambah ke Koleksi</p>
+                <p className="text-xs text-muted-foreground font-normal">
+                  Atur film ke dalam koleksi pilihan
+                </p>
+              </div>
             </Button>
           </div>
-        ) : (
-          /* Collections List */
-          <div className="px-4 pb-6 pt-2">
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setShowCollections(false)} className="text-muted-foreground hover:text-foreground">
-                ← Kembali
-              </button>
-              <h3 className="font-bold text-base">Pilih Koleksi</h3>
-              <button onClick={handleClose}>
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
 
-            {/* Search / Create */}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Cari atau buat koleksi baru..."
-              className="w-full mb-3 px-4 py-3 rounded-xl bg-secondary/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          {/* Close button */}
+          <Button
+            variant="ghost"
+            onClick={handleClose}
+            className="w-full mt-3 text-muted-foreground hover:text-foreground"
+          >
+            Batal
+          </Button>
+        </div>
 
-            <div className="max-h-64 overflow-y-auto space-y-2">
-              {/* Create new collection option */}
-              {searchQuery && !filteredCollections.some(c => c.name.toLowerCase() === searchQuery.toLowerCase()) && (
-                <button
-                  onClick={() => createCollectionMutation.mutate(searchQuery)}
-                  disabled={createCollectionMutation.isPending}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors text-left"
-                >
-                  <FolderPlus className="w-5 h-5 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-primary">Buat koleksi baru</p>
-                    <p className="text-xs text-muted-foreground">"{searchQuery}"</p>
-                  </div>
-                  {createCollectionMutation.isPending && <Loader2 className="w-4 h-4 animate-spin ml-auto text-primary" />}
-                </button>
-              )}
-
-              {collectionsLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : filteredCollections.length === 0 && !searchQuery ? (
-                <p className="text-center text-muted-foreground text-sm py-6">
-                  Belum ada koleksi. Ketik nama untuk membuat baru!
-                </p>
-              ) : (
-                filteredCollections.map(col => {
-                  const alreadyAdded = col.collection_items?.some(
-                    (i: any) => i.media_id === mediaId && i.media_type === mediaType
-                  );
-                  return (
-                    <button
-                      key={col.id}
-                      onClick={() => !alreadyAdded && addToCollectionMutation.mutate(col.id)}
-                      disabled={alreadyAdded || addToCollectionMutation.isPending}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left",
-                        alreadyAdded
-                          ? "bg-secondary/20 opacity-60 cursor-default"
-                          : "bg-secondary/50 hover:bg-secondary active:scale-[0.98]"
-                      )}
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 border border-border">
-                        <FolderPlus className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{col.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {col.collection_items?.length || 0} item
-                        </p>
-                      </div>
-                      {alreadyAdded && (
-                        <span className="text-xs text-primary font-medium flex-shrink-0">✓ Sudah ada</span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
+        {/* Collections List */}
+        <div className={cn("px-4 pb-6 pt-2 transition-all duration-300", !showCollections && "hidden")}>
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setShowCollections(false)} className="text-muted-foreground hover:text-foreground">
+              ← Kembali
+            </button>
+            <h3 className="font-bold text-base">Pilih Koleksi</h3>
+            <button onClick={handleClose}>
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
           </div>
-        )}
+
+          {/* Search / Create */}
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Cari atau buat koleksi baru..."
+            className="w-full mb-3 px-4 py-3 rounded-xl bg-secondary/50 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+
+          <div className="max-h-[300px] overflow-y-auto space-y-2 pb-4 pr-1 scrollbar-thin">
+            {/* Create new collection option */}
+            {searchQuery && !filteredCollections.some(c => c.name.toLowerCase() === searchQuery.toLowerCase()) && (
+              <button
+                onClick={() => createCollectionMutation.mutate(searchQuery)}
+                disabled={createCollectionMutation.isPending}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors text-left"
+              >
+                <FolderPlus className="w-5 h-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-primary">Buat koleksi baru</p>
+                  <p className="text-xs text-muted-foreground">"{searchQuery}"</p>
+                </div>
+                {createCollectionMutation.isPending && <Loader2 className="w-4 h-4 animate-spin ml-auto text-primary" />}
+              </button>
+            )}
+
+            {collectionsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : filteredCollections.length === 0 && !searchQuery ? (
+              <p className="text-center text-muted-foreground text-sm py-6">
+                Belum ada koleksi. Ketik nama untuk membuat baru!
+              </p>
+            ) : (
+              filteredCollections.map(col => {
+                const alreadyAdded = col.collection_items?.some(
+                  (i: { media_id: number; media_type: string }) => i.media_id === mediaId && i.media_type === mediaType
+                );
+                return (
+                  <button
+                    key={col.id}
+                    onClick={() => !alreadyAdded && addToCollectionMutation.mutate(col.id)}
+                    disabled={alreadyAdded || addToCollectionMutation.isPending}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left",
+                      alreadyAdded
+                        ? "bg-secondary/20 opacity-60 cursor-default"
+                        : "bg-secondary/50 hover:bg-secondary active:scale-[0.98]"
+                    )}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 border border-border">
+                      <FolderPlus className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{col.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {col.collection_items?.length || 0} item
+                      </p>
+                    </div>
+                    {alreadyAdded && (
+                      <span className="text-xs text-primary font-medium flex-shrink-0">✓ Sudah ada</span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

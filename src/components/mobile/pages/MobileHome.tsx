@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { HomeLayout } from '../MobileLayout';
 import { HeroSlider } from '../HeroSlider';
-import { CarouselRow } from '../CarouselRow';
+import { CarouselRow, CarouselItem } from '../CarouselRow';
 import { MobileAutoCarouselRow } from '../MobileAutoCarouselRow';
 import { HeroSkeleton, CarouselRowSkeleton } from '../Skeletons';
 import { NetworkError } from '../ErrorState';
@@ -18,34 +18,72 @@ export const MobileHome: React.FC = () => {
   const navigate = useNavigate();
   const { toggleWatchlist } = useMobileWatchlist();
 
-  // Load basic TMDB data
+  // Pisah: hero hanya butuh trending — jangan blok render karena popular/TV belum selesai
   const {
     trending,
     popularMovies,
-    isLoading
+    isLoading,
+    isHeroLoading,
   } = useMixedContent();
 
-  // Load "Top 4 Enjun"
+  // Priority 2: Defer below-fold content until hero loads
   const { data: enjunTopData, isLoading: enjunTopLoading } = useQuery({
     queryKey: ['enjunTop'],
     queryFn: getEnjunTop,
     staleTime: 10 * 60 * 1000,
+    enabled: !isHeroLoading, // Cukup tunggu hero, bukan semua content
   });
 
   // Transform data for mobile
-  const heroItems = trending.data ? transformTMDBData(trending.data.slice(0, 5)) : [];
-  const trendingItems = trending.data ? transformTMDBData(trending.data) : [];
-  const popularItems = popularMovies.data ? transformTMDBData(popularMovies.data) : [];
-  const enjunTopItems = enjunTopData ? transformTMDBData(enjunTopData) : [];
+  const heroItems = React.useMemo(() => {
+    return trending.data ? transformTMDBData(trending.data.slice(0, 5)) : [];
+  }, [trending.data]);
+
+  const trendingItems = React.useMemo(() => {
+    return trending.data ? transformTMDBData(trending.data) : [];
+  }, [trending.data]);
+
+  const popularItems = React.useMemo(() => {
+    return popularMovies.data ? transformTMDBData(popularMovies.data) : [];
+  }, [popularMovies.data]);
+
+  const enjunTopItems = React.useMemo(() => {
+    return enjunTopData ? transformTMDBData(enjunTopData) : [];
+  }, [enjunTopData]);
+
+  // Dynamic LCP image preloading to speed up mobile paint metrics (LCP/FCP)
+  React.useEffect(() => {
+    if (heroItems.length > 0) {
+      const firstBackdrop = heroItems[0].backdrop;
+      const existingPreload = document.querySelector(`link[href="${firstBackdrop}"][rel="preload"]`);
+      if (!existingPreload) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = firstBackdrop;
+        // Inject with high priority so the browser fetches it immediately
+        link.setAttribute('fetchpriority', 'high');
+        document.head.appendChild(link);
+      }
+    }
+  }, [heroItems]);
 
   const hasError = trending.error || popularMovies.error;
 
-  const handleItemClick = (item: any) => {
-    navigate(`/${item.type}/${item.id}`);
+  const handleItemClick = (item: CarouselItem) => {
+    navigate(`/${item.type || 'movie'}/${item.id}`);
   };
 
-  const handleWatchlistToggle = (item: any) => {
-    toggleWatchlist(item);
+  const handleWatchlistToggle = (id: string) => {
+    const item = [...trendingItems, ...popularItems, ...enjunTopItems].find(x => x.id === id);
+    if (item) {
+      toggleWatchlist({
+        id: item.id,
+        title: item.title,
+        poster: item.poster,
+        type: item.type || 'movie',
+      });
+    }
   };
 
   const handleSearch = () => {
@@ -66,18 +104,22 @@ export const MobileHome: React.FC = () => {
 
   return (
     <HomeLayout>
-      <div className="space-y-6 pb-6 w-full overflow-hidden">
-        {/* Hero Section */}
+      <div className="space-y-6 pb-6 w-full">
+        {/* Hero Section — ALWAYS render with fixed height to prevent layout shift and ensure LCP detection */}
         <section className="px-4">
-          {isLoading ? (
-            <HeroSkeleton />
-          ) : (
-            <HeroSlider
-              items={heroItems}
-              onItemClick={handleItemClick}
-              onWatchlistToggle={handleWatchlistToggle}
-            />
-          )}
+          <div className="relative w-full h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+            {isHeroLoading ? (
+              <HeroSkeleton />
+            ) : heroItems.length > 0 ? (
+              <HeroSlider
+                items={heroItems}
+                onItemClick={handleItemClick}
+                onWatchlistToggle={handleWatchlistToggle}
+              />
+            ) : (
+              <HeroSkeleton />
+            )}
+          </div>
         </section>
 
         {/* Trending Now (ga pake lihat semua) */}
@@ -126,7 +168,8 @@ export const MobileHome: React.FC = () => {
         ))}
 
         {/* Quick Actions (Keep these handy Mobile features) */}
-        <section className="px-4 pt-4 border-t border-white/5 mt-8">
+        {/* min-h prevents layout shift — section always occupies same space */}
+        <section className="px-4 pt-4 border-t border-white/5 mt-8 min-h-[90px]">
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"

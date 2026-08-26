@@ -3,7 +3,7 @@ import { getResponsiveImageUrl } from '@/services/tmdb';
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { cn } from "@/lib/utils";
 
 interface MovieCardProps {
@@ -17,7 +17,7 @@ interface MovieCardProps {
   priority?: boolean;
 }
 
-export const MovieCard = ({
+export const MovieCard = memo(({
   id,
   title,
   posterPath,
@@ -41,24 +41,27 @@ export const MovieCard = ({
     <div className="group relative">
       <Link to={`/${mediaType}/${id}`} className="block">
         <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-muted shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] ring-1 ring-border/50 hover:ring-primary/50">
-          {/* Simple Image Container */}
+          {/* Image container — aspect-ratio menjaga dimensi tetap sebelum gambar load */}
           <div className="relative h-full w-full overflow-hidden">
             {!imageError ? (
               <>
-                {!imageLoaded && (
-                  <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                  </div>
-                )}
+                {/* Skeleton background — selalu ada, hilang saat gambar load */}
+                <div className={cn(
+                  "absolute inset-0 bg-muted transition-opacity duration-300",
+                  imageLoaded ? "opacity-0" : "opacity-100 animate-pulse"
+                )} />
                 <img
                   src={getResponsiveImageUrl(posterPath)}
                   alt={title}
+                  width={220}
+                  height={330}
                   className={cn(
-                    "w-full h-full object-cover transition-all duration-500",
+                    "w-full h-full object-cover transition-opacity duration-500",
                     imageLoaded ? "opacity-100" : "opacity-0",
                     "group-hover:scale-110"
                   )}
                   loading={priority ? 'eager' : 'lazy'}
+                  decoding="async"
                   onLoad={() => setImageLoaded(true)}
                   onError={() => setImageError(true)}
                 />
@@ -116,4 +119,6 @@ export const MovieCard = ({
       </Link>
     </div>
   );
-};
+});
+
+MovieCard.displayName = 'MovieCard';

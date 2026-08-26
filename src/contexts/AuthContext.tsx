@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * AuthContext — Satu-satunya sumber kebenaran status autentikasi di seluruh aplikasi.
  * Hanya ada SATU Supabase listener yang dipasang di sini, menghindari multiple listeners

@@ -61,8 +61,14 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://api.themoviedb.org" />
-    <link rel="preconnect" href="https://image.tmdb.org" />
+    <link rel="preconnect" href="https://api.themoviedb.org" crossorigin />
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
+    <link rel="dns-prefetch" href="https://api.themoviedb.org" />
+    <link rel="dns-prefetch" href="https://image.tmdb.org" />
+    <!-- Supabase — dipakai untuk auth, preconnect agar koneksi siap lebih cepat -->
+    <link rel="preconnect" href="https://supabase.co" crossorigin />
+    <!-- Google OAuth hanya dipakai di halaman /auth, tidak perlu preconnect di semua halaman -->
+    <link rel="dns-prefetch" href="https://accounts.google.com" />
 
     <!-- CSS Variables for safe areas -->
     <style>
@@ -88,12 +94,24 @@
       .scrollbar-hide::-webkit-scrollbar {
         display: none;
       }
+
+      /* CRITICAL CSS: Ensure hero section is visible immediately for LCP */
+      /* This prevents the "blank screen" issue that causes NO_LCP error */
+      #root {
+        min-height: 100vh;
+        background-color: #09090b; /* bg-background */
+      }
+      
+      /* Reserve space for hero section to prevent layout shift */
+      .hero-container {
+        min-height: 400px;
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      }
     </style>
   </head>
 
   <body>
     <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -12,38 +12,52 @@ import { ContentRow } from "@/components/ContentRow"
 import { HeroSection } from "@/components/HeroSection"
 import { Film, Star, Trophy, TrendingUp } from "lucide-react"
 
+// Skeleton placeholder dengan dimensi identik HeroSection agar tidak ada layout shift
+const HeroSkeleton = () => (
+  <div className="w-full h-full rounded-3xl bg-muted/50 animate-pulse ring-1 ring-white/5" />
+)
+
 const Index = () => {
   // Performance monitoring
   const { measureCustom } = usePerformance('Index Page');
 
+  // Priority 1: Load hero content first (critical for LCP)
   const { data: trending, isLoading: trendingLoading } = useQuery({
     queryKey: ["trending"],
     queryFn: () => getTrending(1),
   })
 
+  // Priority 2: Defer below-fold content until hero is loaded
   const { data: popularMovies, isLoading: moviesLoading } = useQuery({
     queryKey: ["popularMovies"],
     queryFn: () => getPopularMovies(1),
+    enabled: !trendingLoading, // Wait for hero to load first
   })
 
   const { data: topRatedMovies, isLoading: topRatedLoading } = useQuery({
     queryKey: ["topRatedMovies"],
     queryFn: () => getTopRatedMovies(1),
+    enabled: !trendingLoading, // Wait for hero to load first
   })
 
   const { data: enjunTop, isLoading: enjunTopLoading } = useQuery({
     queryKey: ["enjunTop"],
     queryFn: getEnjunTop,
+    enabled: !trendingLoading, // Wait for hero to load first
   })
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 min-h-[150vh] md:min-h-[250vh]">
+      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         
-        {/* Hero Section Wrapper to prevent Layout Shift */}
-        <div className="min-h-[500px] sm:min-h-[60vh] lg:min-h-[70vh] mb-16 w-full">
-          {!trendingLoading && trending?.items && trending.items.length > 0 && (
+        {/* Hero Section — fixed height agar tidak ada layout shift saat data load */}
+        <div className="h-[500px] sm:h-[60vh] lg:h-[70vh] mb-16 w-full">
+          {trendingLoading ? (
+            <HeroSkeleton />
+          ) : trending?.items && trending.items.length > 0 ? (
             <HeroSection trending={trending.items} />
+          ) : (
+            <HeroSkeleton />
           )}
         </div>
 

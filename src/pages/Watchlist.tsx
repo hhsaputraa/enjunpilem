@@ -1,32 +1,22 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { TMDBMediaItem } from '@/types/tmdb';
 import { supabase } from '@/integrations/supabase/client';
 import { MovieCard } from '@/components/MovieCard';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getMovieDetails, getTVDetails } from '@/services/tmdb';
-import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { promisePool } from '@/lib/promisePool';
 
 const Watchlist = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const { data: watchlist, isLoading } = useQuery({
     queryKey: ['watchlist', user?.id],
@@ -34,21 +24,27 @@ const Watchlist = () => {
       if (!user) return [];
       const { data: watchlistData } = await supabase
         .from('watchlist')
-        .select('*')
+        .select('id, media_id, media_type, added_at')
         .eq('user_id', user.id)
         .order('added_at', { ascending: false });
 
       if (!watchlistData) return [];
 
-      const mediaDetails = await Promise.all(
-        watchlistData.map(async (item) => {
+      const settledResults = await promisePool(
+        watchlistData,
+        async (item) => {
           const details = await (item.media_type === 'movie' 
             ? getMovieDetails(item.media_id.toString())
             : getTVDetails(item.media_id.toString())
           );
-          return { ...details, media_type: item.media_type, watchlist_id: item.id };
-        })
+          return { ...details, media_type: item.media_type, watchlist_id: item.id } as TMDBMediaItem & { watchlist_id: string };
+        },
+        5
       );
+
+      const mediaDetails = settledResults
+        .filter((res): res is PromiseFulfilledResult<TMDBMediaItem & { watchlist_id: string }> => res.status === 'fulfilled')
+        .map((res) => res.value);
 
       return mediaDetails;
     },
@@ -71,6 +67,17 @@ const Watchlist = () => {
     },
   });
 
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6 bg-background flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="h-12 w-48 bg-zinc-800/50 rounded-lg"></div>
+          <div className="h-4 w-64 bg-zinc-800/50 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen p-6 bg-background flex items-center justify-center">
@@ -87,13 +94,13 @@ const Watchlist = () => {
   const movies = watchlist?.filter(item => item.media_type === 'movie') || [];
   const tvShows = watchlist?.filter(item => item.media_type === 'tv') || [];
 
-  const MovieList = ({ items }: { items: any[] }) => (
+  const MovieList = ({ items }: { items: (TMDBMediaItem & { watchlist_id: string })[] }) => (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-      {items.map((item: any) => (
+      {items.map((item: TMDBMediaItem & { watchlist_id: string }) => (
         <div key={`${item.media_type}-${item.id}`} className="relative group">
           <div className="relative">
             <MovieCard
-              id={item.id}
+              id={Number(item.id)}
               title={item.title || item.name}
               posterPath={item.poster_path}
               overview={item.overview}

@@ -1,7 +1,7 @@
 // Service Worker for EnjunPilem PWA
-const CACHE_NAME = 'enjunpilem-v2';
-const STATIC_CACHE = 'enjunpilem-static-v2';
-const DYNAMIC_CACHE = 'enjunpilem-dynamic-v2';
+const CACHE_NAME = 'enjunpilem-v3';
+const STATIC_CACHE = 'enjunpilem-static-v3';
+const DYNAMIC_CACHE = 'enjunpilem-dynamic-v3';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -13,7 +13,11 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Force activate new SW
+  // Do NOT call self.skipWaiting() here.
+  // skipWaiting() forces the new SW to activate while the old one is still
+  // controlling pages, which triggers a clients.claim() → navigation reload
+  // that Lighthouse reports as a 2+ second redirect penalty.
+  // The new SW will activate naturally after all tabs using the old SW are closed.
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
@@ -25,18 +29,19 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    Promise.all([
-      self.clients.claim(), // Take control of all clients immediately
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-    ])
+    // Do NOT call self.clients.claim() here.
+    // clients.claim() after skipWaiting() is what causes the navigation
+    // interrupt. Without skipWaiting(), this SW only controls pages opened
+    // after activation, so claim() is unnecessary and harmful to performance.
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
 

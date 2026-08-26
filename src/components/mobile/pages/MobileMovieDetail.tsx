@@ -70,7 +70,7 @@ export const MobileMovieDetail: React.FC = () => {
 
   // Auto-open sheet if redirected back from auth with showAddSheet flag
   React.useEffect(() => {
-    if ((location.state as any)?.showAddSheet && user) {
+    if ((location.state as { showAddSheet?: boolean })?.showAddSheet && user) {
       setIsSheetOpen(true);
       // Clear state so it doesn't re-trigger on navigation
       window.history.replaceState({}, document.title);
@@ -234,8 +234,6 @@ export const MobileMovieDetail: React.FC = () => {
                   <Plus className="w-5 h-5" />
                 )}
               </Button>
-              
-              
             </div>
           </div>
 
@@ -329,6 +327,9 @@ export const MobileMovieDetail: React.FC = () => {
         title={movie.title}
         posterPath={movieDetails?.poster_path}
         overview={movie.overview}
+        voteAverage={movieDetails?.vote_average}
+        releaseDate={movieDetails?.release_date}
+        firstAirDate={movieDetails?.first_air_date}
       />
     </DetailLayout>
   );
