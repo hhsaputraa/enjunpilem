@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { getResponsiveImageUrl } from '@/services/tmdb';
 import { Badge } from '@/components/ui/badge';
-import { Star, Calendar, Play } from 'lucide-react';
+import { Star, Calendar, Play, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, memo } from 'react';
 import { cn } from "@/lib/utils";
@@ -40,7 +40,7 @@ export const MovieCard = memo(({
   return (
     <div className="group relative">
       <Link to={`/${mediaType}/${id}`} className="block">
-        <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-muted shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] ring-1 ring-border/50 hover:ring-primary/50">
+        <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden bg-muted shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] ring-1 ring-border/50 hover:ring-primary/50 transform-gpu will-change-transform">
           {/* Image container — aspect-ratio menjaga dimensi tetap sebelum gambar load */}
           <div className="relative h-full w-full overflow-hidden">
             {!imageError ? (
@@ -68,8 +68,8 @@ export const MovieCard = memo(({
               </>
             ) : (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="text-3xl mb-2 opacity-50">🎬</div>
+                <div className="text-center text-muted-foreground flex flex-col items-center justify-center">
+                  <Film className="w-8 h-8 mb-2 opacity-50" />
                   <div className="text-sm">No Image</div>
                 </div>
               </div>
@@ -106,7 +106,7 @@ export const MovieCard = memo(({
                   </div>
                 )}
 
-                {releaseDate && (
+                {releaseDate && !isNaN(new Date(releaseDate).getTime()) && (
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-white/10 text-white/90 border border-white/10 backdrop-blur-md">
                     <Calendar className="w-2.5 h-2.5" />
                     {new Date(releaseDate).getFullYear()}

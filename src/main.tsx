@@ -4,6 +4,14 @@ import './index.css'
 import { validateEnv, devConfig } from '@/config/env'
 import { initPerformanceObserver } from './hooks/usePerformance'
 
+// Apply the saved/system theme before React mounts to avoid a dark-mode flash.
+const savedTheme = localStorage.getItem('enjunpilem-theme');
+const initialTheme = savedTheme === 'dark' || savedTheme === 'light'
+  ? savedTheme
+  : (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+document.documentElement.style.colorScheme = initialTheme;
+
 // Validate environment variables on startup
 validateEnv();
 

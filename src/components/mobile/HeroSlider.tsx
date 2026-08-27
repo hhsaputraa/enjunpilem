@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Plus, Star } from 'lucide-react';
+import { Play, Plus, Star, Film, Tv } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -264,13 +264,17 @@ export const HeroSlider: React.FC<HeroSliderProps> = ({
             <Badge
               variant="secondary"
               className={cn(
-                'bg-black/60 backdrop-blur-sm border-white/20',
+                'bg-black/60 backdrop-blur-sm border-white/20 flex items-center gap-1',
                 currentItem.type === 'movie'
                   ? 'text-blue-300 border-blue-400/30'
-                  : 'text-purple-300 border-purple-400/30'
+                  : 'text-cyan-300 border-cyan-400/30'
               )}
             >
-              {currentItem.type === 'movie' ? '🎬 Film' : '📺 Serial'}
+              {currentItem.type === 'movie' ? (
+                <><Film className="w-3.5 h-3.5" /> Film</>
+              ) : (
+                <><Tv className="w-3.5 h-3.5" /> Serial</>
+              )}
             </Badge>
 
             {typeof currentItem.rating === 'number' && (

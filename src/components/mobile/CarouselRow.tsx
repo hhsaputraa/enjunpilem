@@ -58,7 +58,7 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
     <section 
       className={cn("space-y-3", className)}
       aria-label={title}
-      style={{ contentVisibility: 'auto' }} // Optimize rendering of off-screen content
+      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 260px' }} // Optimize rendering of off-screen content
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4">
@@ -151,21 +151,21 @@ export const CarouselRow: React.FC<CarouselRowProps> = ({
 
 // Specialized carousel variants
 export const TrendingCarousel: React.FC<Omit<CarouselRowProps, 'title'>> = (props) => (
-  <CarouselRow title="🔥 Sedang Tren" itemSize="lg" {...props} />
+  <CarouselRow title="Sedang Tren" itemSize="lg" {...props} />
 );
 
 export const NewReleasesCarousel: React.FC<Omit<CarouselRowProps, 'title'>> = (props) => (
-  <CarouselRow title="🆕 Baru Rilis" {...props} />
+  <CarouselRow title="Baru Rilis" {...props} />
 );
 
 export const TopRatedCarousel: React.FC<Omit<CarouselRowProps, 'title'>> = (props) => (
-  <CarouselRow title="⭐ Rating Tertinggi" {...props} />
+  <CarouselRow title="Rating Tertinggi" {...props} />
 );
 
 export const RecommendedCarousel: React.FC<Omit<CarouselRowProps, 'title'>> = (props) => (
-  <CarouselRow title="💡 Rekomendasi" {...props} />
+  <CarouselRow title="Rekomendasi" {...props} />
 );
 
 export const ContinueWatchingCarousel: React.FC<Omit<CarouselRowProps, 'title'>> = (props) => (
-  <CarouselRow title="▶️ Lanjut Tonton" showViewAll={false} {...props} />
+  <CarouselRow title="Lanjut Tonton" showViewAll={false} {...props} />
 );

@@ -21,6 +21,7 @@ import { useUserProfile } from "@/hooks/useUserProfile"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 import { LogoImage } from "@/components/LogoImage"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 const Navbar = () => {
   const { user } = useAuth()
@@ -91,12 +92,11 @@ const Navbar = () => {
     <header 
       className={cn(
         "sticky top-0 z-50 w-full transition-colors duration-300",
-        scrolled 
-          ? "bg-background/80 backdrop-blur-md border-b border-border/40 shadow-sm transition-shadow duration-300" 
-          : "bg-transparent border-b border-transparent"
+        "bg-background/95 backdrop-blur-md border-b border-border/60 shadow-sm",
+        scrolled && "shadow-md"
       )}
     >
-      <div className="container mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-3 px-4 lg:px-6">
         {/* Logo */}
         <Link 
           to="/" 
@@ -111,20 +111,20 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1.5 p-1 bg-muted/50 rounded-full border border-white/5 backdrop-blur-sm">
+        <nav className="hidden min-w-0 flex-1 lg:flex items-center gap-0 rounded-full border border-border/60 bg-muted/80 p-1 shadow-sm backdrop-blur-sm lg:mx-3">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               className={cn(
-                "flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                "flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-1.5 py-2 text-[13px] font-medium leading-none transition-colors duration-200 xl:px-2",
                 isActive(link.path)
-                  ? "bg-background text-foreground shadow-sm scale-105"
+                  ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-background/50"
               )}
             >
-              {link.icon && <link.icon className="w-4 h-4" />}
-              {link.name}
+              {link.icon && <link.icon className="size-4 shrink-0" />}
+              <span className="whitespace-nowrap">{link.name}</span>
             </Link>
           ))}
         </nav>
@@ -134,6 +134,8 @@ const Navbar = () => {
           <div className="hidden lg:block w-full max-w-[240px]">
             <SearchBar />
           </div>
+
+          <ThemeToggle />
 
           <div className="lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => navigate("/search")}>

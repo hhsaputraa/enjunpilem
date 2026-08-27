@@ -150,7 +150,9 @@ const Onboarding = () => {
                 <p className="text-xs text-destructive">Username sudah dipakai</p>
               )}
               {!checking && validation.ok && available === true && (
-                <p className="text-xs text-green-500">Username tersedia ✓</p>
+                <p className="text-xs text-green-500 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> Username tersedia
+                </p>
               )}
             </div>
 

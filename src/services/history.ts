@@ -81,3 +81,70 @@ export const deleteFromWatchHistory = async (id: string): Promise<boolean> => {
   }
   return true;
 };
+
+export const updateWatchProgress = async (params: {
+  media_id: number;
+  media_type: 'movie' | 'tv';
+  title?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  progress_percent: number;
+  season_number?: number;
+  episode_number?: number;
+  episode_name?: string;
+}): Promise<WatchHistoryRow | null> => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return null;
+
+  const userId = session.session.user.id;
+
+  const upsertData: Record<string, any> = {
+    user_id: userId,
+    media_id: params.media_id,
+    media_type: params.media_type,
+    progress_percent: Math.min(100, Math.max(0, Math.round(params.progress_percent))),
+    last_watched_at: new Date().toISOString(),
+  };
+
+  if (params.title) upsertData.title = params.title;
+  if (params.poster_path !== undefined) upsertData.poster_path = params.poster_path;
+  if (params.backdrop_path !== undefined) upsertData.backdrop_path = params.backdrop_path;
+  if (params.season_number !== undefined) upsertData.season_number = params.season_number;
+  if (params.episode_number !== undefined) upsertData.episode_number = params.episode_number;
+  if (params.episode_name !== undefined) upsertData.episode_name = params.episode_name;
+
+  const { data, error } = await supabase
+    .from('watch_history')
+    .upsert(upsertData as any, {
+      onConflict: 'user_id,media_id,media_type'
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating watch progress:', error);
+    return null;
+  }
+  return data;
+};
+
+export const getContinueWatching = async (): Promise<WatchHistoryRow[]> => {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session?.session?.user) return [];
+
+  const { data, error } = await supabase
+    .from('watch_history')
+    .select('*')
+    .eq('user_id', session.session.user.id)
+    .gt('progress_percent', 0)
+    .lt('progress_percent', 95)
+    .order('last_watched_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error('Error fetching continue watching history:', error);
+    return [];
+  }
+  return data || [];
+};
+

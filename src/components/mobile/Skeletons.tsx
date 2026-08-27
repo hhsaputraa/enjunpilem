@@ -12,8 +12,8 @@ export const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
 // saat data TMDB belum selesai di-fetch. Tanpa teks ini = NO_LCP.
 // PENTING: Teks harus visible (tidak opacity:0) agar bisa jadi LCP candidate
 export const HeroSkeleton: React.FC = () => (
-  <div className="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 animate-pulse">
-    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-2xl" />
+  <div className="absolute inset-0 w-full h-full rounded-2xl bg-muted animate-pulse">
+    <div className="absolute inset-0 bg-gradient-to-t from-foreground/15 to-transparent rounded-2xl" />
     <div className="absolute bottom-6 left-6 right-6 space-y-3">
       <div className="flex gap-2">
         <Skeleton className="h-6 w-16 rounded-full" />

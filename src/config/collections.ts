@@ -60,7 +60,7 @@ export const COLLECTIONS: CollectionConfig[] = [
     title: 'Marvel Cinematic Universe',
     slug: 'marvel-mcu',
     icon: 'Zap',
-    color: 'text-purple-500',
+    color: 'text-cyan-500',
     description: 'Complete MCU collection',
   },
   {

@@ -13,7 +13,6 @@ import {
   Moon,
   Sun,
   Globe,
-  Download,
   Trash2,
   Info,
   LogOut,
@@ -25,12 +24,14 @@ import {
 } from 'lucide-react';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { AvatarPicker } from '@/components/AvatarPicker';
 import { Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToastHelpers } from '../Toast';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface UserProfile {
   id: string;
@@ -62,10 +63,13 @@ interface SettingItem {
 
 export const MobileProfile: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { showSuccess, showInfo } = useToastHelpers();
   const { user: authUser, loading, signOut, getUserDisplayName, getUserInitials } = useMobileAuth();
   const { data: profile } = useUserProfile(authUser?.id);
   const avatarUrl = profile?.avatar_url || authUser?.avatar_url;
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const [language, setLanguage] = useState('id');
   const [notifications, setNotifications] = useState(true);
 
@@ -118,12 +122,12 @@ export const MobileProfile: React.FC = () => {
   const settingItems: SettingItem[] = [
     {
       id: 'theme',
-      label: 'Mode Gelap',
-      description: 'Gunakan tema gelap untuk kenyamanan mata',
+      label: isDarkMode ? 'Mode Gelap' : 'Mode Terang',
+      description: isDarkMode ? 'Gunakan tema gelap untuk kenyamanan mata' : 'Gunakan tema terang untuk tampilan bersih',
       icon: isDarkMode ? Moon : Sun,
       type: 'toggle',
       value: isDarkMode,
-      onToggle: setIsDarkMode,
+      onToggle: () => toggleTheme(),
     },
     {
       id: 'language',
@@ -145,23 +149,14 @@ export const MobileProfile: React.FC = () => {
       onToggle: setNotifications,
     },
     {
-      id: 'downloads',
-      label: 'Unduhan',
-      description: 'Kelola konten yang diunduh',
-      icon: Download,
-      type: 'navigation',
-      badge: '2',
-      onClick: () => navigate('/downloads'),
-    },
-    {
       id: 'clear-cache',
       label: 'Hapus Cache',
-      description: 'Bersihkan data sementara aplikasi',
+      description: 'Bersihkan data',
       icon: Trash2,
       type: 'action',
       onClick: () => {
-        // Handle clear cache
-        console.log('Clear cache');
+        queryClient.clear();
+        showSuccess('Cache Dibersihkan', 'Data berhasil dibersihkan');
       },
     },
     {
@@ -169,8 +164,10 @@ export const MobileProfile: React.FC = () => {
       label: 'Tentang Aplikasi',
       description: 'Versi 2.0.0',
       icon: Info,
-      type: 'navigation',
-      onClick: () => navigate('/about'),
+      type: 'action',
+      onClick: () => {
+        showInfo('EnjunPilem v2.0.0', 'Platform streaming film & serial TV favorit Anda.');
+      },
     },
     {
       id: 'logout',
@@ -182,10 +179,6 @@ export const MobileProfile: React.FC = () => {
       onClick: signOut,
     },
   ];
-
-  const handleEditProfile = () => {
-    navigate('/profile/edit');
-  };
 
   const handleStatClick = (type: 'watchlist' | 'favorites' | 'watched') => {
     switch (type) {
@@ -392,8 +385,8 @@ export const MobileProfile: React.FC = () => {
             <div className="text-xs text-muted-foreground">
               Versi 2.0.0 • Build 2024.01
             </div>
-            <div className="text-xs text-muted-foreground">
-              Made with ❤️ for movie lovers
+            <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+              Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for movie lovers
             </div>
           </div>
         </section>

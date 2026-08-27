@@ -22,25 +22,25 @@ const ImportCollection = () => {
 
   if (loading || !user || user.id !== ALLOWED_USER_ID) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-       <Loader className="w-8 h-8 text-[#0AC4E0] animate-spin" />
+       <Loader className="w-8 h-8 text-primary animate-spin" />
     </div>
   );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header for the embedded page */}
-      <div className="border-b border-white/5 bg-zinc-950/50 backdrop-blur-md p-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="border-b border-border bg-card/80 backdrop-blur-md p-4 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => navigate("/collections")}
-            className="rounded-xl hover:bg-white/10"
+            className="rounded-xl hover:bg-accent text-foreground"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-white">Import Collection</h1>
+            <h1 className="text-lg font-bold text-foreground">Import Collection</h1>
             <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">
               Powered by Streamlit
             </p>
@@ -51,7 +51,7 @@ const ImportCollection = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-xs font-bold uppercase tracking-wider text-[#0AC4E0] hover:bg-[#0AC4E0]/10 rounded-xl"
+            className="text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary/10 rounded-xl"
             onClick={() => window.open(streamlitUrl, "_blank")}
           >
             <ExternalLink className="w-3.5 h-3.5 mr-2" />
@@ -60,15 +60,15 @@ const ImportCollection = () => {
         </div>
       </div>
 
-      <div className="flex-1 relative bg-[#0e1117]">
+      <div className="flex-1 relative bg-card">
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-20">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/95 z-20">
             <div className="relative w-16 h-16 mb-6">
-              <div className="absolute inset-0 border-4 border-[#0AC4E0]/20 rounded-full" />
-              <div className="absolute inset-0 border-4 border-[#0AC4E0] rounded-full border-t-transparent animate-spin" />
-              <Loader className="absolute inset-0 m-auto w-6 h-6 text-[#0AC4E0] animate-pulse" />
+              <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
+              <div className="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin" />
+              <Loader className="absolute inset-0 m-auto w-6 h-6 text-primary animate-pulse" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Connecting to Sync Service</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">Connecting to Sync Service</h2>
             <p className="text-muted-foreground text-sm">This may take a moment to wake up the server...</p>
           </div>
         )}

@@ -9,6 +9,7 @@ import {
 import { COLLECTIONS } from "@/config/collections"
 import { AutoContentRow } from "@/components/AutoContentRow"
 import { ContentRow } from "@/components/ContentRow"
+import { ContinueWatchingRow } from "@/components/ContinueWatchingRow"
 import { HeroSection } from "@/components/HeroSection"
 import { Film, Star, Trophy, TrendingUp } from "lucide-react"
 
@@ -62,6 +63,8 @@ const Index = () => {
         </div>
 
         <div className="space-y-4 sm:space-y-8">
+          <ContinueWatchingRow />
+
           <ContentRow
             title="Trending Now"
             items={trending?.items || []}

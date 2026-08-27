@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Trash2, Grid, List, Star, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2, Grid, List, Star, Search, ChevronUp, ChevronDown, Film } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -64,10 +64,16 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = React.useDeferredValue(searchQuery);
   const [localItems, setLocalItems] = useState<CollectionItem[]>([]);
   const [itemToDelete, setItemToDelete] = useState<CollectionItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Automatically scroll to top when changing page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['collection-items', collectionId],
@@ -83,6 +89,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
       return (data || []) as CollectionItem[];
     },
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Sync server data to local state
@@ -93,7 +100,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
   // Reset pagination on search
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [deferredSearchQuery]);
 
   // Scroll to top on page change
   useEffect(() => {
@@ -106,11 +113,12 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
   }, [currentPage]);
 
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return localItems;
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (!query) return localItems;
     return localItems.filter(item => 
-      (item.title || item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+      (item.title || item.name || '').toLowerCase().includes(query)
     );
-  }, [localItems, searchQuery]);
+  }, [localItems, deferredSearchQuery]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
@@ -183,7 +191,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
           <Button 
             variant="ghost" 
             onClick={onBack} 
-            className="p-0 hover:bg-white/10 rounded-full h-9 w-9 flex items-center justify-center border border-border/20 bg-card/40"
+            className="p-0 hover:bg-accent rounded-full h-9 w-9 flex items-center justify-center border border-border/40 bg-card/60"
           >
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </Button>
@@ -202,7 +210,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                   <img
                     src={ownerAvatarUrl}
                     alt={ownerName}
-                    className="w-4 h-4 rounded-full object-cover border border-white/10"
+                    className="w-4 h-4 rounded-full object-cover border border-border"
                   />
                 )}
                 <span>
@@ -227,19 +235,19 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
 
           <div className="flex items-center gap-1 bg-card/40 p-1 rounded-xl border border-border/40">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode('grid')}
-              className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'grid' ? "bg-primary text-primary-foreground hover:bg-primary shadow-sm" : "text-muted-foreground hover:text-white")}
+              className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'grid' ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent")}
               aria-label="Grid view"
             >
               <Grid className="h-3.5 w-3.5" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode('list')}
-              className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'list' ? "bg-primary text-primary-foreground hover:bg-primary shadow-sm" : "text-muted-foreground hover:text-white")}
+              className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'list' ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-accent")}
               aria-label="List view"
             >
               <List className="h-3.5 w-3.5" />
@@ -308,7 +316,9 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                           loading="lazy"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">🎬</div>
+                        <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                          <Film className="w-4 h-4 opacity-50" />
+                        </div>
                       )}
 
                       {/* Rating Badge */}
@@ -326,7 +336,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                         <span className={cn(
                           "text-[8px] font-black px-1.5 py-0.25 rounded-md uppercase tracking-wider",
                           item.media_type === 'tv' 
-                            ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" 
+                            ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" 
                             : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                         )}>
                           {item.media_type === 'tv' ? 'TV' : 'Film'}
@@ -378,7 +388,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                           size="icon"
                           onClick={() => handleMoveUp(globalIdx)}
                           disabled={globalIdx === 0}
-                          className="h-7 w-7 rounded-md hover:bg-white/10 text-muted-foreground disabled:opacity-20 transition-colors"
+                          className="h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
                         >
                           <ChevronUp className="h-4.5 w-4.5" />
                         </Button>
@@ -387,7 +397,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                           size="icon"
                           onClick={() => handleMoveDown(globalIdx)}
                           disabled={globalIdx === localItems.length - 1}
-                          className="h-7 w-7 rounded-md hover:bg-white/10 text-muted-foreground disabled:opacity-20 transition-colors"
+                          className="h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
                         >
                           <ChevronDown className="h-4.5 w-4.5" />
                         </Button>
@@ -395,7 +405,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                     )}
 
                     <Link to={detailPath} className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-14 aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 flex-shrink-0 border border-border/20">
+                      <div className="w-14 aspect-[2/3] rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border/40">
                         {item.poster_path ? (
                           <img
                             src={getImageUrl(item.poster_path, 'w300')}
@@ -404,7 +414,9 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">🎬</div>
+                          <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                            <Film className="w-4 h-4 opacity-50" />
+                          </div>
                         )}
                       </div>
 
@@ -413,8 +425,8 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                           <span className={cn(
                             "text-[8px] font-black px-1.5 py-0.25 rounded-md uppercase tracking-wider",
                             item.media_type === 'tv' 
-                              ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" 
-                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              ? "bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 border border-cyan-500/20" 
+                              : "bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20"
                           )}>
                             {item.media_type === 'tv' ? 'TV' : 'Film'}
                           </span>
@@ -459,7 +471,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
             size="icon"
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={activePage === 1}
-            className="h-9 w-9 rounded-xl border-border/40 bg-card/45 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
+            className="h-9 w-9 rounded-xl border-border bg-card text-foreground hover:bg-accent disabled:opacity-20 transition-all"
           >
             <ChevronLeft className="h-4.5 w-4.5" />
           </Button>
@@ -481,7 +493,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                     "h-9 min-w-9 rounded-xl font-black transition-all duration-300",
                     activePage === pageNum
                       ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
-                      : "border-border/40 bg-card/45 text-muted-foreground hover:bg-white/10"
+                      : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent"
                   )}
                 >
                   {pageNum}
@@ -491,7 +503,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
             
             if (pageNum === 2 || pageNum === totalPages - 1) {
               return (
-                <span key={pageNum} className="text-zinc-600 px-1 font-bold text-xs select-none">
+                <span key={pageNum} className="text-muted-foreground/50 px-1 font-bold text-xs select-none">
                   •••
                 </span>
               );
@@ -505,7 +517,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
             size="icon"
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={activePage === totalPages}
-            className="h-9 w-9 rounded-xl border-border/40 bg-card/45 text-foreground hover:bg-white/10 disabled:opacity-20 transition-all"
+            className="h-9 w-9 rounded-xl border-border bg-card text-foreground hover:bg-accent disabled:opacity-20 transition-all"
           >
             <ChevronRight className="h-4.5 w-4.5" />
           </Button>
@@ -514,7 +526,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="border-border/50 bg-background/95 backdrop-blur-xl text-foreground max-w-[90%] rounded-2xl">
+        <AlertDialogContent className="border-border bg-card text-card-foreground max-w-[90%] rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-bold text-center">Hapus dari Koleksi?</AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-center text-muted-foreground leading-relaxed mt-1">
@@ -522,7 +534,7 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row gap-2 mt-4">
-            <AlertDialogCancel className="flex-1 bg-card border-border/40 hover:bg-white/10 text-foreground rounded-xl h-12 mt-0">Batal</AlertDialogCancel>
+            <AlertDialogCancel className="flex-1 bg-card border-border hover:bg-accent text-foreground rounded-xl h-12 mt-0">Batal</AlertDialogCancel>
             <AlertDialogAction
               className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl h-12 font-bold"
               onClick={() => {

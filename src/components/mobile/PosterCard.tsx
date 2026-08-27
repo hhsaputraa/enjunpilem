@@ -2,7 +2,7 @@
 
 import React, { useState, memo } from 'react';
 // Using regular img tag instead of next/image
-import { Star, Play, Plus, Check } from 'lucide-react';
+import { Star, Play, Plus, Check, Film, Tv } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMobileWatchlist } from '@/hooks/useMobileWatchlist';
@@ -74,7 +74,7 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
   return (
     <div
       className={cn(
-        "relative group cursor-pointer",
+        "relative group cursor-pointer transform-gpu will-change-transform",
         "transition-transform duration-200 ease-out",
         "hover:scale-105 active:scale-95",
         sizeClasses[size],
@@ -105,8 +105,8 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/60 flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <div className="text-2xl mb-1">🎬</div>
+            <div className="text-center text-muted-foreground flex flex-col items-center justify-center">
+              <Film className="w-6 h-6 mb-1 opacity-60" />
               <div className="text-xs">No Image</div>
             </div>
           </div>
@@ -134,7 +134,7 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  {rating && rating > 0 && (
+                  {typeof rating === 'number' && !isNaN(rating) && rating > 0 && (
                     <Badge variant="secondary" className="text-xs bg-black/60 text-yellow-400 border-yellow-400/30">
                       <Star className="w-3 h-3 fill-current mr-1" />
                       {rating.toFixed(1)}
@@ -171,13 +171,13 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
             <Badge 
               variant="secondary" 
               className={cn(
-                "text-2xs font-medium",
+                "text-2xs font-medium px-1.5 py-0.5 flex items-center justify-center",
                 type === 'movie' 
                   ? "bg-blue-500/20 text-blue-300 border-blue-500/30" 
-                  : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                  : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
               )}
             >
-              {type === 'movie' ? '🎬' : '📺'}
+              {type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}
             </Badge>
           </div>
         )}

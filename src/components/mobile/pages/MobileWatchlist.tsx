@@ -8,7 +8,7 @@ import { LoadError } from '../ErrorState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { Filter, Grid, List, Trash2, Star, Plus, ChevronLeft, ChevronRight, Lock, Film } from 'lucide-react';
 import { useMobileWatchlist, WatchlistItem as DBWatchlistItem } from '@/hooks/useMobileWatchlist';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { cn } from '@/lib/utils';
@@ -364,7 +364,7 @@ export const MobileWatchlist: React.FC = () => {
                 <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Film</div>
               </div>
               <div className="text-center p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-                <div className="text-xl font-black text-purple-400 tracking-tight">{getWatchlistStats().tvShows}</div>
+                <div className="text-xl font-black text-cyan-400 tracking-tight">{getWatchlistStats().tvShows}</div>
                 <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">Serial</div>
               </div>
             </div>
@@ -596,7 +596,7 @@ const WatchlistContent: React.FC<{
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500">
-                    🎬
+                    <Film className="w-5 h-5 opacity-60" />
                   </div>
                 )}
               </div>
@@ -609,7 +609,7 @@ const WatchlistContent: React.FC<{
                       "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
                       item.type === 'movie' 
                         ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
-                        : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                        : "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
                     )}>
                       {item.type === 'movie' ? 'Film' : 'TV'}
                     </span>

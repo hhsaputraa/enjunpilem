@@ -3,7 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Clock, Calendar, ChevronRight } from 'lucide-react';
+import { Play, Clock, Calendar, ChevronRight, Star } from 'lucide-react';
 import { getResponsiveImageUrl } from '@/services/tmdb';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -217,7 +217,7 @@ export const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                       </h4>
                       {episode.vote_average && episode.vote_average > 0 && (
                         <div className="flex items-center text-[10px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded flex-shrink-0">
-                           <span className="text-yellow-500 mr-1">★</span>
+                           <Star className="w-3 h-3 text-yellow-500 fill-current mr-1" />
                            {episode.vote_average.toFixed(1)}
                         </div>
                       )}

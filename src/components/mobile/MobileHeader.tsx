@@ -59,7 +59,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </Button>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="font-bold text-lg bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <span className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
               EnjunPilem
             </span>
           </div>

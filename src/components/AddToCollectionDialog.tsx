@@ -165,38 +165,38 @@ export const AddToCollectionDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 bg-background/50 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300">
-          <FolderPlus className="w-4 h-4" />
+        <Button variant="outline" className="flex items-center gap-2 bg-background/50 backdrop-blur-sm border-border hover:bg-accent text-foreground transition-all duration-300">
+          <FolderPlus className="w-4 h-4 text-primary" />
           Add to Collection
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-white/10 bg-zinc-950 shadow-2xl">
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-border bg-card text-card-foreground shadow-2xl">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent tracking-tight">
+          <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
             Add to Collection
           </DialogTitle>
         </DialogHeader>
 
         <Command className="bg-transparent" shouldFilter={true}>
           <CommandInput 
-            placeholder="Search Or Create collections..." 
+            placeholder="Search or create collections..." 
             value={searchQuery}
             onValueChange={setSearchQuery}
-            className="h-12 bg-transparent outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 border-none placeholder:text-white/20 px-4"
+            className="h-12 bg-transparent outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 border-none placeholder:text-muted-foreground text-foreground px-4"
             containerClassName="px-6 border-none focus-within:ring-0"
           />
           
           <CommandList className="max-h-[300px] overflow-visible pb-2">
             <ScrollArea className="h-[300px] px-2">
               <CommandEmpty className="py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 border border-white/10">
-                  <Search className="w-6 h-6 text-white/20" />
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 border border-border">
+                  <Search className="w-6 h-6 text-muted-foreground/50" />
                 </div>
-                <p className="text-sm font-medium text-white/60 mb-6">No collections found.</p>
+                <p className="text-sm font-medium text-muted-foreground mb-6">No collections found.</p>
                 {searchQuery && (
                   <Button 
                     size="sm" 
-                    className="gap-2 bg-[#0AC4E0] hover:bg-[#0AC4E0]/80 text-black font-semibold rounded-full px-6 transition-all active:scale-95"
+                    className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 transition-all active:scale-95"
                     onClick={() => createCollection.mutate(searchQuery)}
                     disabled={createCollection.isPending}
                   >
@@ -208,7 +208,7 @@ export const AddToCollectionDialog = ({
 
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center p-12 gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#0AC4E0]" />
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground animate-pulse">Scanning collections...</p>
                 </div>
               ) : (
@@ -231,25 +231,25 @@ export const AddToCollectionDialog = ({
                                 "flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group mb-1",
                                 isAlreadyAdded 
                                   ? "opacity-50 cursor-default bg-transparent" 
-                                  : "hover:bg-white/5 aria-selected:bg-white/10"
+                                  : "hover:bg-accent aria-selected:bg-accent"
                               )}
                             >
                               <div className="flex items-center gap-4">
                                 <div className={cn(
                                   "w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-200",
                                   isAlreadyAdded 
-                                    ? "bg-white/5 border-white/5" 
-                                    : "bg-white/5 border-white/10 group-hover:border-[#0AC4E0]/30 group-hover:bg-[#0AC4E0]/10"
+                                    ? "bg-muted border-border" 
+                                    : "bg-muted border-border group-hover:border-primary/40 group-hover:bg-primary/10"
                                 )}>
                                   <Folder className={cn(
                                     "w-5 h-5 transition-colors",
-                                    isAlreadyAdded ? "text-white/20" : "text-white/40 group-hover:text-[#0AC4E0]"
+                                    isAlreadyAdded ? "text-muted-foreground/40" : "text-muted-foreground group-hover:text-primary"
                                   )} />
                                 </div>
                                 <div className="flex flex-col gap-0.5">
                                   <span className={cn(
                                     "text-sm font-semibold transition-colors",
-                                    isAlreadyAdded ? "text-white/40" : "text-white group-hover:text-[#0AC4E0]"
+                                    isAlreadyAdded ? "text-muted-foreground" : "text-foreground group-hover:text-primary"
                                   )}>
                                     {collection.name}
                                   </span>
@@ -260,9 +260,9 @@ export const AddToCollectionDialog = ({
                               </div>
                               
                               {isAlreadyAdded && (
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#0AC4E0]/10 border border-[#0AC4E0]/20">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0AC4E0]" />
-                                  <span className="text-[10px] font-bold text-[#0AC4E0] uppercase tracking-tighter">In Collection</span>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                                  <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">In Collection</span>
                                 </div>
                               )}
                             </CommandItem>
@@ -277,13 +277,13 @@ export const AddToCollectionDialog = ({
                       <CommandItem
                         value={searchQuery}
                         onSelect={() => createCollection.mutate(searchQuery)}
-                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-[#0AC4E0]/10 group cursor-pointer transition-all duration-200 border border-transparent hover:border-[#0AC4E0]/20"
+                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-primary/10 group cursor-pointer transition-all duration-200 border border-transparent hover:border-primary/20"
                       >
-                        <div className="w-11 h-11 rounded-xl bg-[#0AC4E0]/10 flex items-center justify-center border border-[#0AC4E0]/20 group-hover:bg-[#0AC4E0]/20">
-                          <Plus className="w-5 h-5 text-[#0AC4E0]" />
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20">
+                          <Plus className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-semibold text-white group-hover:text-[#0AC4E0]">New Collection</span>
+                          <span className="text-sm font-semibold text-foreground group-hover:text-primary">New Collection</span>
                           <span className="text-xs text-muted-foreground italic">"{searchQuery}"</span>
                         </div>
                       </CommandItem>
@@ -296,8 +296,8 @@ export const AddToCollectionDialog = ({
         </Command>
 
         <div className="mt-auto">
-          <div className="px-6 py-4 border-t border-white/5 bg-zinc-900/50 backdrop-blur-md flex items-center gap-4">
-            <div className="w-14 h-20 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0 border border-white/10 shadow-xl ring-1 ring-white/5">
+          <div className="px-6 py-4 border-t border-border bg-muted/40 backdrop-blur-md flex items-center gap-4">
+            <div className="w-14 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border shadow-md">
               {posterPath ? (
                 <img 
                   src={`https://image.tmdb.org/t/p/w92${posterPath}`} 
@@ -306,14 +306,14 @@ export const AddToCollectionDialog = ({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <FolderPlus className="w-5 h-5 text-white/10" />
+                  <FolderPlus className="w-5 h-5 text-muted-foreground/40" />
                 </div>
               )}
             </div>
             <div className="flex flex-col gap-1 overflow-hidden">
-              <span className="text-[10px] font-bold text-[#0AC4E0] uppercase tracking-[0.2em]">Currently Adding</span>
-              <span className="text-sm font-bold text-white truncate leading-tight">{title || name}</span>
-              <span className="text-xs text-muted-foreground line-clamp-2 leading-relaxed opacity-70">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Currently Adding</span>
+              <span className="text-sm font-bold text-foreground truncate leading-tight">{title || name}</span>
+              <span className="text-xs text-muted-foreground line-clamp-2 leading-relaxed opacity-80">
                 {overview || "No description available"}
               </span>
             </div>

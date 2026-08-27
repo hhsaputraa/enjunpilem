@@ -13,47 +13,68 @@ const SESSION_ID = tmdbConfig.sessionId;
 const ACCESS_TOKEN = tmdbConfig.accessToken;
 const V4_BASE_URL = 'https://api.themoviedb.org/3';
 
-// Cache for account lists to avoid repeated TMDB calls
+// Cache for account lists & in-flight promises to avoid duplicate parallel calls
 let accountListsCache: TMDBList[] | null = null;
+let accountListsPromise: Promise<TMDBList[]> | null = null;
+
+const genericCache = new Map<string, Promise<any>>();
+
+const fetchWithCache = <T>(cacheKey: string, fetcher: () => Promise<T>): Promise<T> => {
+  if (genericCache.has(cacheKey)) {
+    return genericCache.get(cacheKey)!;
+  }
+  const promise = fetcher().catch(err => {
+    genericCache.delete(cacheKey);
+    throw err;
+  });
+  genericCache.set(cacheKey, promise);
+  return promise;
+};
 
 const slugify = (str: string) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 export const getAccountLists = async (): Promise<TMDBList[]> => {
   if (accountListsCache) return accountListsCache;
+  if (accountListsPromise) return accountListsPromise;
 
-  try {
-    if (ACCESS_TOKEN) {
-      const response = await axios.get(
-        `${V4_BASE_URL}/account/${ACCOUNT_ID}/lists`,
-        {
-          headers: {
-            Authorization: `Bearer ${ACCESS_TOKEN}`,
-            'Content-Type': 'application/json;charset=utf-8',
-          },
-        }
-      );
-      accountListsCache = response.data.results;
-    } else if (SESSION_ID) {
-      const response = await axios.get(
-        `${BASE_URL}/account/${ACCOUNT_ID}/lists`,
-        {
-          params: {
-            api_key: API_KEY,
-            session_id: SESSION_ID,
-          },
-        }
-      );
-      accountListsCache = response.data.results;
-    } else {
-      throw new Error('TMDB session ID or access token must be provided');
+  accountListsPromise = (async () => {
+    try {
+      if (ACCESS_TOKEN) {
+        const response = await axios.get(
+          `${V4_BASE_URL}/account/${ACCOUNT_ID}/lists`,
+          {
+            headers: {
+              Authorization: `Bearer ${ACCESS_TOKEN}`,
+              'Content-Type': 'application/json;charset=utf-8',
+            },
+          }
+        );
+        accountListsCache = response.data.results || response.data.items || [];
+      } else if (SESSION_ID) {
+        const response = await axios.get(
+          `${BASE_URL}/account/${ACCOUNT_ID}/lists`,
+          {
+            params: {
+              api_key: API_KEY,
+              session_id: SESSION_ID,
+            },
+          }
+        );
+        accountListsCache = response.data.results || response.data.items || [];
+      } else {
+        throw new Error('TMDB session ID or access token must be provided');
+      }
+    } catch (error) {
+      console.error('Error fetching account lists:', error);
+      accountListsCache = [];
+    } finally {
+      accountListsPromise = null;
     }
-  } catch (error) {
-    console.error('Error fetching account lists:', error);
-    accountListsCache = [];
-  }
+    return accountListsCache || [];
+  })();
 
-  return accountListsCache;
+  return accountListsPromise;
 };
 
 const findListBySlug = async (slug: string): Promise<TMDBList | undefined> => {
@@ -61,49 +82,73 @@ const findListBySlug = async (slug: string): Promise<TMDBList | undefined> => {
   return lists.find((list: TMDBList) => list.slug === slug || slugify(list.name) === slug);
 };
 
-const fetchListItems = async (listId: string | number, page = 1) => {
-  try {
-    if (ACCESS_TOKEN) {
-      const response = await axios.get(`${V4_BASE_URL}/list/${listId}`, {
-        headers: {
-          Authorization: `Bearer ${ACCESS_TOKEN}`,
-          'Content-Type': 'application/json;charset=utf-8',
-        },
-        params: { page },
+const listItemsCache = new Map<string, Promise<{ items: TMDBMediaItem[]; totalPages: number }>>();
+
+const fetchListItems = (listId: string | number, page = 1) => {
+  const cacheKey = `list_${listId}_${page}`;
+  if (listItemsCache.has(cacheKey)) {
+    return listItemsCache.get(cacheKey)!;
+  }
+
+  const promise = (async () => {
+    try {
+      if (ACCESS_TOKEN) {
+        const response = await axios.get(`${V4_BASE_URL}/list/${listId}`, {
+          headers: {
+            Authorization: `Bearer ${ACCESS_TOKEN}`,
+            'Content-Type': 'application/json;charset=utf-8',
+          },
+          params: { page },
+        });
+        return {
+          items: response.data.results || response.data.items || [],
+          totalPages: response.data.total_pages || 1,
+        };
+      }
+      const response = await axios.get(`${BASE_URL}/list/${listId}`, {
+        params: { api_key: API_KEY, page },
       });
       return {
-        items: response.data.results || response.data.items,
-        totalPages: response.data.total_pages,
+        items: response.data.items || response.data.results || [],
+        totalPages: response.data.total_pages || 1,
       };
+    } catch (error) {
+      console.error('Error fetching list items:', error);
+      listItemsCache.delete(cacheKey);
+      return { items: [], totalPages: 0 };
     }
-    const response = await axios.get(`${BASE_URL}/list/${listId}`, {
-      params: { api_key: API_KEY, page },
-    });
-    return { items: response.data.items, totalPages: response.data.total_pages };
-  } catch (error) {
-    console.error('Error fetching list items:', error);
-    return { items: [], totalPages: 0 };
-  }
+  })();
+
+  listItemsCache.set(cacheKey, promise);
+  return promise;
 };
 
-export const getTrending = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
-  const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}&page=${page}`);
-  return { items: response.data.results, totalPages: response.data.total_pages };
+export const getTrending = (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
+  return fetchWithCache(`trending_${page}`, async () => {
+    const response = await axios.get(`${BASE_URL}/trending/all/day?api_key=${API_KEY}&page=${page}`);
+    return { items: response.data.results, totalPages: response.data.total_pages };
+  });
 };
 
-export const getPopularMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
-  const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`);
-  return { items: response.data.results, totalPages: response.data.total_pages };
+export const getPopularMovies = (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
+  return fetchWithCache(`popular_movies_${page}`, async () => {
+    const response = await axios.get(`${BASE_URL}/movie/popular?api_key=${API_KEY}&page=${page}`);
+    return { items: response.data.results, totalPages: response.data.total_pages };
+  });
 };
 
-export const getPopularTVShows = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
-  const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`);
-  return { items: response.data.results, totalPages: response.data.total_pages };
+export const getPopularTVShows = (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
+  return fetchWithCache(`popular_tv_${page}`, async () => {
+    const response = await axios.get(`${BASE_URL}/tv/popular?api_key=${API_KEY}&page=${page}`);
+    return { items: response.data.results, totalPages: response.data.total_pages };
+  });
 };
 
-export const getTopRatedMovies = async (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
-  const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&page=${page}`);
-  return { items: response.data.results, totalPages: response.data.total_pages };
+export const getTopRatedMovies = (page: number = 1): Promise<{ items: TMDBMediaItem[]; totalPages: number }> => {
+  return fetchWithCache(`top_rated_movies_${page}`, async () => {
+    const response = await axios.get(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}&page=${page}`);
+    return { items: response.data.results, totalPages: response.data.total_pages };
+  });
 };
 
 const detailsCache = new Map<string, Promise<any>>();

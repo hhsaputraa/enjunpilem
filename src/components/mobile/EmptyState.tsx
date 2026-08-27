@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Search, Bookmark, Heart, Sparkles, WifiOff, Wrench, Rocket } from 'lucide-react';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -27,7 +26,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     className
   )}>
     {icon && (
-      <div className="mb-4 text-muted-foreground">
+      <div className="mb-4 text-muted-foreground flex items-center justify-center">
         {icon}
       </div>
     )}
@@ -56,9 +55,7 @@ export const NoSearchResults: React.FC<{
   onClear?: () => void;
 }> = ({ query, onClear }) => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">🔍</div>
-    }
+    icon={<Search className="w-12 h-12 text-muted-foreground/60" />}
     title="Tidak Ada Hasil"
     description={`Tidak ditemukan hasil untuk "${query}". Coba kata kunci lain atau periksa ejaan.`}
     action={onClear ? {
@@ -72,9 +69,7 @@ export const EmptyWatchlist: React.FC<{
   onExplore?: () => void;
 }> = ({ onExplore }) => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">📚</div>
-    }
+    icon={<Bookmark className="w-12 h-12 text-muted-foreground/60" />}
     title="Watchlist Kosong"
     description="Belum ada film atau serial TV di watchlist kamu. Mulai jelajahi dan tambahkan yang menarik!"
     action={onExplore ? {
@@ -88,9 +83,7 @@ export const EmptyFavorites: React.FC<{
   onExplore?: () => void;
 }> = ({ onExplore }) => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">❤️</div>
-    }
+    icon={<Heart className="w-12 h-12 text-muted-foreground/60" />}
     title="Belum Ada Favorit"
     description="Tandai film dan serial TV favorit kamu untuk akses cepat di sini."
     action={onExplore ? {
@@ -104,9 +97,7 @@ export const NoRecommendations: React.FC<{
   onExplore?: () => void;
 }> = ({ onExplore }) => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">💡</div>
-    }
+    icon={<Sparkles className="w-12 h-12 text-muted-foreground/60" />}
     title="Belum Ada Rekomendasi"
     description="Tonton beberapa film atau serial TV dulu untuk mendapatkan rekomendasi personal."
     action={onExplore ? {
@@ -120,9 +111,7 @@ export const OfflineState: React.FC<{
   onRetry?: () => void;
 }> = ({ onRetry }) => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">📡</div>
-    }
+    icon={<WifiOff className="w-12 h-12 text-muted-foreground/60" />}
     title="Tidak Ada Koneksi"
     description="Periksa koneksi internet kamu dan coba lagi."
     action={onRetry ? {
@@ -134,9 +123,7 @@ export const OfflineState: React.FC<{
 
 export const MaintenanceState: React.FC = () => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">🔧</div>
-    }
+    icon={<Wrench className="w-12 h-12 text-muted-foreground/60" />}
     title="Sedang Maintenance"
     description="Kami sedang melakukan pemeliharaan sistem. Silakan coba lagi nanti."
   />
@@ -146,9 +133,7 @@ export const ComingSoon: React.FC<{
   feature?: string;
 }> = ({ feature = "Fitur ini" }) => (
   <EmptyState
-    icon={
-      <div className="text-6xl mb-2">🚀</div>
-    }
+    icon={<Rocket className="w-12 h-12 text-muted-foreground/60" />}
     title="Segera Hadir"
     description={`${feature} akan segera tersedia. Nantikan update selanjutnya!`}
   />

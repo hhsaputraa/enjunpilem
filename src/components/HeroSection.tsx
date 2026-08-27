@@ -12,8 +12,10 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
   if (!trending || trending.length === 0) return null
 
   const featuredItem = trending[0]
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const backdropSize = isMobile ? 'w780' : 'w1280';
   const backdropUrl = featuredItem?.backdrop_path
-    ? `https://image.tmdb.org/t/p/w1280${featuredItem.backdrop_path}`
+    ? `https://image.tmdb.org/t/p/${backdropSize}${featuredItem.backdrop_path}`
     : null
 
   return (
@@ -33,8 +35,8 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
               width="1280"
               height="720"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
@@ -68,7 +70,7 @@ export const HeroSection = ({ trending }: HeroSectionProps) => {
           </h1>
 
           {/* Overview */}
-          <p className="text-muted-foreground text-sm sm:text-base lg:text-lg leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md">
+          <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md">
             {featuredItem.overview}
           </p>
 
