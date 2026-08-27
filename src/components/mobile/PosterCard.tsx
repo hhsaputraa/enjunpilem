@@ -134,7 +134,7 @@ export const PosterCard: React.FC<PosterCardProps> = memo(({
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  {rating && rating > 0 && (
+                  {typeof rating === 'number' && !isNaN(rating) && rating > 0 && (
                     <Badge variant="secondary" className="text-xs bg-black/60 text-yellow-400 border-yellow-400/30">
                       <Star className="w-3 h-3 fill-current mr-1" />
                       {rating.toFixed(1)}

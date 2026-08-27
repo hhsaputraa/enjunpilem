@@ -150,7 +150,7 @@ const DetailListCollection = ({ title, queryFn, queryKey, collectionId }: Detail
               <Film className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-sky-600 dark:from-cyan-400 dark:to-blue-500 text-transparent bg-clip-text">
                 {title}
               </h1>
               <p className="text-muted-foreground mt-2">Explore our curated collection of {title?.toLowerCase()}</p>

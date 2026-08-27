@@ -106,7 +106,7 @@ export const MovieCard = memo(({
                   </div>
                 )}
 
-                {releaseDate && (
+                {releaseDate && !isNaN(new Date(releaseDate).getTime()) && (
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-white/10 text-white/90 border border-white/10 backdrop-blur-md">
                     <Calendar className="w-2.5 h-2.5" />
                     {new Date(releaseDate).getFullYear()}

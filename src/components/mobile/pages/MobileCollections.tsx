@@ -73,6 +73,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
 
   // Search feature state
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = React.useDeferredValue(searchQuery);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections', user?.id],
@@ -87,10 +88,6 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
           is_shared,
           collection_items (
             id,
-            media_id,
-            media_type,
-            title,
-            name,
             poster_path
           )
         `)
@@ -101,6 +98,8 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       return data;
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const createCollection = useMutation({
@@ -274,14 +273,19 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
 
   const activeSelected = isNested ? null : localSelectedCollection;
 
-  // Filter collections by search query
-  const filteredCollections = collections?.filter((collection) => {
-    const nameMatch = collection.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const descMatch = collection.description
-      ? collection.description.toLowerCase().includes(searchQuery.toLowerCase())
-      : false;
-    return nameMatch || descMatch;
-  });
+  // Filter collections by search query (Memoized & Deferred)
+  const filteredCollections = React.useMemo(() => {
+    if (!collections) return [];
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (!query) return collections;
+    return collections.filter((collection) => {
+      const nameMatch = collection.name.toLowerCase().includes(query);
+      const descMatch = collection.description
+        ? collection.description.toLowerCase().includes(query)
+        : false;
+      return nameMatch || descMatch;
+    });
+  }, [collections, deferredSearchQuery]);
 
   // If in non-nested mode and collection is selected, render details inline
   if (!isNested && activeSelected) {
