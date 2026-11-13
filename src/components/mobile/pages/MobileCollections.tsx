@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useDeferredValue, memo, useCallback } from 'react';
 import { PageLayout } from '../MobileLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMobileAuth } from '@/hooks/useMobileAuth';
 import { MobileCollectionDetails } from './MobileCollectionDetails';
 import { getImageUrl } from '@/services/tmdb';
+import {
+  parseCollectionDescription,
+  formatCollectionDescription,
+  resolveCollectionHeroPoster,
+} from '@/services/collectionUtils';
 import { Plus, Globe, Lock, FolderHeart, Edit3, Trash2, ChevronLeft, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +33,258 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+interface CollectionRecord {
+  id: string;
+  name: string;
+  description: string | null;
+  is_shared: boolean;
+  collection_items?: Array<{
+    id: string;
+    poster_path: string | null;
+  }>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEMOIZED MOBILE COLLECTION CARD COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+interface MobileCollectionCardProps {
+  collection: CollectionRecord;
+  isSwiped: boolean;
+  onSelect: (collection: CollectionRecord) => void;
+  onStartEdit: (collection: CollectionRecord) => void;
+  onPromptDelete: (collection: CollectionRecord) => void;
+  onToggleShare: (id: string, is_shared: boolean) => void;
+  isTogglePending: boolean;
+  onSwipeChange: (id: string | null) => void;
+}
+
+const MobileCollectionCard = memo(({
+  collection,
+  isSwiped,
+  onSelect,
+  onStartEdit,
+  onPromptDelete,
+  onToggleShare,
+  isTogglePending,
+  onSwipeChange,
+}: MobileCollectionCardProps) => {
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  const items = collection.collection_items || [];
+  const { description: cleanDesc, customCoverPath } = useMemo(
+    () => parseCollectionDescription(collection.description),
+    [collection.description]
+  );
+
+  const heroPoster = useMemo(
+    () => resolveCollectionHeroPoster(items, customCoverPath),
+    [items, customCoverPath]
+  );
+
+  // Touch Gesture Handlers (Vertical Scroll aware to prevent GC thrashing & false triggers)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchStartY(e.targetTouches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    const currentY = e.targetTouches[0].clientY;
+    const diffX = currentX - touchStartX;
+    const diffY = currentY - touchStartY;
+
+    // If movement is predominantly vertical (scrolling page), ignore swipe
+    if (Math.abs(diffY) > Math.abs(diffX)) return;
+
+    if (diffX < -45) {
+      onSwipeChange(collection.id);
+    } else if (diffX > 45) {
+      onSwipeChange(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
+  return (
+    <div
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '92px' }}
+      className="relative overflow-hidden rounded-2xl select-none animate-fade-in"
+    >
+      {/* Swipe Action Buttons (Revealed on Swipe Left) */}
+      <div 
+        className={cn(
+          "absolute top-0 bottom-0 right-0 flex items-center gap-2 px-3 z-0 transition-all duration-300 ease-out",
+          isSwiped ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-90 translate-x-4 pointer-events-none"
+        )}
+      >
+        <Button
+          size="icon"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onStartEdit(collection);
+          }}
+          className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-md active:scale-95 transition-all flex items-center justify-center border border-amber-400/20"
+          title="Edit Koleksi"
+        >
+          <Edit3 className="w-4 h-4" />
+        </Button>
+        
+        <Button
+          size="icon"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleShare(collection.id, !collection.is_shared);
+          }}
+          disabled={isTogglePending}
+          className={cn(
+            "w-10 h-10 rounded-full text-white shadow-md active:scale-95 transition-all flex items-center justify-center border",
+            collection.is_shared 
+              ? "bg-teal-500 hover:bg-teal-600 border-teal-400/20" 
+              : "bg-slate-600 hover:bg-slate-700 border-slate-500/20"
+          )}
+          title={collection.is_shared ? "Ubah ke Pribadi" : "Ubah ke Publik"}
+        >
+          {collection.is_shared ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+        </Button>
+
+        <Button
+          size="icon"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPromptDelete(collection);
+          }}
+          className="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-md active:scale-95 transition-all flex items-center justify-center border border-rose-400/20"
+          title="Hapus Koleksi"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Main Card */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={(e) => {
+          if (isSwiped) {
+            e.stopPropagation();
+            onSwipeChange(null);
+          } else {
+            onSelect(collection);
+          }
+        }}
+        className={cn(
+          "flex items-center gap-4 bg-card/40 border border-border/40 hover:bg-card/60 rounded-2xl p-3 cursor-pointer active:scale-[0.98] transition-all duration-300 ease-out z-10 relative",
+          isSwiped ? "-translate-x-[154px] shadow-lg shadow-black/10" : "translate-x-0"
+        )}
+      >
+        {/* Stacked Poster Collage Cover */}
+        <div className="w-16 h-20 shrink-0 relative mr-2 select-none">
+          {items.length > 0 ? (
+            <>
+              {/* 3rd Layer (Far back) */}
+              {items.length >= 3 && items[2]?.poster_path && (
+                <div className="absolute inset-0 translate-x-2 -translate-y-2 rounded-xl overflow-hidden border border-border/40 bg-muted -z-20 shadow-2xs">
+                  <img 
+                    src={getImageUrl(items[2].poster_path, 'w92')}
+                    className="w-full h-full object-cover opacity-40 brightness-75"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              )}
+              
+              {/* 2nd Layer (Middle back) */}
+              {items.length >= 2 && items[1]?.poster_path && (
+                <div className="absolute inset-0 translate-x-1 -translate-y-1 rounded-xl overflow-hidden border border-border/40 bg-muted -z-10 shadow-xs">
+                  <img 
+                    src={getImageUrl(items[1].poster_path, 'w92')}
+                    className="w-full h-full object-cover opacity-75 brightness-90"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              )}
+              
+              {/* 1st Layer (Main Front Card) - Displays resolved heroPoster */}
+              <div className="w-full h-full rounded-xl overflow-hidden border border-border/40 bg-muted relative z-10 shadow-md">
+                {heroPoster ? (
+                  <img 
+                    src={getImageUrl(heroPoster, 'w185')}
+                    className="w-full h-full object-cover"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted">
+                    <FolderHeart className="w-5 h-5 text-muted-foreground/40" />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Empty Collection Placeholder */
+            <div className="w-full h-full rounded-xl border border-dashed border-border/60 bg-gradient-to-br from-card/30 to-card/10 flex items-center justify-center z-10 relative shadow-inner">
+              <Plus className="w-5 h-5 text-muted-foreground/40" />
+            </div>
+          )}
+          
+          {/* Item count badge float overlay */}
+          <div className="absolute -bottom-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-lg border border-black/40 shadow-lg z-20">
+            {items.length}
+          </div>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-base text-foreground truncate">{collection.name}</h3>
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
+            {cleanDesc || 'Koleksi Film tanpa deskripsi.'}
+          </p>
+          
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                  collection.is_shared
+                    ? "bg-primary/10 text-primary border-primary/20"
+                    : "bg-muted text-muted-foreground border-border/50"
+                )}
+              >
+                {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                {collection.is_shared ? 'Publik' : 'Pribadi'}
+              </span>
+            </div>
+            
+            {/* Swiped Indicator Hint */}
+            {!isSwiped && (
+              <span className="text-[10px] text-muted-foreground/30 flex items-center gap-0.5 animate-pulse">
+                <span>Geser</span>
+                <ChevronLeft className="w-3 h-3 text-muted-foreground/40" />
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+MobileCollectionCard.displayName = 'MobileCollectionCard';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN MOBILE COLLECTIONS COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 interface MobileCollectionsProps {
   isNested?: boolean;
   isCreateDrawerOpen?: boolean;
@@ -56,13 +313,12 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
   const openDrawer = isNested ? isCreateDrawerOpen : localIsCreateDrawerOpen;
   const setOpenDrawer = isNested ? setIsCreateDrawerOpen : setLocalIsCreateDrawerOpen;
 
-  // Swipe gesture states
+  // Swipe gesture state
   const [swipedId, setSwipedId] = useState<string | null>(null);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   // Edit Collection state
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const [selectedEditCollection, setSelectedEditCollection] = useState<{ id: string; name: string; description: string; is_shared: boolean } | null>(null);
+  const [selectedEditCollection, setSelectedEditCollection] = useState<{ id: string; name: string; description: string; is_shared: boolean; customCoverPath: string | null } | null>(null);
   const [editCollectionName, setEditCollectionName] = useState('');
   const [editCollectionDescription, setEditCollectionDescription] = useState('');
   const [editCollectionShared, setEditCollectionShared] = useState(false);
@@ -73,7 +329,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
 
   // Search feature state
   const [searchQuery, setSearchQuery] = useState('');
-  const deferredSearchQuery = React.useDeferredValue(searchQuery);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const { data: collections, isLoading } = useQuery({
     queryKey: ['collections', user?.id],
@@ -95,7 +351,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return (data || []) as CollectionRecord[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -121,7 +377,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       showSuccess("Koleksi Dibuat!");
       setNewCollectionName('');
@@ -147,7 +403,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       showSuccess(`Koleksi diubah menjadi ${data.is_shared ? 'Publik' : 'Pribadi'}!`);
       setSwipedId(null);
@@ -167,7 +423,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       showSuccess("Koleksi berhasil dihapus!");
       setSwipedId(null);
@@ -196,7 +452,7 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['collections', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['shared-collections'] });
       showSuccess("Koleksi berhasil diperbarui!");
       setSwipedId(null);
@@ -222,67 +478,80 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
   const handleUpdateCollection = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedEditCollection && editCollectionName.trim()) {
+      const finalDescription = formatCollectionDescription(
+        editCollectionDescription.trim(),
+        selectedEditCollection.customCoverPath
+      );
       updateCollection.mutate({
         id: selectedEditCollection.id,
         name: editCollectionName.trim(),
-        description: editCollectionDescription.trim(),
+        description: finalDescription,
         is_shared: editCollectionShared
       });
     }
   };
 
-  const handleSelectCollection = (collection: { id: string; name: string; description: string | null }) => {
+  const handleSelectCollection = useCallback((collection: CollectionRecord) => {
+    const { description: cleanDesc } = parseCollectionDescription(collection.description);
+    const itemToSelect = {
+      id: collection.id,
+      name: collection.name,
+      description: cleanDesc,
+    };
     if (isNested && onCollectionSelect) {
-      onCollectionSelect(collection);
+      onCollectionSelect(itemToSelect);
     } else {
-      setLocalSelectedCollection(collection);
+      setLocalSelectedCollection(itemToSelect);
     }
-  };
+  }, [isNested, onCollectionSelect]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (isNested && onCollectionSelect) {
       onCollectionSelect(null);
     } else {
       setLocalSelectedCollection(null);
     }
-  };
+  }, [isNested, onCollectionSelect]);
 
-  // Swipe touch handlers
-  const handleTouchStart = (e: React.TouchEvent, id: string) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
+  const handleStartEdit = useCallback((collection: CollectionRecord) => {
+    const { description: cleanDesc, customCoverPath } = parseCollectionDescription(collection.description);
+    setEditCollectionName(collection.name);
+    setEditCollectionDescription(cleanDesc);
+    setEditCollectionShared(collection.is_shared);
+    setSelectedEditCollection({
+      id: collection.id,
+      name: collection.name,
+      description: cleanDesc,
+      is_shared: collection.is_shared,
+      customCoverPath,
+    });
+    setIsEditDrawerOpen(true);
+  }, []);
 
-  const handleTouchMove = (e: React.TouchEvent, id: string) => {
-    if (touchStart === null) return;
-    const currentTouch = e.targetTouches[0].clientX;
-    const diff = currentTouch - touchStart;
-    
-    // Swipe left (dragging right to left, diff is negative) by more than 50px reveals options
-    if (diff < -50) {
-      setSwipedId(id);
-    } 
-    // Swipe right (dragging left to right, diff is positive) by more than 50px hides options
-    else if (diff > 50) {
-      setSwipedId(null);
-    }
-  };
+  const handlePromptDelete = useCallback((collection: CollectionRecord) => {
+    setCollectionToDelete({ id: collection.id, name: collection.name });
+    setIsDeleteDialogOpen(true);
+  }, []);
 
-  const handleTouchEnd = () => {
-    setTouchStart(null);
-  };
+  const handleToggleShare = useCallback((id: string, is_shared: boolean) => {
+    toggleShared.mutate({ id, is_shared });
+  }, [toggleShared]);
+
+  const handleSwipeChange = useCallback((id: string | null) => {
+    setSwipedId(id);
+  }, []);
 
   const activeSelected = isNested ? null : localSelectedCollection;
 
-  // Filter collections by search query (Memoized & Deferred)
-  const filteredCollections = React.useMemo(() => {
+  // Filter collections by search query (without matching invisible comment tags)
+  const filteredCollections = useMemo(() => {
     if (!collections) return [];
     const query = deferredSearchQuery.trim().toLowerCase();
     if (!query) return collections;
     return collections.filter((collection) => {
       const nameMatch = collection.name.toLowerCase().includes(query);
-      const descMatch = collection.description
-        ? collection.description.toLowerCase().includes(query)
-        : false;
+      const { description: cleanDesc } = parseCollectionDescription(collection.description);
+      const descMatch = cleanDesc.toLowerCase().includes(query);
       return nameMatch || descMatch;
     });
   }, [collections, deferredSearchQuery]);
@@ -322,11 +591,11 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
       )}
 
       {isLoading ? (
-         <div className="space-y-4">
-           {[...Array(4)].map((_, i) => (
-             <div key={i} className="h-28 rounded-2xl bg-card/40 border border-border/40 animate-pulse" />
-           ))}
-         </div>
+        <div className="space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 rounded-2xl bg-card/40 border border-border/40 animate-pulse" />
+          ))}
+        </div>
       ) : collections?.length === 0 ? (
         <div className="flex col-span-full flex-col items-center justify-center p-12 text-center h-[50vh]">
           <div className="w-16 h-16 rounded-full bg-card/40 flex items-center justify-center mb-4 border border-border/50">
@@ -338,7 +607,6 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
           </p>
         </div>
       ) : filteredCollections?.length === 0 ? (
-        /* Sleek Empty State for Search Results */
         <div className="flex flex-col items-center justify-center p-12 text-center h-[40vh] animate-fade-in">
           <div className="w-12 h-12 rounded-full bg-card/30 flex items-center justify-center mb-4 border border-border/40">
             <Search className="w-5 h-5 text-muted-foreground/50 animate-pulse" />
@@ -350,182 +618,19 @@ export const MobileCollections: React.FC<MobileCollectionsProps> = ({
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filteredCollections?.map((collection) => {
-            const items = collection.collection_items || [];
-            const isSwiped = swipedId === collection.id;
-            
-            return (
-              <div 
-                key={collection.id} 
-                className="relative overflow-hidden rounded-2xl select-none animate-fade-in"
-              >
-                {/* Swipe Action Buttons (Behind on the Right, Revealed on Swipe Left) */}
-                <div 
-                  className={cn(
-                    "absolute top-0 bottom-0 right-0 flex items-center gap-2 px-3 z-0 transition-all duration-300 ease-out",
-                    isSwiped ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-90 translate-x-4 pointer-events-none"
-                  )}
-                >
-                  <Button
-                    size="icon"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditCollectionName(collection.name);
-                      setEditCollectionDescription(collection.description || '');
-                      setEditCollectionShared(collection.is_shared);
-                      setSelectedEditCollection({
-                        id: collection.id,
-                        name: collection.name,
-                        description: collection.description || '',
-                        is_shared: collection.is_shared
-                      });
-                      setIsEditDrawerOpen(true);
-                    }}
-                    className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-md active:scale-95 transition-all flex items-center justify-center border border-amber-400/20"
-                    title="Edit Koleksi"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
-                  
-                  <Button
-                    size="icon"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleShared.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                    }}
-                    disabled={toggleShared.isPending}
-                    className={cn(
-                      "w-10 h-10 rounded-full text-white shadow-md active:scale-95 transition-all flex items-center justify-center border",
-                      collection.is_shared 
-                        ? "bg-teal-500 hover:bg-teal-600 border-teal-400/20" 
-                        : "bg-slate-600 hover:bg-slate-700 border-slate-500/20"
-                    )}
-                    title={collection.is_shared ? "Ubah ke Pribadi" : "Ubah ke Publik"}
-                  >
-                    {collection.is_shared ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                  </Button>
-
-                  <Button
-                    size="icon"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCollectionToDelete({ id: collection.id, name: collection.name });
-                      setIsDeleteDialogOpen(true);
-                    }}
-                    className="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-md active:scale-95 transition-all flex items-center justify-center border border-rose-400/20"
-                    title="Hapus Koleksi"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                {/* Main Card (z-10, Slides Left on Swipe) */}
-                <div
-                  onTouchStart={(e) => handleTouchStart(e, collection.id)}
-                  onTouchMove={(e) => handleTouchMove(e, collection.id)}
-                  onTouchEnd={handleTouchEnd}
-                  onClick={(e) => {
-                    if (isSwiped) {
-                      e.stopPropagation();
-                      setSwipedId(null);
-                    } else {
-                      handleSelectCollection({ 
-                        id: collection.id, 
-                        name: collection.name, 
-                        description: collection.description 
-                      });
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center gap-4 bg-card/40 border border-border/40 hover:bg-card/60 rounded-2xl p-3 cursor-pointer active:scale-[0.98] transition-all duration-300 ease-out z-10 relative",
-                    isSwiped ? "-translate-x-[154px] shadow-lg shadow-black/10" : "translate-x-0"
-                  )}
-                >
-                  {/* Stacked Poster Collage Cover */}
-                  <div className="w-16 h-20 shrink-0 relative mr-2 select-none">
-                    {items.length > 0 ? (
-                      <>
-                        {/* 3rd Layer (Far back) - Renders items[2] poster if available */}
-                        {items.length >= 3 && items[2] && (
-                          <div className="absolute inset-0 translate-x-2 -translate-y-2 rounded-xl overflow-hidden border border-border/40 bg-muted -z-20 shadow-2xs">
-                            <img 
-                              src={getImageUrl(items[2].poster_path || '', 'w185')}
-                              className="w-full h-full object-cover opacity-40 brightness-75"
-                              alt=""
-                            />
-                          </div>
-                        )}
-                        
-                        {/* 2nd Layer (Middle back) - Renders items[1] poster if available */}
-                        {items.length >= 2 && items[1] && (
-                          <div className="absolute inset-0 translate-x-1 -translate-y-1 rounded-xl overflow-hidden border border-border/40 bg-muted -z-10 shadow-xs">
-                            <img 
-                              src={getImageUrl(items[1].poster_path || '', 'w185')}
-                              className="w-full h-full object-cover opacity-75 brightness-90"
-                              alt=""
-                            />
-                          </div>
-                        )}
-                        
-                        {/* 1st Layer (Main Front Card) - Renders items[0] poster */}
-                        <div className="w-full h-full rounded-xl overflow-hidden border border-border/40 bg-muted relative z-10 shadow-md">
-                          <img 
-                            src={getImageUrl(items[0].poster_path || '', 'w185')}
-                            className="w-full h-full object-cover"
-                            alt=""
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      /* Empty Collection Placeholder with custom modern gradient */
-                      <div className="w-full h-full rounded-xl border border-dashed border-border/60 bg-gradient-to-br from-card/30 to-card/10 flex items-center justify-center z-10 relative shadow-inner">
-                        <Plus className="w-5 h-5 text-muted-foreground/40" />
-                      </div>
-                    )}
-                    
-                    {/* Item count badge float overlay */}
-                    <div className="absolute -bottom-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 rounded-lg border border-black/40 shadow-lg z-20">
-                      {items.length}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-base text-foreground truncate">{collection.name}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
-                      {collection.description || 'Koleksi Film tanpa deskripsi.'}
-                    </p>
-                    
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                            collection.is_shared
-                              ? "bg-primary/10 text-primary border-primary/20"
-                              : "bg-muted text-muted-foreground border-border/50"
-                          )}
-                        >
-                          {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                          {collection.is_shared ? 'Publik' : 'Pribadi'}
-                        </span>
-                      </div>
-                      
-                      {/* Swiped Indicator Hint */}
-                      {!isSwiped && (
-                        <span className="text-[10px] text-muted-foreground/30 flex items-center gap-0.5 animate-pulse">
-                          <span>Geser</span>
-                          <ChevronLeft className="w-3 h-3 text-muted-foreground/40" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {filteredCollections.map((collection) => (
+            <MobileCollectionCard
+              key={collection.id}
+              collection={collection}
+              isSwiped={swipedId === collection.id}
+              onSelect={handleSelectCollection}
+              onStartEdit={handleStartEdit}
+              onPromptDelete={handlePromptDelete}
+              onToggleShare={handleToggleShare}
+              isTogglePending={toggleShared.isPending}
+              onSwipeChange={handleSwipeChange}
+            />
+          ))}
         </div>
       )}
 

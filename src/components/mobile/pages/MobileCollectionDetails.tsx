@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getImageUrl } from '@/services/tmdb';
+import { safeExtractYear, parseCollectionDescription } from '@/services/collectionUtils';
 import { Link } from 'react-router-dom';
 import {
   AlertDialog,
@@ -69,11 +70,6 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
   const [itemToDelete, setItemToDelete] = useState<CollectionItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Automatically scroll to top when changing page
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['collection-items', collectionId],
@@ -256,13 +252,17 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
         </div>
       </div>
 
-      {description && (
-        <div className="p-3.5 rounded-2xl bg-card/30 border border-border/30 backdrop-blur-md">
-          <p className="text-xs text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
-            {description}
-          </p>
-        </div>
-      )}
+      {(() => {
+        const cleanDesc = parseCollectionDescription(description).description;
+        if (!cleanDesc) return null;
+        return (
+          <div className="p-3.5 rounded-2xl bg-card/40 border border-border/40">
+            <p className="text-xs text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
+              {cleanDesc}
+            </p>
+          </div>
+        );
+      })()}
 
       {!readOnly && localItems.length > 0 && !isSearching && (
         <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 font-bold">
@@ -300,20 +300,19 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
               {paginatedItems.map((item) => {
                 const title = item.title || item.name || 'Unknown';
                 const rating = item.vote_average || 0;
-                const year = item.release_date || item.first_air_date
-                  ? new Date(item.release_date || item.first_air_date!).getFullYear().toString()
-                  : '';
+                const year = safeExtractYear(item.release_date || item.first_air_date);
                 
                 return (
-                  <div key={item.id} className="relative group rounded-2xl overflow-hidden bg-card/45 border border-border/40 shadow-sm flex flex-col">
+                  <div key={item.id} style={{ contentVisibility: 'auto', containIntrinsicSize: '240px' }} className="relative group rounded-2xl overflow-hidden bg-card/45 border border-border/40 shadow-xs flex flex-col">
                     {/* Poster Wrapper */}
                     <Link to={`/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.media_id}`} className="aspect-[2/3] w-full block overflow-hidden bg-zinc-900 relative">
                       {item.poster_path ? (
                         <img
-                          src={getImageUrl(item.poster_path, 'w500')}
+                          src={getImageUrl(item.poster_path, 'w300')}
                           alt={title}
                           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                           loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
@@ -371,14 +370,14 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
               {paginatedItems.map((item, idx) => {
                 const globalIdx = (activePage - 1) * ITEMS_PER_PAGE + idx;
                 const title = item.title || item.name || 'Untitled';
-                const date = item.release_date || item.first_air_date || '';
-                const year = date ? new Date(date).getFullYear() : '';
+                const year = safeExtractYear(item.release_date || item.first_air_date);
                 const detailPath = `/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.media_id}`;
 
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm"
+                    style={{ contentVisibility: 'auto', containIntrinsicSize: '80px' }}
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-border/40 bg-card/50"
                   >
                     {/* Reordering Chevrons for Mobile (Touch-friendly reordering) */}
                     {!readOnly && (
@@ -408,10 +407,11 @@ export const MobileCollectionDetails: React.FC<MobileCollectionDetailsProps> = (
                       <div className="w-14 aspect-[2/3] rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border/40">
                         {item.poster_path ? (
                           <img
-                            src={getImageUrl(item.poster_path, 'w300')}
+                            src={getImageUrl(item.poster_path, 'w185')}
                             alt={title}
                             className="w-full h-full object-cover"
                             loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">

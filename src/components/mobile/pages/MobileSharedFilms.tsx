@@ -7,6 +7,7 @@ import { Search, Users, TrendingUp, Clock, Eye, Heart, MessageCircle, Share2, Fi
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MobileCollectionDetails } from './MobileCollectionDetails';
+import { parseCollectionDescription } from '@/services/collectionUtils';
 
 interface SharedCollection {
   id: string;
@@ -172,12 +173,13 @@ export const MobileSharedFilms: React.FC = () => {
     if (!collections) return [];
     const query = deferredSearchQuery.trim().toLowerCase();
     if (!query) return collections;
-    return collections.filter(
-      (c) =>
-        c.name.toLowerCase().includes(query) ||
-        (c.description || '').toLowerCase().includes(query) ||
-        (c.profiles?.username || '').toLowerCase().includes(query)
-    );
+    return collections.filter((c) => {
+      const nameMatch = c.name.toLowerCase().includes(query);
+      const { description: cleanDesc } = parseCollectionDescription(c.description);
+      const descMatch = cleanDesc.toLowerCase().includes(query);
+      const userMatch = (c.profiles?.username || '').toLowerCase().includes(query);
+      return nameMatch || descMatch || userMatch;
+    });
   }, [collections, deferredSearchQuery]);
 
   const visibleCollections = useMemo(() => {
@@ -193,7 +195,7 @@ export const MobileSharedFilms: React.FC = () => {
           <MobileCollectionDetails
             collectionId={selected.id}
             collectionName={selected.name}
-            description={selected.description}
+            description={parseCollectionDescription(selected.description).description}
             ownerName={ownerName}
             ownerAvatarUrl={ownerAvatarUrl}
             readOnly

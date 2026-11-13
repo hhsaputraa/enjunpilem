@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { getImageUrl } from '@/services/tmdb';
 import { CollectionDetails } from '@/components/CollectionDetails';
+import { parseCollectionDescription } from '@/services/collectionUtils';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -148,11 +149,15 @@ const SharedCollectionCard = memo(({
            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-3">
               Browse Collection
            </span>
-           {collection.description && (
-              <p className="text-sm text-muted-foreground font-medium text-center line-clamp-3 italic max-w-[200px]">
-                "{collection.description}"
-              </p>
-           )}
+           {(() => {
+             const cleanDesc = parseCollectionDescription(collection.description).description;
+             if (!cleanDesc) return null;
+             return (
+               <p className="text-sm text-muted-foreground font-medium text-center line-clamp-3 italic max-w-[200px]">
+                 "{cleanDesc}"
+               </p>
+             );
+           })()}
         </div>
       </div>
 
@@ -236,12 +241,13 @@ const SharedFilms = () => {
     if (!collections) return [];
     const query = deferredSearchQuery.trim().toLowerCase();
     if (!query) return collections;
-    return collections.filter(
-      (c) =>
-        c.name.toLowerCase().includes(query) ||
-        (c.description || '').toLowerCase().includes(query) ||
-        (c.profiles?.username || '').toLowerCase().includes(query)
-    );
+    return collections.filter((c) => {
+      const nameMatch = c.name.toLowerCase().includes(query);
+      const { description: cleanDesc } = parseCollectionDescription(c.description);
+      const descMatch = cleanDesc.toLowerCase().includes(query);
+      const userMatch = (c.profiles?.username || '').toLowerCase().includes(query);
+      return nameMatch || descMatch || userMatch;
+    });
   }, [collections, deferredSearchQuery]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -259,7 +265,7 @@ const SharedFilms = () => {
           <CollectionDetails
             collectionId={selected.id}
             collectionName={selected.name}
-            description={selected.description}
+            description={parseCollectionDescription(selected.description).description}
             ownerName={ownerName}
             ownerAvatarUrl={ownerAvatarUrl}
             readOnly

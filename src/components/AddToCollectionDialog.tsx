@@ -59,7 +59,7 @@ export const AddToCollectionDialog = ({
   }, [isOpen]);
 
   const { data: collections, isLoading } = useQuery({
-    queryKey: ['collections'],
+    queryKey: ['collections', user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase

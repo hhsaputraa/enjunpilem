@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getImageUrl } from '@/services/tmdb';
+import { safeExtractYear, parseCollectionDescription } from '@/services/collectionUtils';
 import {
   DndContext,
   closestCenter,
@@ -85,6 +86,8 @@ const SortableGridItem = memo(({
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 10 : 'auto' as const,
+    contentVisibility: 'auto' as const,
+    containIntrinsicSize: '280px',
   };
 
   return (
@@ -150,11 +153,12 @@ const SortableListItem = memo(({
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 10 : 'auto' as const,
+    contentVisibility: 'auto' as const,
+    containIntrinsicSize: '280px',
   };
 
   const title = item.title || item.name || 'Untitled';
-  const date = item.release_date || item.first_air_date || '';
-  const year = date ? new Date(date).getFullYear() : '';
+  const year = safeExtractYear(item.release_date || item.first_air_date);
   const detailPath = `/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.media_id}`;
 
   return (
@@ -178,7 +182,7 @@ const SortableListItem = memo(({
         <div className="w-14 h-20 sm:w-16 sm:h-24 rounded-md overflow-hidden bg-muted flex-shrink-0">
           {item.poster_path ? (
             <img
-              src={getImageUrl(item.poster_path, 'w300')}
+              src={getImageUrl(item.poster_path, 'w185')}
               alt={title}
               className="w-full h-full object-cover"
               loading="lazy"
@@ -401,13 +405,17 @@ export const CollectionDetails = ({
         </div>
       </div>
 
-      {description && (
-        <div className="p-4 rounded-xl bg-card/60 border border-border">
-          <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
-            {description}
-          </p>
-        </div>
-      )}
+      {(() => {
+        const cleanDesc = parseCollectionDescription(description).description;
+        if (!cleanDesc) return null;
+        return (
+          <div className="p-4 rounded-xl bg-card/60 border border-border">
+            <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
+              {cleanDesc}
+            </p>
+          </div>
+        );
+      })()}
 
       {!readOnly && localItems.length > 0 && !isSearching && (
         <p className="text-xs text-muted-foreground flex items-center gap-2">
