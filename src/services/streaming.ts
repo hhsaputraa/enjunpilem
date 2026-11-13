@@ -22,14 +22,14 @@ export const getStreamingUrl = (
 
   if (server === 'vidrock') {
     if (type === 'movie') {
-      return `https://vidrock.ru/movie/${cleanId}`;
+      return `https://vidrock.net/movie/${cleanId}`;
     }
-    return `https://vidrock.ru/tv/${cleanId}/${season}/${episode}`;
+    return `https://vidrock.net/tv/${cleanId}/${season}/${episode}`;
   }
 
   // Default: vidsrc
   if (type === 'movie') {
-    return `https://vidsrc-embed.ru/embed/movie?tmdb=${cleanId}`;
+    return `https://vidsrc.sh/embed/movie?tmdb=${cleanId}`;
   }
-  return `https://vidsrc-embed.ru/embed/tv?tmdb=${cleanId}&season=${season}&episode=${episode}`;
+  return `https://vidsrc.sh/embed/tv?tmdb=${cleanId}&season=${season}&episode=${episode}`;
 };

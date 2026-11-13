@@ -1,7 +1,7 @@
 # Dual Streaming Servers (VidSrc & Vidrock) Design Specification
 
 ## Overview
-This specification details adding support for a second streaming server (`Vidrock` - `https://vidrock.ru/`) alongside the existing `VidSrc` (`https://vidsrc-embed.ru/embed`) server in EnjunPilem. Users will be able to switch between streaming servers via 2 button controls, and their server preference will persist across sessions using `localStorage`.
+This specification details adding support for a second streaming server (`Vidrock` - `https://vidrock.net/`) alongside the existing `VidSrc` (`https://vidsrc.sh/embed`) server in EnjunPilem. Users will be able to switch between streaming servers via 2 button controls, and their server preference will persist across sessions using `localStorage`.
 
 ## Architecture & Data Flow
 
@@ -9,11 +9,11 @@ This specification details adding support for a second streaming server (`Vidroc
 - Server identifiers: `'vidsrc'` | `'vidrock'`
 - URL Generator `getStreamingUrl`:
   - `vidsrc`:
-    - Movie: `https://vidsrc-embed.ru/embed/movie?tmdb={id}`
-    - TV: `https://vidsrc-embed.ru/embed/tv?tmdb={id}&season={season}&episode={episode}`
+    - Movie: `https://vidsrc.sh/embed/movie?tmdb={id}`
+    - TV: `https://vidsrc.sh/embed/tv?tmdb={id}&season={season}&episode={episode}`
   - `vidrock`:
-    - Movie: `https://vidrock.ru/movie/{id}`
-    - TV: `https://vidrock.ru/tv/{id}/{season}/{episode}`
+    - Movie: `https://vidrock.net/movie/{id}`
+    - TV: `https://vidrock.net/tv/{id}/{season}/{episode}`
 
 ### 2. Custom Hook (`src/hooks/useStreamingServer.ts`)
 - Reads initial server from `localStorage.getItem('preferred_streaming_server')` defaulting to `'vidsrc'`.

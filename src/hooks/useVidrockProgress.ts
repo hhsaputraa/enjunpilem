@@ -69,7 +69,7 @@ export const useVidrockProgress = ({
 
     const handleMessage = (event: MessageEvent) => {
       // Security check: Only process messages from Vidrock player
-      if (event.origin !== 'https://vidrock.ru') return;
+      if (event.origin !== 'https://vidrock.net' && event.origin !== 'https://vidrock.ru') return;
 
       const data = event.data;
       if (!data || typeof data !== 'object') return;

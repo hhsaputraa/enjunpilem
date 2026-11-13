@@ -96,7 +96,7 @@ const Auth = () => {
 
         <CardContent className="space-y-6">
           {/* Primary: Google Sign In */}
-          <div className="w-full flex justify-center">
+          <div className="w-full flex justify-center" style={{ colorScheme: "light" }}>
             <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
               <GoogleLogin
                 onSuccess={(credentialResponse) => {
@@ -110,6 +110,9 @@ const Auth = () => {
                 theme="filled_black"
                 shape="pill"
                 text="continue_with"
+                containerProps={{
+                  style: { colorScheme: "light" }
+                }}
               />
             </GoogleOAuthProvider>
           </div>

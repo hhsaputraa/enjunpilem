@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -26,7 +25,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Pencil, Search, LayoutGrid, List, ArrowUpDown, Globe, Lock, Combine } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  Pencil, 
+  Search, 
+  LayoutGrid, 
+  List, 
+  ArrowUpDown, 
+  Globe, 
+  Lock, 
+  Combine, 
+  Film, 
+  Play, 
+  MoreVertical,
+  Layers
+} from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -39,6 +53,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -70,7 +85,7 @@ const Collections = () => {
   const [editingCollection, setEditingCollection] = useState<{ id: string; name: string; description: string | null; is_shared: boolean } | null>(null);
   const [collectionToDelete, setCollectionToDelete] = useState<{ id: string; name: string } | null>(null);
   
-  // New UI/UX States
+  // UI/UX States
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -102,6 +117,7 @@ const Collections = () => {
           name,
           description,
           is_shared,
+          created_at,
           collection_items (
             id,
             poster_path
@@ -127,12 +143,15 @@ const Collections = () => {
     
     const query = deferredSearchQuery.trim().toLowerCase();
     const result = query 
-      ? collections.filter(collection => collection.name.toLowerCase().includes(query))
+      ? collections.filter(collection => 
+          (collection.name || '').toLowerCase().includes(query) ||
+          (collection.description || '').toLowerCase().includes(query)
+        )
       : [...collections];
 
     switch (sortBy) {
       case 'alphabetical':
-        result.sort((a, b) => a.name.localeCompare(b.name));
+        result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         break;
       case 'items':
         result.sort((a, b) => (b.collection_items?.length || 0) - (a.collection_items?.length || 0));
@@ -303,9 +322,14 @@ const Collections = () => {
   if (!user) {
     return (
       <div className="min-h-screen p-6 bg-background">
-        <div className="max-w-7xl mx-auto text-center py-12">
-          <h1 className="text-3xl font-bold mb-4">Collections</h1>
-          <p className="text-lg text-muted-foreground">Please sign in to view and manage your collections.</p>
+        <div className="max-w-7xl mx-auto text-center py-16">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4 border border-border">
+            <Layers className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Collections</h1>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Please sign in to organize and manage your custom movie and TV collections.
+          </p>
         </div>
       </div>
     );
@@ -328,18 +352,27 @@ const Collections = () => {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen p-6 bg-background">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col gap-8 mb-12">
-          <div className="flex justify-between items-end">
-            <div>
-              <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                My Collections
-              </h1>
-              <p className="text-muted-foreground mt-1 text-sm font-medium">
-                Organize and manage your favorite Film
-              </p>
-            </div>
+      <div className="min-h-screen p-6 md:p-8 bg-background">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col gap-6 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
+                    My Collections
+                  </h1>
+                  {collections && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {collections.length}
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground mt-1 text-sm font-medium">
+                  Curate, organize, and share your favorite films and shows
+                </p>
+              </div>
+
               <div className="flex items-center gap-3">
                 {user?.id === import.meta.env.VITE_ALLOWED_ADMIN_ID && (
                   <Tooltip>
@@ -347,10 +380,10 @@ const Collections = () => {
                       <Button 
                         variant="outline"
                         onClick={() => navigate("/import-collection")}
-                        className="border-border hover:bg-accent text-foreground font-bold h-11 px-6 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-2"
+                        className="border-border hover:bg-accent text-foreground font-semibold h-10 px-4 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-2 text-xs"
                       >
                         <Combine className="w-4 h-4 text-primary" />
-                        Import Items
+                        Import Letterboxd
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
@@ -360,582 +393,616 @@ const Collections = () => {
                 )}
 
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DialogTrigger asChild>
-                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-11 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
-                        New Collection
-                      </Button>
-                    </DialogTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-widest border-none">
-                    Create a new private or public library
-                  </TooltipContent>
-                </Tooltip>
-              <DialogContent className="border-border bg-card text-card-foreground p-6 sm:rounded-2xl shadow-xl">
-                <DialogHeader>
-                  <DialogTitle className="text-2xl font-bold">Create Collection</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleCreateCollection} className="space-y-5 mt-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-primary">Name</label>
-                    <Input
-                      placeholder="e.g. Top 20 Favorite Film"
-                      value={newCollectionName}
-                      onChange={(e) => setNewCollectionName(e.target.value)}
-                      className="bg-muted/50 border-input h-12 rounded-xl focus:ring-primary text-foreground"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-primary">Description</label>
-                    <Textarea
-                      placeholder="What's this collection about?"
-                      value={newCollectionDescription}
-                      onChange={(e) => setNewCollectionDescription(e.target.value)}
-                      className="bg-muted/50 border-input rounded-xl focus-visible:ring-primary min-h-[90px] resize-none text-foreground"
-                      maxLength={500}
-                    />
-                  </div>
-                  <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/40 border border-border">
-                    <div className="flex items-start gap-3">
-                      {newCollectionShared ? (
-                        <Globe className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                      ) : (
-                        <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
-                      )}
-                      <div>
-                        <p className="text-sm font-bold text-foreground">
-                          {newCollectionShared ? 'Public' : 'Private'}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {newCollectionShared
-                            ? 'Anyone can see this on Shared Films.'
-                            : 'Only you can see this collection.'}
-                        </p>
+                  <DialogTrigger asChild>
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-5 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center gap-2 text-xs">
+                      <Plus className="w-4 h-4" />
+                      New Collection
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="border-border bg-card text-card-foreground p-6 sm:rounded-2xl shadow-xl max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-bold">Create Collection</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateCollection} className="space-y-4 mt-2">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Collection Name</label>
+                        <Input
+                          placeholder="e.g. Masterpieces of Cinema"
+                          value={newCollectionName}
+                          onChange={(e) => setNewCollectionName(e.target.value)}
+                          className="bg-muted/40 border-input h-11 rounded-xl focus:ring-primary text-foreground text-sm"
+                          autoFocus
+                        />
                       </div>
-                    </div>
-                    <Switch
-                      checked={newCollectionShared}
-                      onCheckedChange={setNewCollectionShared}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </div>
-                  <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl" disabled={!newCollectionName.trim()}>
-                    Start Collection
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-          <div className="flex flex-wrap items-center gap-4 bg-card/80 p-2 rounded-2xl border border-border/60 shadow-xs backdrop-blur-sm">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Find a collection..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 bg-transparent border-none focus:ring-0 h-11 placeholder:text-muted-foreground text-sm font-medium text-foreground"
-              />
-            </div>
-            
-            <div className="h-6 w-px bg-border hidden sm:block" />
-
-            <div className="flex items-center gap-2 pr-2">
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-9 gap-2 text-xs font-bold uppercase tracking-wider hover:bg-accent text-foreground rounded-xl">
-                        <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
-                        Sort: {sortBy}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Description (Optional)</label>
+                        <Textarea
+                          placeholder="What's the theme or story of this collection?"
+                          value={newCollectionDescription}
+                          onChange={(e) => setNewCollectionDescription(e.target.value)}
+                          className="bg-muted/40 border-input rounded-xl focus-visible:ring-primary min-h-[85px] resize-none text-foreground text-sm leading-relaxed"
+                          maxLength={500}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/30 border border-border">
+                        <div className="flex items-center gap-3">
+                          {newCollectionShared ? (
+                            <Globe className="w-4 h-4 text-primary shrink-0" />
+                          ) : (
+                            <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                          <div>
+                            <p className="text-xs font-bold text-foreground">
+                              {newCollectionShared ? 'Public Collection' : 'Private Collection'}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {newCollectionShared
+                                ? 'Visible on Shared Films for other members.'
+                                : 'Only you can view this collection.'}
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={newCollectionShared}
+                          onCheckedChange={setNewCollectionShared}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl text-sm" 
+                        disabled={!newCollectionName.trim() || createCollection.isPending}
+                      >
+                        {createCollection.isPending ? "Creating..." : "Create Collection"}
                       </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                    Change display order
-                  </TooltipContent>
-                </Tooltip>
-                
-                <DropdownMenuContent align="end" className="w-48 bg-popover border-border text-popover-foreground rounded-xl overflow-hidden p-1 shadow-md">
-                  <DropdownMenuItem onClick={() => setSortBy('newest')} className="rounded-lg gap-2 text-xs font-medium focus:bg-primary focus:text-primary-foreground cursor-pointer uppercase tracking-wide">Most Recent</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('alphabetical')} className="rounded-lg gap-2 text-xs font-medium focus:bg-primary focus:text-primary-foreground cursor-pointer uppercase tracking-wide">A - Z</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy('items')} className="rounded-lg gap-2 text-xs font-medium focus:bg-primary focus:text-primary-foreground cursor-pointer uppercase tracking-wide">Item Count</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="flex bg-muted rounded-xl p-1 border border-border">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setViewMode('grid')}
-                      className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'grid' ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground hover:bg-accent")}
-                    >
-                      <LayoutGrid className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                    Grid View
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setViewMode('compact')}
-                      className={cn("h-8 w-8 rounded-lg transition-all", viewMode === 'compact' ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground hover:bg-accent")}
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                    List View
-                  </TooltipContent>
-                </Tooltip>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Edit Collection Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="border-border bg-card text-card-foreground p-6 sm:rounded-2xl shadow-xl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Edit Collection</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUpdateCollection} className="space-y-5 mt-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-primary">Name</label>
+            {/* Filter, Search & View Controls */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-card/60 p-2.5 rounded-2xl border border-border/70 shadow-xs">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Collection name"
-                  value={editingCollection?.name || ''}
-                  onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
-                  className="bg-muted/50 border-input h-12 rounded-xl focus:ring-primary text-foreground"
+                  placeholder="Search collections..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-transparent border-none focus-visible:ring-0 h-10 placeholder:text-muted-foreground text-sm text-foreground"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-primary">Description</label>
-                <Textarea
-                  placeholder="What's this collection about?"
-                  value={editingCollection?.description || ''}
-                  onChange={(e) => setEditingCollection(prev => prev ? { ...prev, description: e.target.value } : null)}
-                  className="bg-muted/50 border-input rounded-xl focus-visible:ring-primary min-h-[90px] resize-none text-foreground"
-                  maxLength={500}
-                />
-              </div>
-              <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-muted/40 border border-border">
-                <div className="flex items-start gap-3">
-                  {editingCollection?.is_shared ? (
-                    <Globe className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                  ) : (
-                    <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
-                  )}
-                  <div>
-                    <p className="text-sm font-bold text-foreground">
-                      {editingCollection?.is_shared ? 'Public' : 'Private'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {editingCollection?.is_shared
-                        ? 'Anyone can see this on Shared Films.'
-                        : 'Only you can see this collection.'}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={!!editingCollection?.is_shared}
-                  onCheckedChange={(checked) => setEditingCollection(prev => prev ? { ...prev, is_shared: checked } : null)}
-                  className="data-[state=checked]:bg-primary"
-                />
-              </div>
-              <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl" disabled={!editingCollection?.name.trim()}>
-                Update Collection
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+              
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 gap-2 text-xs font-semibold hover:bg-accent text-muted-foreground hover:text-foreground rounded-xl">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
+                      <span>Sort: {sortBy === 'newest' ? 'Newest' : sortBy === 'alphabetical' ? 'A - Z' : 'Item Count'}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44 bg-popover border-border text-popover-foreground rounded-xl p-1 shadow-md">
+                    <DropdownMenuItem onClick={() => setSortBy('newest')} className="rounded-lg text-xs font-medium cursor-pointer">Newest First</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('alphabetical')} className="rounded-lg text-xs font-medium cursor-pointer">Alphabetical (A - Z)</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy('items')} className="rounded-lg text-xs font-medium cursor-pointer">Most Items</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-64 rounded-2xl bg-muted/50 border border-border/50 animate-pulse" />
-            ))}
-          </div>
-        ) : filteredAndSortedCollections?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
-            <div className="w-20 h-20 rounded-3xl bg-muted/40 flex items-center justify-center border border-border mb-6">
-              <Plus className="w-8 h-8 text-muted-foreground/40" />
+                <div className="flex bg-muted/70 rounded-xl p-1 border border-border">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setViewMode('grid')}
+                        className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'grid' ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}
+                      >
+                        <LayoutGrid className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-[10px] font-semibold">Grid View</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setViewMode('compact')}
+                        className={cn("h-7 w-7 rounded-lg transition-all", viewMode === 'compact' ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}
+                      >
+                        <List className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-[10px] font-semibold">List View</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">No collections found</h3>
-            <p className="text-muted-foreground text-sm max-w-sm mb-8">
-              {searchQuery ? "We couldn't find any collection matching your search." : "You haven't created any collections yet. Start by creating your first one!"}
-            </p>
-            {searchQuery && (
-              <Button onClick={() => setSearchQuery('')} variant="outline" className="rounded-xl border-border hover:bg-accent text-foreground">
-                Clear search
-              </Button>
-            )}
           </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {paginatedCollections?.map((collection) => (
-              <div
-                key={collection.id}
-                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
-                className="group relative flex flex-col rounded-[2.5rem] border border-border/80 bg-card hover:bg-card/95 transition-all duration-500 overflow-hidden backdrop-blur-xl cursor-pointer hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 text-card-foreground"
-              >
-                {/* Content Container (Subtle blur on hover) */}
-                <div className="flex flex-col h-full p-6 transition-all duration-500 group-hover:blur-[2px] group-hover:opacity-70">
-                  {/* Background Poster Blur */}
-                  {collection.collection_items?.[0]?.poster_path && (
-                    <div className="absolute inset-0 z-0 opacity-15 dark:opacity-25 group-hover:opacity-25 dark:group-hover:opacity-35 transition-opacity duration-700">
-                      <img 
-                        src={getImageUrl(collection.collection_items[0].poster_path, 'w92')} 
-                        alt="" 
-                        className="w-full h-full object-cover blur-2xl scale-110"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-card/70 to-card/95" />
+
+          {/* Edit Collection Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="border-border bg-card text-card-foreground p-6 sm:rounded-2xl shadow-xl max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">Edit Collection</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateCollection} className="space-y-4 mt-2">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Collection Name</label>
+                  <Input
+                    placeholder="Collection name"
+                    value={editingCollection?.name || ''}
+                    onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    className="bg-muted/40 border-input h-11 rounded-xl focus:ring-primary text-foreground text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Description (Optional)</label>
+                  <Textarea
+                    placeholder="What's the theme of this collection?"
+                    value={editingCollection?.description || ''}
+                    onChange={(e) => setEditingCollection(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    className="bg-muted/40 border-input rounded-xl focus-visible:ring-primary min-h-[85px] resize-none text-foreground text-sm leading-relaxed"
+                    maxLength={500}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/30 border border-border">
+                  <div className="flex items-center gap-3">
+                    {editingCollection?.is_shared ? (
+                      <Globe className="w-4 h-4 text-primary shrink-0" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        {editingCollection?.is_shared ? 'Public Collection' : 'Private Collection'}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {editingCollection?.is_shared
+                          ? 'Visible on Shared Films for other members.'
+                          : 'Only you can view this collection.'}
+                      </p>
                     </div>
-                  )}
-                  
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                  
-                  <div className="relative flex justify-between items-start mb-8 z-10">
-                    <div className="flex flex-col min-w-0">
-                      <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors leading-tight truncate pr-4 capitalize">
-                        {collection.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                          {collection.collection_items?.length || 0} items
-                        </span>
+                  </div>
+                  <Switch
+                    checked={!!editingCollection?.is_shared}
+                    onCheckedChange={(checked) => setEditingCollection(prev => prev ? { ...prev, is_shared: checked } : null)}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl text-sm" 
+                  disabled={!editingCollection?.name.trim() || updateCollection.isPending}
+                >
+                  {updateCollection.isPending ? "Updating..." : "Save Changes"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Collections Content */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-[16/11] rounded-2xl bg-muted/40 border border-border/40 animate-pulse" />
+              ))}
+            </div>
+          ) : filteredAndSortedCollections.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center border border-dashed border-border/70 rounded-3xl bg-card/20">
+              <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center border border-border mb-4">
+                <Film className="w-8 h-8 text-muted-foreground/60" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">
+                {searchQuery ? "No collections match your search" : "No collections yet"}
+              </h3>
+              <p className="text-muted-foreground text-xs max-w-sm mb-6 leading-relaxed">
+                {searchQuery 
+                  ? `We couldn't find anything matching "${searchQuery}".` 
+                  : "Create your first curated collection to organize movies and TV shows you love."}
+              </p>
+              {searchQuery ? (
+                <Button onClick={() => setSearchQuery('')} variant="outline" size="sm" className="rounded-xl text-xs">
+                  Clear Search
+                </Button>
+              ) : (
+                <Button onClick={() => setIsDialogOpen(true)} size="sm" className="rounded-xl text-xs font-bold gap-1.5 bg-primary text-primary-foreground">
+                  <Plus className="w-3.5 h-3.5" />
+                  Create First Collection
+                </Button>
+              )}
+            </div>
+          ) : viewMode === 'grid' ? (
+            /* Option B: Cinematic Backdrop Hero + Mini Thumbs Grid Layout */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedCollections.map((collection) => {
+                const items = collection.collection_items || [];
+                const heroPoster = items[0]?.poster_path;
+                const thumbItems = items.slice(0, 4);
+
+                return (
+                  <div
+                    key={collection.id}
+                    onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
+                    className="group relative flex flex-col rounded-2xl border border-border/80 bg-card hover:border-primary/50 transition-all duration-300 overflow-hidden shadow-xs hover:shadow-lg cursor-pointer transform-gpu hover:-translate-y-1"
+                  >
+                    {/* Hero Visual Banner (Aspect 16:9) */}
+                    <div className="relative w-full aspect-[16/9] bg-muted/80 overflow-hidden shrink-0">
+                      {heroPoster ? (
+                        <>
+                          <img
+                            src={getImageUrl(heroPoster, 'w500')}
+                            alt={collection.name}
+                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 will-change-transform"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          {/* Smooth cinematic bottom gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/25 to-transparent" />
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-card/60 to-muted/40 gap-2 text-muted-foreground/50">
+                          <Film className="w-10 h-10 stroke-[1.5]" />
+                          <span className="text-[11px] font-medium tracking-wide">Empty Collection</span>
+                        </div>
+                      )}
+
+                      {/* Top Bar Badges (Visibility & Quick Menu) */}
+                      <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
+                        {/* Visibility Pill */}
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border font-medium",
+                            "inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border shadow-sm backdrop-blur-md",
                             collection.is_shared
-                              ? "bg-primary/10 text-primary border-primary/30"
-                              : "bg-muted text-muted-foreground border-border"
+                              ? "bg-primary/90 text-primary-foreground border-primary/30"
+                              : "bg-black/60 text-zinc-200 border-white/10"
                           )}
                         >
-                          {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                          {collection.is_shared ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
                           {collection.is_shared ? 'Public' : 'Private'}
+                        </span>
+
+                        {/* Actions Menu (Dropdown) */}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full bg-black/50 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md transition-all"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44 bg-popover border-border text-popover-foreground rounded-xl p-1 shadow-lg">
+                              <DropdownMenuItem
+                                onClick={() => toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared })}
+                                className="rounded-lg text-xs font-medium cursor-pointer gap-2"
+                              >
+                                {collection.is_shared ? <Lock className="w-3.5 h-3.5 text-muted-foreground" /> : <Globe className="w-3.5 h-3.5 text-primary" />}
+                                {collection.is_shared ? 'Make Private' : 'Make Public'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingCollection({
+                                    id: collection.id,
+                                    name: collection.name,
+                                    description: collection.description,
+                                    is_shared: !!collection.is_shared,
+                                  });
+                                  setIsEditDialogOpen(true);
+                                }}
+                                className="rounded-lg text-xs font-medium cursor-pointer gap-2"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                Edit Info
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setCollectionToDelete({ id: collection.id, name: collection.name });
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                className="rounded-lg text-xs font-medium cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Delete Collection
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+
+                      {/* Subtle Center Hover Icon */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <div className="w-11 h-11 rounded-full bg-background/85 text-foreground flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Body with Mini Thumbnails Overlap */}
+                    <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3 relative z-10">
+                      {/* Mini Poster Thumbnails Strip */}
+                      {items.length > 0 && (
+                        <div className="flex items-center gap-1.5 -mt-8 relative z-20">
+                          {thumbItems.map((item, idx) => {
+                            const isLastWithMore = idx === 3 && items.length > 4;
+                            const extraCount = items.length - 3;
+
+                            return (
+                              <div
+                                key={item.id || idx}
+                                className="relative w-11 h-16 rounded-md overflow-hidden border-2 border-card bg-muted shadow-sm shrink-0"
+                              >
+                                {item.poster_path ? (
+                                  <img
+                                    src={getImageUrl(item.poster_path, 'w185')}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                                    <Film className="w-3 h-3 text-muted-foreground/40" />
+                                  </div>
+                                )}
+
+                                {isLastWithMore && (
+                                  <div className="absolute inset-0 bg-black/75 flex items-center justify-center text-[10px] font-bold text-white tracking-wider">
+                                    +{extraCount}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Text Details */}
+                      <div>
+                        <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors leading-snug truncate capitalize">
+                          {collection.name}
+                        </h3>
+                        {collection.description ? (
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mt-1">
+                            {collection.description}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground/60 italic mt-1">
+                            No description added
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Meta Footer */}
+                      <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px] text-muted-foreground font-medium">
+                        <span>{items.length} {items.length === 1 ? 'Item' : 'Items'}</span>
+                        <span className="text-primary font-semibold group-hover:underline">
+                          View details →
                         </span>
                       </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* List/Compact Mode Layout */
+            <div className="flex flex-col gap-3">
+              {paginatedCollections.map((collection) => {
+                const items = collection.collection_items || [];
+                const heroPoster = items[0]?.poster_path;
 
-                  <div className="relative h-60 mb-2 z-10 group/stack">
-                    {collection.collection_items && collection.collection_items.length > 0 ? (
-                      <div className="relative w-full h-full flex items-center justify-center translate-y-2">
-                        {collection.collection_items.slice(0, 3).map((item, idx) => (
-                          <div 
-                            key={item.id} 
-                            className="absolute h-[110%] aspect-[2/3] rounded-2xl overflow-hidden shadow-lg dark:shadow-2xl transition-all duration-700 border border-border/60"
-                            style={{
-                              left: '50%',
-                              zIndex: 10 - idx,
-                              transform: `translateX(-50%) translateX(${(idx - 1) * 35}px) rotate(${(idx - 1) * 6}deg) scale(${1 - idx * 0.08}) translateY(${idx * 8}px)`,
-                              opacity: 1 - idx * 0.15
+                return (
+                  <div
+                    key={collection.id}
+                    onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-2xl border border-border/80 bg-card hover:bg-card/95 hover:border-primary/40 text-card-foreground transition-all cursor-pointer shadow-xs gap-3"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      {/* Thumbnail */}
+                      <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden bg-muted border border-border/60 shrink-0 relative">
+                        {heroPoster ? (
+                          <img
+                            src={getImageUrl(heroPoster, 'w185')}
+                            alt=""
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Film className="w-5 h-5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <span className="absolute bottom-1 right-1 bg-black/75 text-[9px] font-bold text-white px-1.5 py-0.5 rounded">
+                          {items.length}
+                        </span>
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors truncate">
+                            {collection.name}
+                          </h3>
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                              collection.is_shared
+                                ? "bg-primary/10 text-primary border-primary/20"
+                                : "bg-muted text-muted-foreground border-border"
+                            )}
+                          >
+                            {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                            {collection.is_shared ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                        {collection.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 leading-relaxed">
+                            {collection.description}
+                          </p>
+                        )}
+                        <span className="text-[11px] text-muted-foreground mt-1">
+                          {items.length} {items.length === 1 ? 'Item' : 'Items in collection'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
+                            onClick={() => toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared })}
+                          >
+                            {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-[10px] font-semibold">
+                          {collection.is_shared ? 'Make Private' : 'Make Public'}
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
+                            onClick={() => {
+                              setEditingCollection({
+                                id: collection.id,
+                                name: collection.name,
+                                description: collection.description,
+                                is_shared: !!collection.is_shared,
+                              });
+                              setIsEditDialogOpen(true);
                             }}
                           >
-                            <img
-                              src={getImageUrl(item.poster_path!, 'w300')}
-                              alt={collection.name}
-                              className="w-full h-full object-cover group-hover/stack:scale-105 transition-transform duration-1000"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                            <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_30px_rgba(0,0,0,0.4)]" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="w-full h-full rounded-3xl bg-muted/40 border border-dashed border-border flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center border border-border">
-                          <Plus className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">No items yet</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-[10px] font-semibold">Edit Info</TooltipContent>
+                      </Tooltip>
 
-                {/* Hover Management Buttons (Always visible on hover) */}
-                <div className="absolute top-6 right-6 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-30">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground backdrop-blur-md bg-card/90 dark:bg-background/80 border border-border shadow-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                        }}
-                      >
-                        {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                      {collection.is_shared ? 'Make Private' : 'Make Public'}
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground backdrop-blur-md bg-card/90 dark:bg-background/80 border border-border shadow-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingCollection({
-                            id: collection.id,
-                            name: collection.name,
-                            description: collection.description,
-                            is_shared: !!collection.is_shared,
-                          });
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                      Edit Collection
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive backdrop-blur-md bg-card/90 dark:bg-background/80 border border-border shadow-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCollectionToDelete({ id: collection.id, name: collection.name });
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-destructive/15 border-destructive/30 text-destructive font-bold text-[10px] uppercase tracking-widest">
-                      Delete Collection
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-
-                {/* Hover Overlay - Theme Aware */}
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-background/90 dark:bg-background/85 backdrop-blur-[2px] p-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-4 transition-transform duration-500 shadow-xl shadow-primary/20 group-hover:scale-110">
-                    <LayoutGrid className="w-6 h-6" />
-                  </div>
-                  
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-3">
-                    View Library
-                  </span>
-
-                  {collection.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-3 italic max-w-[200px]">
-                      "{collection.description}"
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {paginatedCollections?.map((collection) => (
-              <div
-                key={collection.id}
-                className="group flex items-center justify-between p-4 rounded-2xl border border-border/80 bg-card hover:bg-card/95 text-card-foreground transition-all cursor-pointer shadow-xs hover:border-primary/40 hover:shadow-md"
-                onClick={() => setSelectedCollection({ id: collection.id, name: collection.name, description: collection.description })}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-12 h-16 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
-                    {collection.collection_items?.[0]?.poster_path && (
-                      <img
-                        src={getImageUrl(collection.collection_items[0].poster_path, 'w300')}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-foreground group-hover:text-primary transition-colors truncate">{collection.name}</h3>
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border",
-                          collection.is_shared
-                            ? "bg-primary/10 text-primary border-primary/30"
-                            : "bg-muted text-muted-foreground border-border"
-                        )}
-                      >
-                        {collection.is_shared ? <Globe className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                        {collection.is_shared ? 'Public' : 'Private'}
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              setCollectionToDelete({ id: collection.id, name: collection.name });
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-[10px] font-semibold text-destructive">Delete</TooltipContent>
+                      </Tooltip>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                      {collection.collection_items?.length || 0} ITEMS
-                    </span>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleShareMutation.mutate({ id: collection.id, is_shared: !collection.is_shared });
-                          }}
-                        >
-                          {collection.is_shared ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                        {collection.is_shared ? 'Make Private' : 'Make Public'}
-                      </TooltipContent>
-                    </Tooltip>
+                );
+              })}
+            </div>
+          )}
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground" onClick={(e) => { e.stopPropagation(); setEditingCollection({ id: collection.id, name: collection.name, description: collection.description, is_shared: !!collection.is_shared }); setIsEditDialogOpen(true); }}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-popover border-border text-primary font-bold text-[10px] uppercase tracking-widest">
-                        Edit Collection
-                      </TooltipContent>
-                    </Tooltip>
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-12 pb-8">
+              <Pagination>
+                <PaginationContent className="bg-card border border-border p-1 rounded-xl shadow-xs">
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      className={cn(
+                        "rounded-lg hover:bg-accent text-foreground transition-colors cursor-pointer text-xs",
+                        currentPage === 1 && "pointer-events-none opacity-40"
+                      )}
+                    />
+                  </PaginationItem>
+                  
+                  {[...Array(totalPages)].map((_, i) => {
+                    const page = i + 1;
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className={cn(
+                              "rounded-lg cursor-pointer text-xs transition-all",
+                              currentPage === page 
+                                ? "bg-primary text-primary-foreground font-bold shadow-xs hover:bg-primary/90 hover:text-primary-foreground" 
+                                : "hover:bg-accent text-muted-foreground hover:text-foreground font-medium"
+                            )}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (
+                      page === currentPage - 2 || 
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationEllipsis className="text-muted-foreground/40" />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setCollectionToDelete({ id: collection.id, name: collection.name }); setIsDeleteDialogOpen(true); }}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-destructive/15 border-destructive/30 text-destructive font-bold text-[10px] uppercase tracking-widest">
-                        Delete Collection
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border group-hover:bg-primary group-hover:border-transparent transition-all">
-                    <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary-foreground hover:rotate-180 transition-transform" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      className={cn(
+                        "rounded-lg hover:bg-accent text-foreground transition-colors cursor-pointer text-xs",
+                        currentPage === totalPages && "pointer-events-none opacity-40"
+                      )}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="mt-16 pb-12">
-            <Pagination>
-              <PaginationContent className="bg-card/90 backdrop-blur-xl border border-border p-1.5 rounded-2xl shadow-xs">
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={cn(
-                      "rounded-xl hover:bg-accent text-foreground transition-colors cursor-pointer",
-                      currentPage === 1 && "pointer-events-none opacity-50"
-                    )}
-                  />
-                </PaginationItem>
-                
-                {[...Array(totalPages)].map((_, i) => {
-                  const page = i + 1;
-                  // Show current page, first, last, and pages around current
-                  if (
-                    page === 1 || 
-                    page === totalPages || 
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className={cn(
-                            "rounded-xl cursor-pointer transition-all",
-                            currentPage === page 
-                              ? "bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20 hover:bg-primary/90 hover:text-primary-foreground" 
-                              : "hover:bg-accent text-muted-foreground hover:text-foreground font-medium"
-                          )}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  } else if (
-                    page === currentPage - 2 || 
-                    page === currentPage + 2
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationEllipsis className="text-muted-foreground/50" />
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className={cn(
-                      "rounded-xl hover:bg-accent text-foreground transition-colors cursor-pointer",
-                      currentPage === totalPages && "pointer-events-none opacity-50"
-                    )}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Make sure you want to delete the "{collectionToDelete?.name}" collection? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => {
-                  if (collectionToDelete) {
-                    deleteCollection.mutate(collectionToDelete.id);
-                    setCollectionToDelete(null);
-                  }
-                }}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          {/* Delete Confirmation Alert Dialog */}
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent className="rounded-2xl max-w-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-lg font-bold">Delete Collection?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground">
+                  Are you sure you want to delete <span className="font-semibold text-foreground">"{collectionToDelete?.name}"</span>? The movies in this collection will not be removed from your general database.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="mt-4">
+                <AlertDialogCancel className="rounded-xl text-xs font-semibold">Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl text-xs font-bold"
+                  onClick={() => {
+                    if (collectionToDelete) {
+                      deleteCollection.mutate(collectionToDelete.id);
+                      setCollectionToDelete(null);
+                    }
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </TooltipProvider>

@@ -2,21 +2,21 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add Vidrock (`https://vidrock.ru/`) as a second streaming server alongside VidSrc and provide 2 server selector button controls with persistent localStorage preference.
+**Goal:** Add Vidrock (`https://vidrock.net/`) as a second streaming server alongside VidSrc and provide 2 server selector button controls with persistent localStorage preference.
 
 **Architecture:** Create a centralized streaming helper (`src/services/streaming.ts`) and custom hook (`src/hooks/useStreamingServer.ts`), build a reusable `ServerSelector` component, and integrate it into `src/pages/Watch.tsx` and `src/components/mobile/MobileVideoPlayer.tsx`.
 
 **Tech Stack:** React, TypeScript, Tailwind CSS, Lucide Icons, localStorage API.
 
 ## Global Constraints
-- Target servers: `vidsrc` (`https://vidsrc-embed.ru/embed`) and `vidrock` (`https://vidrock.ru`)
+- Target servers: `vidsrc` (`https://vidsrc.sh/embed`) and `vidrock` (`https://vidrock.net`)
 - Storage key: `preferred_streaming_server`
 - Movie embed formats:
-  - VidSrc: `https://vidsrc-embed.ru/embed/movie?tmdb={id}`
-  - Vidrock: `https://vidrock.ru/movie/{id}`
+  - VidSrc: `https://vidsrc.sh/embed/movie?tmdb={id}`
+  - Vidrock: `https://vidrock.net/movie/{id}`
 - TV embed formats:
-  - VidSrc: `https://vidsrc-embed.ru/embed/tv?tmdb={id}&season={season}&episode={episode}`
-  - Vidrock: `https://vidrock.ru/tv/{id}/{season}/{episode}`
+  - VidSrc: `https://vidsrc.sh/embed/tv?tmdb={id}&season={season}&episode={episode}`
+  - Vidrock: `https://vidrock.net/tv/{id}/{season}/{episode}`
 
 ---
 
@@ -57,16 +57,16 @@ export const getStreamingUrl = (
 
   if (server === 'vidrock') {
     if (type === 'movie') {
-      return `https://vidrock.ru/movie/${cleanId}`;
+      return `https://vidrock.net/movie/${cleanId}`;
     }
-    return `https://vidrock.ru/tv/${cleanId}/${season}/${episode}`;
+    return `https://vidrock.net/tv/${cleanId}/${season}/${episode}`;
   }
 
   // Default: vidsrc
   if (type === 'movie') {
-    return `https://vidsrc-embed.ru/embed/movie?tmdb=${cleanId}`;
+    return `https://vidsrc.sh/embed/movie?tmdb=${cleanId}`;
   }
-  return `https://vidsrc-embed.ru/embed/tv?tmdb=${cleanId}&season=${season}&episode=${episode}`;
+  return `https://vidsrc.sh/embed/tv?tmdb=${cleanId}&season=${season}&episode=${episode}`;
 };
 ```
 
